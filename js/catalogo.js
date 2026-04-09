@@ -5,6 +5,8 @@
     searchTerm: ""
   };
 
+  let searchDebounceTimer = null;
+
   const gridEl = document.getElementById("productsGrid");
   const statusEl = document.getElementById("catalogStatus");
   const filtersEl = document.getElementById("categoryFilters");
@@ -97,7 +99,7 @@
   }
 
   function renderFilters() {
-    const fixedCategories = ["Bisuteria", "Piñatas", "Arreglos", "Decoraciones"];
+    const fixedCategories = ["Bisuteria", "Pi\u00f1atas", "Arreglos", "Decoraciones"];
     const dynamicCategories = state.products.map((product) => product.categoria).filter(Boolean);
     const unique = Array.from(new Set(["Todos", ...fixedCategories, ...dynamicCategories]));
 
@@ -251,8 +253,16 @@
 
   if (searchInputEl) {
     searchInputEl.addEventListener("input", (event) => {
-      state.searchTerm = event.target.value || "";
-      renderProducts();
+      // Debounce para evitar rerender por cada tecla y reducir trabajo de DOM.
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
+      }
+
+      const nextTerm = event.target.value || "";
+      searchDebounceTimer = setTimeout(() => {
+        state.searchTerm = nextTerm;
+        renderProducts();
+      }, 120);
     });
   }
 

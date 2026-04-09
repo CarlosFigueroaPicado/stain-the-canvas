@@ -125,7 +125,7 @@ h3 {
 
 .category-filter.active {
   background: var(--brand-primary);
-  color: #fff;
+  color: var(--brand-text);
 }
 
 .product-preview-card,
@@ -265,6 +265,76 @@ h3 {
   background: linear-gradient(180deg, #fffdfb, var(--brand-surface));
 }
 
+.login-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.login-logo-mark {
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--brand-text);
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-dark));
+  box-shadow: 0 8px 18px rgba(163, 79, 51, 0.28);
+}
+
+.login-logo-text {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+.login-side-visual {
+  position: absolute;
+  inset: 0 440px 0 0;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 251, 0.42), rgba(245, 232, 218, 0.38)),
+    url("../assets/images/Fondo_login.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.login-emblem {
+  position: absolute;
+  inset: auto 2rem 2rem 2rem;
+  margin: 0;
+  max-width: 600px;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.2rem, 2.1vw, 2rem);
+  line-height: 1.25;
+  color: rgba(43, 43, 43, 0.9);
+  text-shadow: 0 2px 12px rgba(255, 255, 255, 0.85);
+}
+
+.login-relief {
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.95),
+    0 2px 0 rgba(255, 255, 255, 0.62),
+    0 4px 10px rgba(43, 43, 43, 0.24),
+    0 -1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.login-logo-mark.login-relief {
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.72),
+    0 2px 0 rgba(255, 255, 255, 0.34),
+    0 3px 7px rgba(43, 43, 43, 0.38);
+}
+.login-motto-glow {
+  display: inline-block;
+  color: var(--brand-text);
+  background: rgba(255, 255, 255, 0.24);
+  padding: 0.28em 0.5em;
+  border-radius: 0.45rem;
+  box-shadow: 0 8px 20px rgba(43, 43, 43, 0.14);
+}
 .login-curtain {
   position: absolute;
   inset: 0;
@@ -275,14 +345,11 @@ h3 {
   cursor: pointer;
   color: var(--brand-text);
   background:
-    linear-gradient(135deg, rgba(255, 253, 251, 0.96), rgba(245, 232, 218, 0.95)),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(200, 107, 74, 0.12),
-      rgba(200, 107, 74, 0.12) 8px,
-      rgba(255, 255, 255, 0.28) 8px,
-      rgba(255, 255, 255, 0.28) 16px
-    );
+    linear-gradient(135deg, rgba(255, 253, 251, 0.6), rgba(245, 232, 218, 0.56)),
+    url("../assets/images/Fondo_login.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   border-right: 1px solid var(--brand-border);
   transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   z-index: 2;
@@ -297,7 +364,8 @@ h3 {
 }
 
 .login-shell.is-open .login-curtain {
-  transform: translateX(-102%);
+  transform: translateX(-100%);
+  pointer-events: none;
 }
 
 @media (max-width: 991.98px) {
@@ -311,14 +379,24 @@ h3 {
     justify-content: flex-end;
   }
 
+  .login-side-visual {
+    display: none;
+  }
+
+  .login-logo-text {
+    font-size: 1.2rem;
+  }
+
   .login-curtain {
     padding: 1.75rem;
   }
 
   .login-shell.is-open .login-curtain {
-    transform: translateX(-110%);
+    transform: translateX(-100%);
+    pointer-events: none;
   }
 }
+
 
 .catalog-toolbar {
   background: linear-gradient(180deg, #fffdfb, var(--brand-surface));

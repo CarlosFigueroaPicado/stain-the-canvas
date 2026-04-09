@@ -34,14 +34,20 @@
       return false;
     }
 
-    const result = await client.auth.getSession();
-    const session = result && result.data ? result.data.session : null;
-    if (!session) {
+    try {
+      const result = await client.auth.getSession();
+      const session = result && result.data ? result.data.session : null;
+      if (!session) {
+        localStorage.removeItem(TOKEN_KEY);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("No se pudo validar la sesion de admin:", error);
       localStorage.removeItem(TOKEN_KEY);
       return false;
     }
-
-    return true;
   }
 
   async function login(username, password) {
@@ -69,6 +75,7 @@
     });
 
     if (result.error) {
+      console.error("Error en signInWithPassword:", result.error);
       return {
         ok: false,
         error: result.error.message || "No se pudo iniciar sesion."

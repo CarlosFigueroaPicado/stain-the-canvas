@@ -21,9 +21,12 @@
     <main class="login-main">
       <section class="login-shell" id="loginShell">
         <article class="login-card admin-card border-0">
-          <p class="text-uppercase small fw-semibold letter-space mb-2">Acceso privado</p>
-          <h1 class="h2 mb-2">Panel de administracion</h1>
-          <p class="text-muted-brand mb-4">Ingresa tus credenciales para gestionar productos.</p>
+          <div class="login-logo mb-2" aria-label="Logo Stain the Canvas">
+            <span class="login-logo-mark login-relief">STC</span>
+            <span class="brand-title login-logo-text login-relief">Stain the Canvas</span>
+          </div>
+          <h1 class="h2 mb-2 login-relief">Panel de administracion</h1>
+          <p class="text-muted-brand mb-4 login-relief">Ingresa tus credenciales para gestionar productos.</p>
 
           <form id="adminLoginForm" novalidate>
             <div class="mb-3">
@@ -47,11 +50,14 @@
           </form>
         </article>
 
+        <div class="login-side-visual" aria-hidden="true">
+          <p class="login-emblem login-motto-glow login-relief">"Donde la creatividad se transforma en arte hecho a mano, con elegancia en cada detalle."</p>
+        </div>
+
         <button type="button" class="login-curtain" id="loginCurtain" aria-expanded="false">
           <div class="login-curtain-inner">
-            <p class="text-uppercase small fw-semibold letter-space mb-2">Stain the Canvas</p>
-            <h2 class="display-6 mb-3">"La disciplina de hoy construye la libertad de manana."</h2>
-            <p class="mb-0">Haz clic y desliza la cortina para entrar al login de administrador.</p>
+            <p class="text-uppercase small fw-semibold letter-space mb-2 login-relief">Stain the Canvas</p>
+            <h2 class="display-6 mb-3 login-motto-glow login-relief">"Donde la creatividad se transforma en arte hecho a mano, con elegancia en cada detalle."</h2>
           </div>
         </button>
       </section>
