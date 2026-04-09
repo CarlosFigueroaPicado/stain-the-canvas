@@ -16,11 +16,28 @@
     />
 
     <link rel="stylesheet" href="css/styles.css" />
+    <style>
+      html.admin-auth-pending body {
+        visibility: hidden;
+      }
+    </style>
+    <script>
+      document.documentElement.classList.add("admin-auth-pending");
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
     <script src="js/auth.js"></script>
     <script>
-      if (!window.adminAuth || !window.adminAuth.requireAdmin()) {
-        // Redireccion controlada por auth.js
-      }
+      (async function enforceAdminAccess() {
+        try {
+          if (!window.adminAuth || !(await window.adminAuth.requireAdmin())) {
+            return;
+          }
+          document.documentElement.classList.remove("admin-auth-pending");
+        } catch (_) {
+          window.location.replace("login.html?redirect=admin.html");
+        }
+      })();
     </script>
   </head>
   <body>
@@ -165,14 +182,12 @@
           return;
         }
 
-        btn.addEventListener("click", function () {
-          window.adminAuth.logout();
+        btn.addEventListener("click", async function () {
+          await window.adminAuth.logout();
           window.location.replace("login.html");
         });
       })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/supabase.js"></script>
     <script src="js/admin.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   </body>

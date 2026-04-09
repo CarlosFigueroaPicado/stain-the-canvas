@@ -1,4 +1,4 @@
-﻿(function adminLoginPage() {
+(function adminLoginPage() {
   const shellEl = document.getElementById("loginShell");
   const curtainEl = document.getElementById("loginCurtain");
   const formEl = document.getElementById("adminLoginForm");
@@ -11,11 +11,6 @@
   }
 
   const redirectTarget = window.adminAuth.getRedirectTarget("admin.html");
-
-  if (window.adminAuth.isAuthenticated()) {
-    window.location.replace(redirectTarget);
-    return;
-  }
 
   function showStatus(message, kind) {
     statusEl.className = kind === "danger" ? "alert alert-danger mt-3" : "alert alert-success mt-3";
@@ -31,23 +26,52 @@
     }, 220);
   }
 
+  function setLoading(loading) {
+    userEl.disabled = loading;
+    passEl.disabled = loading;
+    const submitBtn = formEl.querySelector("button[type='submit']");
+    if (submitBtn) {
+      submitBtn.disabled = loading;
+      submitBtn.textContent = loading ? "Validando..." : "Entrar";
+    }
+  }
+
   curtainEl.addEventListener("click", openCurtain);
 
-  formEl.addEventListener("submit", (event) => {
+  window.adminAuth
+    .isAuthenticated()
+    .then((ok) => {
+      if (ok) {
+        window.location.replace(redirectTarget);
+      }
+    })
+    .catch(() => {
+      // Si falla la validacion de sesion, permitimos login manual.
+    });
+
+  formEl.addEventListener("submit", async (event) => {
     event.preventDefault();
+    setLoading(true);
 
-    const user = userEl.value;
-    const pass = passEl.value;
-    const ok = window.adminAuth.login(user, pass);
+    try {
+      const user = userEl.value;
+      const pass = passEl.value;
+      const result = await window.adminAuth.login(user, pass);
 
-    if (!ok) {
-      showStatus("Credenciales incorrectas. Intenta nuevamente.", "danger");
-      passEl.value = "";
-      passEl.focus();
-      return;
+      if (!result || !result.ok) {
+        showStatus(
+          (result && result.error) || "Credenciales incorrectas. Intenta nuevamente.",
+          "danger"
+        );
+        passEl.value = "";
+        passEl.focus();
+        return;
+      }
+
+      showStatus("Acceso concedido. Redirigiendo...", "success");
+      window.location.replace(redirectTarget);
+    } finally {
+      setLoading(false);
     }
-
-    showStatus("Acceso concedido. Redirigiendo...", "success");
-    window.location.replace(redirectTarget);
   });
 })();

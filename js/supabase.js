@@ -1,4 +1,4 @@
-﻿/* global supabase */
+/* global supabase */
 
 (function initSupabase() {
   const SUPABASE_URL = "https://mmfpivsfjolohoowhgit.supabase.co";
@@ -215,7 +215,7 @@
     const { createClient } = window.supabase;
     window.supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
-        persistSession: false
+        persistSession: true
       }
     });
   }

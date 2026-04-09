@@ -1,7 +1,8 @@
-﻿-- Stain the Canvas - Supabase setup
+-- Stain the Canvas - Supabase setup
 -- Run in Supabase SQL Editor.
--- Note: these policies allow public CRUD for rapid prototype.
--- For production, replace with authenticated role checks.
+-- Security model:
+-- - Public read for catalog browsing.
+-- - Authenticated write for admin actions.
 
 create extension if not exists pgcrypto;
 
@@ -40,23 +41,26 @@ for select
 using (true);
 
 drop policy if exists "Public can insert productos" on public.productos;
-create policy "Public can insert productos"
+drop policy if exists "Authenticated can insert productos" on public.productos;
+create policy "Authenticated can insert productos"
 on public.productos
 for insert
-with check (true);
+with check (auth.role() = 'authenticated');
 
 drop policy if exists "Public can update productos" on public.productos;
-create policy "Public can update productos"
+drop policy if exists "Authenticated can update productos" on public.productos;
+create policy "Authenticated can update productos"
 on public.productos
 for update
-using (true)
-with check (true);
+using (auth.role() = 'authenticated')
+with check (auth.role() = 'authenticated');
 
 drop policy if exists "Public can delete productos" on public.productos;
-create policy "Public can delete productos"
+drop policy if exists "Authenticated can delete productos" on public.productos;
+create policy "Authenticated can delete productos"
 on public.productos
 for delete
-using (true);
+using (auth.role() = 'authenticated');
 
 insert into storage.buckets (id, name, public)
 values ('productos', 'productos', true)
@@ -69,20 +73,23 @@ for select
 using (bucket_id = 'productos');
 
 drop policy if exists "Public can upload product images" on storage.objects;
-create policy "Public can upload product images"
+drop policy if exists "Authenticated can upload product images" on storage.objects;
+create policy "Authenticated can upload product images"
 on storage.objects
 for insert
-with check (bucket_id = 'productos');
+with check (bucket_id = 'productos' and auth.role() = 'authenticated');
 
 drop policy if exists "Public can update product images" on storage.objects;
-create policy "Public can update product images"
+drop policy if exists "Authenticated can update product images" on storage.objects;
+create policy "Authenticated can update product images"
 on storage.objects
 for update
-using (bucket_id = 'productos')
-with check (bucket_id = 'productos');
+using (bucket_id = 'productos' and auth.role() = 'authenticated')
+with check (bucket_id = 'productos' and auth.role() = 'authenticated');
 
 drop policy if exists "Public can delete product images" on storage.objects;
-create policy "Public can delete product images"
+drop policy if exists "Authenticated can delete product images" on storage.objects;
+create policy "Authenticated can delete product images"
 on storage.objects
 for delete
-using (bucket_id = 'productos');
+using (bucket_id = 'productos' and auth.role() = 'authenticated');

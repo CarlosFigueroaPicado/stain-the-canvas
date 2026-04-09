@@ -15,7 +15,8 @@ El proyecto permite mostrar productos, consultar detalles, contactar por WhatsAp
 - Catálogo de productos
 - Vista de detalle por producto
 - Botón de WhatsApp con mensaje prellenado
-- Panel admin (crear, editar y eliminar productos)
+- Panel admin protegido con Supabase Auth
+- Gestión de productos (crear, editar y eliminar)
 - Subida de imágenes a Supabase Storage
 
 ## 🗄️ Base de datos
@@ -51,12 +52,22 @@ Tipografía:
 3. Abrir `index.html` en el navegador.
 
 ## 🔗 Integración Supabase
-Este proyecto utiliza Supabase para base de datos, autenticación del panel básico y almacenamiento de imágenes.
+Este proyecto utiliza Supabase para base de datos, autenticación del panel admin y almacenamiento de imágenes.
 
 Configura en `js/supabase.js`:
 - `SUPABASE_URL`: URL del proyecto Supabase
-- `SUPABASE_ANON_KEY`: clave pública (anon/publishable)
+- `SUPABASE_ANON_KEY`: clave pública `anon/publishable`
 - `SUPABASE_BUCKET`: bucket de imágenes (`productos`)
+
+### Seguridad de claves
+- `SUPABASE_ANON_KEY` es pública por diseño en apps frontend.
+- Nunca uses `service_role` ni `sb_secret` en cliente web.
+- La seguridad real se aplica con RLS/policies en base de datos y Storage.
+
+### Usuario administrador
+1. Crea un usuario en **Supabase Auth > Users**.
+2. Usa ese correo y contraseña en `login.html`.
+3. Aplica `supabase/setup.sql` para que solo usuarios autenticados puedan escribir.
 
 ### Bucket PRODUCTOS
 Debes crear un bucket público llamado `productos` (PRODUCTOS) en Supabase Storage para servir imágenes del catálogo.
