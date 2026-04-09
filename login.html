@@ -1,0 +1,63 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Admin | Stain the Canvas</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Noto+Sans:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body class="login-page">
+    <main class="login-main">
+      <section class="login-shell" id="loginShell">
+        <article class="login-card admin-card border-0">
+          <p class="text-uppercase small fw-semibold letter-space mb-2">Acceso privado</p>
+          <h1 class="h2 mb-2">Panel de administracion</h1>
+          <p class="text-muted-brand mb-4">Ingresa tus credenciales para gestionar productos.</p>
+
+          <form id="adminLoginForm" novalidate>
+            <div class="mb-3">
+              <label class="form-label" for="loginUser">Usuario</label>
+              <input class="form-control" id="loginUser" type="text" autocomplete="username" required />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="loginPassword">Contrasena</label>
+              <input
+                class="form-control"
+                id="loginPassword"
+                type="password"
+                autocomplete="current-password"
+                required
+              />
+            </div>
+
+            <button class="btn btn-brand rounded-pill px-4 w-100" type="submit">Entrar</button>
+            <div id="loginStatus" class="alert alert-brand-subtle mt-3 d-none" role="status"></div>
+          </form>
+        </article>
+
+        <button type="button" class="login-curtain" id="loginCurtain" aria-expanded="false">
+          <div class="login-curtain-inner">
+            <p class="text-uppercase small fw-semibold letter-space mb-2">Stain the Canvas</p>
+            <h2 class="display-6 mb-3">"La disciplina de hoy construye la libertad de manana."</h2>
+            <p class="mb-0">Haz clic y desliza la cortina para entrar al login de administrador.</p>
+          </div>
+        </button>
+      </section>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/login.js"></script>
+  </body>
+</html>

@@ -1,0 +1,470 @@
+(function adminPage() {
+  const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+  const ALLOWED_IMAGE_TYPES = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/jfif"
+  ]);
+
+  const formEl = document.getElementById("productForm");
+  const statusEl = document.getElementById("adminStatus");
+  const tableBodyEl = document.getElementById("productsTableBody");
+
+  if (!formEl || !statusEl || !tableBodyEl) {
+    return;
+  }
+
+  const refs = {
+    productId: document.getElementById("productId"),
+    nombre: document.getElementById("nombre"),
+    categoria: document.getElementById("categoria"),
+    precio: document.getElementById("precio"),
+    descripcion: document.getElementById("descripcion"),
+    imagen: document.getElementById("imagen"),
+    imagenUrl: document.getElementById("imagenUrl"),
+    imagePreview: document.getElementById("imagePreview"),
+    saveBtn: document.getElementById("saveBtn"),
+    resetBtn: document.getElementById("resetBtn")
+  };
+
+  const state = {
+    products: [],
+    editingId: null,
+    previewObjectUrl: ""
+  };
+
+  function getAlertClass(kind) {
+    switch (kind) {
+      case "success":
+        return "alert alert-success";
+      case "danger":
+        return "alert alert-danger";
+      default:
+        return "alert alert-brand-subtle";
+    }
+  }
+
+  function setStatus(message, kind) {
+    statusEl.className = getAlertClass(kind);
+    statusEl.textContent = message;
+  }
+
+  function placeholderImage(label) {
+    if (window.productUtils && typeof window.productUtils.buildPlaceholderImage === "function") {
+      return window.productUtils.buildPlaceholderImage(label, "320x240");
+    }
+
+    const text = encodeURIComponent((label || "Producto") + " artesanal");
+    return `https://placehold.co/320x240/F5E8DA/2B2B2B?text=${text}`;
+  }
+
+  function toSlug(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40);
+  }
+
+  function clearPreviewObjectUrl() {
+    if (state.previewObjectUrl) {
+      URL.revokeObjectURL(state.previewObjectUrl);
+      state.previewObjectUrl = "";
+    }
+  }
+
+  function setImagePreview(url) {
+    if (!url) {
+      refs.imagePreview.classList.add("d-none");
+      refs.imagePreview.removeAttribute("src");
+      return;
+    }
+
+    refs.imagePreview.src = url;
+    refs.imagePreview.classList.remove("d-none");
+  }
+
+  function setLoading(loading, context) {
+    refs.saveBtn.disabled = loading;
+    refs.resetBtn.disabled = loading;
+
+    if (context === "save" || !context) {
+      refs.saveBtn.textContent = loading
+        ? "Guardando..."
+        : state.editingId
+          ? "Actualizar producto"
+          : "Guardar producto";
+    }
+  }
+
+  function resetForm() {
+    formEl.reset();
+    state.editingId = null;
+    refs.productId.value = "";
+    refs.saveBtn.textContent = "Guardar producto";
+    clearPreviewObjectUrl();
+    setImagePreview("");
+  }
+
+  function fillForm(product) {
+    state.editingId = product.id;
+    refs.productId.value = product.id;
+    refs.nombre.value = product.nombre;
+    refs.categoria.value = product.categoria;
+    refs.precio.value = String(product.precio);
+    refs.descripcion.value = product.descripcion;
+    refs.imagenUrl.value = product.imagenUrl;
+    refs.imagen.value = "";
+    refs.saveBtn.textContent = "Actualizar producto";
+    setImagePreview(product.imagenUrl || placeholderImage(product.nombre));
+  }
+
+  function getFormInput() {
+    return {
+      nombre: refs.nombre.value,
+      categoria: refs.categoria.value,
+      precio: refs.precio.value,
+      descripcion: refs.descripcion.value,
+      imagenUrl: refs.imagenUrl.value
+    };
+  }
+
+  function isHttpUrl(value) {
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function validateSelectedFile(file) {
+    if (!file) {
+      return "";
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      return "La imagen supera 5MB. Sube un archivo mas liviano.";
+    }
+
+    const type = String(file.type || "").toLowerCase();
+    if (type && !ALLOWED_IMAGE_TYPES.has(type) && !type.startsWith("image/")) {
+      return "Formato de imagen no permitido. Usa JPG, PNG, WEBP o GIF.";
+    }
+
+    return "";
+  }
+
+  function validateProductInput(input, selectedFile) {
+    const nombre = String(input.nombre || "").trim();
+    const categoria = String(input.categoria || "").trim();
+    const descripcion = String(input.descripcion || "").trim();
+    const precio = Number.parseFloat(input.precio);
+    const imageUrl = String(input.imagenUrl || "").trim();
+
+    if (nombre.length < 3) {
+      return "El nombre debe tener al menos 3 caracteres.";
+    }
+
+    if (!categoria) {
+      return "Selecciona una categoria valida.";
+    }
+
+    if (!Number.isFinite(precio) || precio < 0) {
+      return "El precio debe ser un numero mayor o igual a 0.";
+    }
+
+    if (descripcion.length < 10) {
+      return "La descripcion debe tener al menos 10 caracteres.";
+    }
+
+    if (imageUrl && !isHttpUrl(imageUrl)) {
+      return "La URL de imagen debe iniciar con http:// o https://";
+    }
+
+    const fileError = validateSelectedFile(selectedFile);
+    if (fileError) {
+      return fileError;
+    }
+
+    return "";
+  }
+
+  async function uploadFile(file, prefix) {
+    const fileError = validateSelectedFile(file);
+    if (fileError) {
+      throw new Error(fileError);
+    }
+
+    const client = window.getSupabaseClient();
+    if (!client) {
+      throw new Error("No se pudo conectar a Supabase para subir la imagen.");
+    }
+
+    const extension = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const base = toSlug(prefix || file.name.replace(`.${extension}`, "")) || "producto";
+    const path = `catalogo/${Date.now()}-${base}.${extension}`;
+
+    const upload = await client.storage.from(window.appConfig.bucket).upload(path, file, {
+      cacheControl: "3600",
+      upsert: false
+    });
+
+    if (upload.error) {
+      throw new Error(upload.error.message);
+    }
+
+    const publicData = client.storage.from(window.appConfig.bucket).getPublicUrl(path);
+    const publicUrl = publicData && publicData.data ? publicData.data.publicUrl : "";
+
+    if (!publicUrl) {
+      throw new Error("No se pudo generar URL publica de la imagen.");
+    }
+
+    return publicUrl;
+  }
+
+  function renderTable() {
+    if (state.products.length === 0) {
+      tableBodyEl.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center text-muted-brand py-4">No hay productos registrados.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    tableBodyEl.innerHTML = state.products
+      .map((product, index) => {
+        const imageSrc = product.imagenUrl || placeholderImage(product.nombre);
+
+        return `
+          <tr>
+            <td>
+              <img src="${window.productUtils.escapeHtml(imageSrc)}" alt="${window.productUtils.escapeHtml(product.nombre)}" class="admin-table-image" loading="lazy" />
+            </td>
+            <td>
+              <strong>${window.productUtils.escapeHtml(product.nombre)}</strong>
+              <div class="small text-muted-brand">${window.productUtils.escapeHtml(product.descripcion)}</div>
+            </td>
+            <td>${window.productUtils.escapeHtml(product.categoria)}</td>
+            <td>${window.productUtils.formatCurrency(product.precio)}</td>
+            <td class="text-end">
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-sm btn-outline-brand rounded-pill" data-action="edit" data-index="${index}">
+                  Editar
+                </button>
+                <button type="button" class="btn btn-sm btn-danger rounded-pill" data-action="delete" data-index="${index}">
+                  Eliminar
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+
+  async function fetchProducts() {
+    const client = window.getSupabaseClient();
+    if (!client) {
+      setStatus("No se pudo conectar a Supabase. Revisa la configuracion.", "danger");
+      return;
+    }
+
+    try {
+      const table = window.appConfig.productsTable;
+      let result = await client.from(table).select("*").order("created_at", { ascending: false });
+
+      if (result.error && String(result.error.message || "").includes("created_at")) {
+        result = await client.from(table).select("*");
+      }
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      state.products = (result.data || []).map((row) => window.productUtils.normalizeProduct(row));
+      renderTable();
+      setStatus(`Productos cargados: ${state.products.length}.`, "success");
+    } catch (error) {
+      console.error("Error al cargar productos en admin:", error);
+      setStatus(`Error al cargar productos: ${error.message}`, "danger");
+    }
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    if (!formEl.checkValidity()) {
+      formEl.reportValidity();
+      return;
+    }
+
+    const client = window.getSupabaseClient();
+    if (!client) {
+      setStatus("No se pudo conectar a Supabase. Revisa la configuracion.", "danger");
+      return;
+    }
+
+    setLoading(true, "save");
+
+    try {
+      const input = getFormInput();
+      const selectedFile = refs.imagen.files && refs.imagen.files[0] ? refs.imagen.files[0] : null;
+      const validationError = validateProductInput(input, selectedFile);
+
+      if (validationError) {
+        setStatus(validationError, "danger");
+        return;
+      }
+
+      let imageUrl = String(input.imagenUrl || "").trim();
+
+      if (selectedFile) {
+        imageUrl = await uploadFile(selectedFile, input.nombre);
+      }
+
+      const payload = window.productUtils.buildProductPayload({
+        nombre: input.nombre,
+        categoria: input.categoria,
+        descripcion: input.descripcion,
+        precio: input.precio,
+        imagenUrl: imageUrl
+      });
+
+      const table = window.appConfig.productsTable;
+      let result;
+
+      if (state.editingId) {
+        result = await client.from(table).update(payload).eq("id", state.editingId);
+      } else {
+        result = await client.from(table).insert(payload);
+      }
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      setStatus(
+        state.editingId ? "Producto actualizado correctamente." : "Producto creado correctamente.",
+        "success"
+      );
+      resetForm();
+      await fetchProducts();
+    } catch (error) {
+      console.error("No se pudo guardar el producto:", error);
+      setStatus(`No se pudo guardar el producto: ${error.message}`, "danger");
+    } finally {
+      setLoading(false, "save");
+    }
+  }
+
+  async function handleDelete(productId) {
+    if (!productId) {
+      setStatus("No se encontro el identificador del producto.", "danger");
+      return;
+    }
+
+    const accepted = window.confirm("Se eliminara este producto. Deseas continuar?");
+    if (!accepted) {
+      return;
+    }
+
+    const client = window.getSupabaseClient();
+    if (!client) {
+      setStatus("No se pudo conectar a Supabase. Revisa la configuracion.", "danger");
+      return;
+    }
+
+    try {
+      setLoading(true, "save");
+      const table = window.appConfig.productsTable;
+      const result = await client.from(table).delete().eq("id", productId);
+
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+
+      setStatus("Producto eliminado correctamente.", "success");
+
+      if (state.editingId === productId) {
+        resetForm();
+      }
+
+      await fetchProducts();
+    } catch (error) {
+      console.error("No se pudo eliminar el producto:", error);
+      setStatus(`No se pudo eliminar el producto: ${error.message}`, "danger");
+    } finally {
+      setLoading(false, "save");
+    }
+  }
+
+  tableBodyEl.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-action]");
+    if (!button) {
+      return;
+    }
+
+    const action = button.dataset.action;
+    const index = Number.parseInt(button.dataset.index || "-1", 10);
+    if (!Number.isInteger(index) || index < 0) {
+      return;
+    }
+
+    const product = state.products[index];
+    if (!product) {
+      return;
+    }
+
+    if (action === "edit") {
+      fillForm(product);
+      setStatus("Modo edicion activado.", "info");
+      return;
+    }
+
+    if (action === "delete") {
+      handleDelete(product.id);
+    }
+  });
+
+  refs.resetBtn.addEventListener("click", () => {
+    resetForm();
+    setStatus("Formulario reiniciado.", "info");
+  });
+
+  refs.imagenUrl.addEventListener("input", () => {
+    if (refs.imagen.files && refs.imagen.files.length > 0) {
+      return;
+    }
+    setImagePreview(refs.imagenUrl.value.trim());
+  });
+
+  refs.imagen.addEventListener("change", () => {
+    clearPreviewObjectUrl();
+
+    if (!refs.imagen.files || refs.imagen.files.length === 0) {
+      setImagePreview(refs.imagenUrl.value.trim());
+      return;
+    }
+
+    const file = refs.imagen.files[0];
+    const fileError = validateSelectedFile(file);
+    if (fileError) {
+      setStatus(fileError, "danger");
+      refs.imagen.value = "";
+      setImagePreview(refs.imagenUrl.value.trim());
+      return;
+    }
+
+    state.previewObjectUrl = URL.createObjectURL(file);
+    setImagePreview(state.previewObjectUrl);
+  });
+
+  formEl.addEventListener("submit", handleSubmit);
+
+  fetchProducts();
+})();

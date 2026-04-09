@@ -1,0 +1,18 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Local editor / agent tooling
+.agents/
+.agents-skills/
+.claude/
+.continue/
+.kiro/
+.vscode/
+.mcp.json
+skills-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
