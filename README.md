@@ -42,7 +42,7 @@ Tipografía:
 ## ⚙️ Instalación
 1. Clonar repositorio:
    ```bash
-   git clone URL
+   git clone https://github.com/CarlosFigueroaPicado/stain-the-canvas.git
    ```
 2. Entrar al proyecto:
    ```bash
