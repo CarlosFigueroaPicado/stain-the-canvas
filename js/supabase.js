@@ -93,6 +93,19 @@
       )
     );
 
+    const galleryRaw = pickFirst(safeRow, ["gallery_urls", "galeria", "imagenes"], []);
+    let galleryUrls = [];
+
+    if (Array.isArray(galleryRaw)) {
+      galleryUrls = galleryRaw
+        .map((item) => String(item || "").trim())
+        .filter(Boolean);
+    }
+
+    if (!galleryUrls.length && imagenUrl) {
+      galleryUrls = [imagenUrl];
+    }
+
     const createdAt = String(pickFirst(safeRow, ["created_at", "fecha_creacion"], ""));
 
     return {
@@ -102,6 +115,7 @@
       descripcion,
       precio,
       imagenUrl,
+      galleryUrls,
       createdAt,
       raw: safeRow
     };
@@ -114,13 +128,21 @@
     const descripcion = String(input.descripcion || "").trim();
     const precio = toNumber(input.precio, 0);
     const imagenUrl = String(input.imagenUrl || "").trim();
+    const galleryUrls = Array.isArray(input.galleryUrls)
+      ? input.galleryUrls
+          .map((item) => String(item || "").trim())
+          .filter(Boolean)
+      : imagenUrl
+        ? [imagenUrl]
+        : [];
 
     return {
       nombre,
       categoria,
       descripcion,
       precio,
-      imagen_url: imagenUrl
+      imagen_url: imagenUrl,
+      gallery_urls: galleryUrls
     };
   }
 

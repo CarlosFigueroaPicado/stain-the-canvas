@@ -416,3 +416,110 @@ h3 {
   color: var(--brand-text);
   background: #fff;
 }
+
+/* Admin dashboard (SaaS style) */
+.admin-panel-page {
+  background:
+    radial-gradient(circle at 85% 10%, rgba(200, 107, 74, 0.12), transparent 30%),
+    radial-gradient(circle at 0% 90%, rgba(200, 107, 74, 0.08), transparent 26%),
+    var(--brand-bg);
+}
+
+.admin-switch {
+  padding: 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--brand-border);
+  background: rgba(255, 253, 251, 0.75);
+  width: fit-content;
+}
+
+.admin-switch .btn {
+  min-width: 132px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-switch .btn:hover {
+  transform: translateY(-1px);
+}
+
+.dashboard-section .admin-card,
+.productos-section .admin-card {
+  border: 1px solid var(--brand-border);
+  background: linear-gradient(180deg, #fffdfb, var(--brand-surface-2));
+}
+
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--brand-primary), #e5a58a);
+}
+
+.kpi-value {
+  margin: 0;
+  font-family: "Cormorant Garamond", serif;
+  font-size: clamp(1.85rem, 3.2vw, 2.4rem);
+  line-height: 1;
+  color: var(--brand-text);
+}
+
+.chart-wrap {
+  position: relative;
+  min-height: 320px;
+}
+
+.chart-wrap-sm {
+  min-height: 290px;
+}
+
+.dashboard-table thead th {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(43, 43, 43, 0.7);
+}
+
+.dashboard-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.dashboard-table tbody tr:hover {
+  background: rgba(200, 107, 74, 0.08);
+}
+
+.dashboard-table td,
+.dashboard-table th {
+  border-color: rgba(200, 107, 74, 0.18);
+}
+
+.productos-section .table thead th {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(43, 43, 43, 0.7);
+}
+
+@media (max-width: 991.98px) {
+  .admin-switch {
+    width: 100%;
+  }
+
+  .admin-switch .btn {
+    flex: 1 1 0;
+  }
+
+  .chart-wrap {
+    min-height: 270px;
+  }
+
+  .chart-wrap-sm {
+    min-height: 250px;
+  }
+}

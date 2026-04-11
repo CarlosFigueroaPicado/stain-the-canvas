@@ -75,7 +75,7 @@ Debes crear un bucket público llamado `productos` (PRODUCTOS) en Supabase Stora
 ## 📸 Funcionalidad de imágenes
 - Upload de imágenes a Supabase Storage desde el panel admin.
 - Obtención de URL pública para persistirla en `imagen_url`.
-- Renderizado automático de la imagen en catálogo y detalle.
+- Renderizado automático de la imagen en catálogo y detalle en modal.
 
 ## 📁 Estructura del proyecto
 ```text
@@ -84,7 +84,6 @@ Debes crear un bucket público llamado `productos` (PRODUCTOS) en Supabase Stora
 ├── catalogo.html
 ├── index.html
 ├── login.html
-├── producto.html
 ├── css/
 ├── js/
 ├── assets/

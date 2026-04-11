@@ -1,10 +1,26 @@
 (function homeFeaturedProducts() {
   const gridEl = document.getElementById("homeFeaturedGrid");
   const statusEl = document.getElementById("homeFeaturedStatus");
+  const modalEl = document.getElementById("homeProductModal");
 
-  if (!gridEl || !statusEl) {
+  if (!gridEl || !statusEl || !modalEl) {
     return;
   }
+
+  const state = {
+    activeProduct: null
+  };
+
+  const modalRefs = {
+    image: document.getElementById("homeModalProductImage"),
+    category: document.getElementById("homeModalProductCategory"),
+    name: document.getElementById("homeModalProductName"),
+    price: document.getElementById("homeModalProductPrice"),
+    description: document.getElementById("homeModalProductDescription"),
+    whatsapp: document.getElementById("homeModalWhatsappBtn")
+  };
+
+  const productModal = new bootstrap.Modal(modalEl);
 
   const featuredDefaults = [
     {
@@ -27,9 +43,9 @@
     },
     {
       id: "3d103fdd-3c13-4ebf-9086-6b20716ae5c8",
-      nombre: "Piñata Unicornio",
-      categoria: "Piñatas",
-      descripcion: "Piñata para fiestas.",
+      nombre: "Pi\u00f1ata Unicornio",
+      categoria: "Pi\u00f1atas",
+      descripcion: "Pi\u00f1ata para fiestas.",
       precio: 25,
       imagenUrl:
         "https://mmfpivsfjolohoowhgit.supabase.co/storage/v1/object/public/productos/assets/pinata_1.jfif"
@@ -64,6 +80,61 @@
       : "";
   }
 
+  async function trackVisitSafe() {
+    if (!window.analyticsModule || typeof window.analyticsModule.trackVisit !== "function") {
+      return;
+    }
+
+    try {
+      await window.analyticsModule.trackVisit();
+    } catch (error) {
+      console.error("No se pudo registrar la visita de inicio:", error);
+    }
+  }
+
+  async function trackEventSafe(payload) {
+    if (!window.analyticsModule || typeof window.analyticsModule.trackEvent !== "function") {
+      return;
+    }
+
+    try {
+      await window.analyticsModule.trackEvent(payload);
+    } catch (error) {
+      console.error("No se pudo registrar el evento de analitica:", error);
+    }
+  }
+
+  function trackProductView(product) {
+    if (!product || !product.id) {
+      return;
+    }
+
+    trackEventSafe({
+      tipo: "view_producto",
+      producto_id: product.id,
+      categoria: product.categoria || null
+    });
+  }
+
+  function trackWhatsappClick(product) {
+    trackEventSafe({
+      tipo: "click_whatsapp",
+      producto_id: product && product.id ? product.id : null,
+      categoria: product && product.categoria ? product.categoria : null
+    });
+  }
+
+  function bindGlobalWhatsappTracking() {
+    const topWhatsappBtn = document.getElementById("homeTopWhatsappBtn");
+    if (!topWhatsappBtn) {
+      return;
+    }
+
+    topWhatsappBtn.addEventListener("click", () => {
+      trackEventSafe({ tipo: "click_whatsapp" });
+    });
+  }
+
   function setStatus(message, kind) {
     statusEl.className =
       kind === "danger" ? "alert alert-danger mb-4" : "alert alert-brand-subtle mb-4";
@@ -75,29 +146,50 @@
     statusEl.classList.add("d-none");
   }
 
+  function openModal(index) {
+    const product = state.cards[index];
+    if (!product) {
+      return;
+    }
+
+    state.activeProduct = product;
+    trackProductView(product);
+
+    modalRefs.image.src = product.imagenUrl;
+    modalRefs.image.alt = product.nombre;
+    modalRefs.category.textContent = product.categoria;
+    modalRefs.name.textContent = product.nombre;
+    modalRefs.price.textContent = formatCurrency(product.precio);
+    modalRefs.description.textContent = product.descripcion;
+    modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(product);
+
+    productModal.show();
+  }
+
   function renderCards(products) {
+    state.cards = Array.isArray(products) ? products : [];
+
     gridEl.innerHTML = products
-      .map((product) => {
-        const detailHref = product.id
-          ? `producto.html?id=${encodeURIComponent(product.id)}`
-          : "catalogo.html";
+      .map((product, index) => {
         const priceText = formatCurrency(product.precio);
 
         return `
           <div class="col-12 col-md-6 col-xl-4">
-            <article class="card product-card h-100 border-0">
+            <article class="card product-card h-100 border-0" data-action="open-modal" data-index="${index}" tabindex="0" role="button" aria-label="Abrir detalle de ${escapeHtml(product.nombre)}">
               <img
                 src="${escapeHtml(product.imagenUrl)}"
                 class="card-img-top product-card-image"
                 alt="${escapeHtml(product.nombre)}"
                 loading="lazy"
+                data-action="open-modal"
+                data-index="${index}"
               />
               <div class="card-body d-flex flex-column">
                 <p class="small text-uppercase letter-space text-brand mb-2">${escapeHtml(product.categoria)}</p>
                 <h3 class="h4 mb-2">${escapeHtml(product.nombre)}</h3>
                 ${priceText ? `<p class="fw-semibold mb-2">${escapeHtml(priceText)}</p>` : ""}
                 <p class="text-muted-brand flex-grow-1 mb-3">${escapeHtml(product.descripcion)}</p>
-                <a class="btn btn-brand rounded-pill px-3 mt-auto" href="${detailHref}">Ver producto</a>
+                <small class="text-muted-brand mt-auto">Haz clic en la imagen para ver detalles.</small>
               </div>
             </article>
           </div>
@@ -143,7 +235,10 @@
 
     const ids = featuredDefaults.map((item) => item.id);
     const table = window.appConfig.productsTable;
-    const result = await client.from(table).select("*").in("id", ids);
+    const result = await client
+      .from(table)
+      .select("id,nombre,categoria,descripcion,precio,imagen_url")
+      .in("id", ids);
 
     if (result.error) {
       console.error("No se pudieron cargar destacados desde Supabase:", result.error);
@@ -159,6 +254,46 @@
     hideStatus();
   }
 
+  trackVisitSafe();
+  bindGlobalWhatsappTracking();
+
+  gridEl.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-action='open-modal']");
+    if (!trigger) {
+      return;
+    }
+
+    const index = Number.parseInt(trigger.dataset.index || "-1", 10);
+    if (!Number.isInteger(index) || index < 0) {
+      return;
+    }
+
+    openModal(index);
+  });
+
+  gridEl.addEventListener("keydown", (event) => {
+    const trigger = event.target.closest("article[data-action='open-modal']");
+    if (!trigger) {
+      return;
+    }
+
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    const index = Number.parseInt(trigger.dataset.index || "-1", 10);
+    if (!Number.isInteger(index) || index < 0) {
+      return;
+    }
+
+    openModal(index);
+  });
+
+  modalRefs.whatsapp.addEventListener("click", () => {
+    trackWhatsappClick(state.activeProduct);
+  });
+
   renderCards(featuredDefaults);
   loadFromSupabase().catch((error) => {
     console.error("Error inesperado al cargar destacados:", error);
@@ -168,4 +303,3 @@
     );
   });
 })();
-

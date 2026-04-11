@@ -2,7 +2,8 @@
   const state = {
     products: [],
     activeCategory: "Todos",
-    searchTerm: ""
+    searchTerm: "",
+    activeProduct: null
   };
 
   let searchDebounceTimer = null;
@@ -24,8 +25,7 @@
     name: document.getElementById("modalProductName"),
     price: document.getElementById("modalProductPrice"),
     description: document.getElementById("modalProductDescription"),
-    whatsapp: document.getElementById("modalWhatsappBtn"),
-    detail: document.getElementById("modalDetailBtn")
+    whatsapp: document.getElementById("modalWhatsappBtn")
   };
 
   const productModal = new bootstrap.Modal(modalEl);
@@ -74,6 +74,50 @@
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .trim();
+  }
+
+  async function trackVisitSafe() {
+    if (!window.analyticsModule || typeof window.analyticsModule.trackVisit !== "function") {
+      return;
+    }
+
+    try {
+      await window.analyticsModule.trackVisit();
+    } catch (error) {
+      console.error("No se pudo registrar la visita del catalogo:", error);
+    }
+  }
+
+  async function trackEventSafe(payload) {
+    if (!window.analyticsModule || typeof window.analyticsModule.trackEvent !== "function") {
+      return;
+    }
+
+    try {
+      await window.analyticsModule.trackEvent(payload);
+    } catch (error) {
+      console.error("No se pudo registrar el evento de analitica:", error);
+    }
+  }
+
+  function trackProductView(product) {
+    if (!product || !product.id) {
+      return;
+    }
+
+    trackEventSafe({
+      tipo: "view_producto",
+      producto_id: product.id,
+      categoria: product.categoria || null
+    });
+  }
+
+  function trackWhatsappClick(product) {
+    trackEventSafe({
+      tipo: "click_whatsapp",
+      producto_id: product && product.id ? product.id : null,
+      categoria: product && product.categoria ? product.categoria : null
+    });
   }
 
   function matchesSearch(product, normalizedSearch) {
@@ -134,7 +178,6 @@
     gridEl.innerHTML = products
       .map((product, index) => {
         const imageUrl = product.imagenUrl || placeholderImage(product.nombre);
-        const detailHref = product.id ? `producto.html?id=${encodeURIComponent(product.id)}` : "producto.html";
 
         return `
           <div class="col-12 col-md-6 col-xl-4">
@@ -161,9 +204,6 @@
                   >
                     WhatsApp
                   </a>
-                  <a class="btn btn-outline-brand rounded-pill px-3" href="${detailHref}" data-skip-modal="true">
-                    Pagina producto
-                  </a>
                 </div>
               </div>
             </article>
@@ -181,6 +221,9 @@
       return;
     }
 
+    state.activeProduct = product;
+    trackProductView(product);
+
     const imageUrl = product.imagenUrl || placeholderImage(product.nombre);
     modalRefs.image.src = imageUrl;
     modalRefs.image.alt = product.nombre;
@@ -189,14 +232,6 @@
     modalRefs.price.textContent = window.productUtils.formatCurrency(product.precio);
     modalRefs.description.textContent = product.descripcion;
     modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(product);
-
-    if (product.id) {
-      modalRefs.detail.classList.remove("d-none");
-      modalRefs.detail.href = `producto.html?id=${encodeURIComponent(product.id)}`;
-    } else {
-      modalRefs.detail.classList.add("d-none");
-      modalRefs.detail.href = "producto.html";
-    }
 
     productModal.show();
   }
@@ -212,10 +247,15 @@
 
     try {
       const table = window.appConfig.productsTable;
-      let result = await client.from(table).select("*").order("created_at", { ascending: false });
+      let result = await client
+        .from(table)
+        .select("id,nombre,categoria,descripcion,precio,imagen_url,created_at")
+        .order("created_at", { ascending: false });
 
       if (result.error && String(result.error.message || "").includes("created_at")) {
-        result = await client.from(table).select("*");
+        result = await client
+          .from(table)
+          .select("id,nombre,categoria,descripcion,precio,imagen_url,created_at");
       }
 
       if (result.error) {
@@ -267,6 +307,20 @@
   }
 
   gridEl.addEventListener("click", (event) => {
+    const whatsappLink = event.target.closest("a[href*='wa.me/']");
+    if (whatsappLink) {
+      const card = whatsappLink.closest("article[data-action='open-modal']");
+      if (card) {
+        const index = Number.parseInt(card.dataset.index || "-1", 10);
+        const filtered = getFilteredProducts();
+        const product = Number.isInteger(index) && index >= 0 ? filtered[index] : null;
+        if (product) {
+          trackWhatsappClick(product);
+        }
+      }
+      return;
+    }
+
     if (event.target.closest("[data-skip-modal='true']")) {
       return;
     }
@@ -282,6 +336,10 @@
     }
 
     openModal(index);
+  });
+
+  modalRefs.whatsapp.addEventListener("click", () => {
+    trackWhatsappClick(state.activeProduct);
   });
 
   gridEl.addEventListener("keydown", (event) => {
@@ -303,5 +361,6 @@
     openModal(index);
   });
 
+  trackVisitSafe();
   fetchProducts();
 })();
