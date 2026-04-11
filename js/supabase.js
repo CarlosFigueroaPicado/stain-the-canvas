@@ -183,18 +183,67 @@
     return `${appConfig.url}/storage/v1/object/public/${appConfig.bucket}/${encodedPath}`;
   }
 
+  function getProductGalleryUrls(productInput) {
+    if (!productInput || typeof productInput !== "object") {
+      return [];
+    }
+
+    const raw = pickFirst(productInput, ["galleryUrls", "gallery_urls", "galeria", "imagenes"], []);
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+
+    return raw
+      .map((item) => String(item || "").trim())
+      .filter(Boolean)
+      .map((url) => {
+        if (/^https?:\/\//i.test(url)) {
+          return url;
+        }
+
+        const encodedPath = url
+          .replace(/^\/+/, "")
+          .split("/")
+          .filter(Boolean)
+          .map((part) => encodeURIComponent(part))
+          .join("/");
+
+        return `${appConfig.url}/storage/v1/object/public/${appConfig.bucket}/${encodedPath}`;
+      });
+  }
+
+  function pickWhatsappPreviewImage(productInput) {
+    const gallery = getProductGalleryUrls(productInput);
+    const imageUrl = resolveProductImageUrl(productInput);
+    const urls = [...gallery];
+    if (imageUrl) {
+      urls.push(imageUrl);
+    }
+
+    const uniqueUrls = Array.from(new Set(urls));
+    if (!uniqueUrls.length) {
+      return "";
+    }
+
+    // WhatsApp suele generar miniatura con mas consistencia en JPG/PNG.
+    const preferred = uniqueUrls.find((url) => /\.(jpe?g|png)(\?|$)/i.test(url));
+    return preferred || uniqueUrls[0];
+  }
+
   function buildWhatsappProductMessage(productInput) {
     const isObject = productInput && typeof productInput === "object";
     const cleanName = isObject
       ? String(productInput.nombre || "").trim() || "producto"
       : String(productInput || "").trim() || "producto";
 
-    const imageUrl = resolveProductImageUrl(productInput);
+    const imageUrl = pickWhatsappPreviewImage(productInput);
 
     const lines = ["Hola, me interesa este producto:", `Producto: ${cleanName}`];
 
     if (imageUrl) {
-      lines.push(`Imagen: ${imageUrl}`);
+      // Enlace limpio para que WhatsApp intente generar preview de miniatura.
+      lines.push("");
+      lines.push(imageUrl);
     }
 
     return lines.join("\n");

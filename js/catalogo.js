@@ -3,7 +3,9 @@
     products: [],
     activeCategory: "Todos",
     searchTerm: "",
-    activeProduct: null
+    activeProduct: null,
+    modalCategoryItems: [],
+    modalCategoryIndex: 0
   };
 
   let searchDebounceTimer = null;
@@ -25,7 +27,9 @@
     name: document.getElementById("modalProductName"),
     price: document.getElementById("modalProductPrice"),
     description: document.getElementById("modalProductDescription"),
-    whatsapp: document.getElementById("modalWhatsappBtn")
+    whatsapp: document.getElementById("modalWhatsappBtn"),
+    prev: document.getElementById("modalPrevBtn"),
+    next: document.getElementById("modalNextBtn")
   };
 
   const productModal = new bootstrap.Modal(modalEl);
@@ -213,10 +217,17 @@
       .join("");
   }
 
-  function openModal(index) {
-    const filtered = getFilteredProducts();
-    const product = filtered[index];
+  function refreshModalArrows() {
+    const many = state.modalCategoryItems.length > 1;
+    if (modalRefs.prev) {
+      modalRefs.prev.disabled = !many;
+    }
+    if (modalRefs.next) {
+      modalRefs.next.disabled = !many;
+    }
+  }
 
+  function openProductModal(product) {
     if (!product) {
       return;
     }
@@ -233,7 +244,48 @@
     modalRefs.description.textContent = product.descripcion;
     modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(product);
 
+    const sameCategory = state.products.filter(
+      (item) => item.id && item.categoria === product.categoria
+    );
+    state.modalCategoryItems = sameCategory.length ? sameCategory : [product];
+    const foundIndex = state.modalCategoryItems.findIndex((item) => item.id === product.id);
+    state.modalCategoryIndex = foundIndex >= 0 ? foundIndex : 0;
+    refreshModalArrows();
+
     productModal.show();
+  }
+
+  function moveModalCategory(step) {
+    if (state.modalCategoryItems.length <= 1) {
+      return;
+    }
+
+    const total = state.modalCategoryItems.length;
+    state.modalCategoryIndex = (state.modalCategoryIndex + step + total) % total;
+    const nextProduct = state.modalCategoryItems[state.modalCategoryIndex];
+    if (!nextProduct) {
+      return;
+    }
+
+    state.activeProduct = nextProduct;
+    trackProductView(nextProduct);
+
+    const imageUrl = nextProduct.imagenUrl || placeholderImage(nextProduct.nombre);
+    modalRefs.image.src = imageUrl;
+    modalRefs.image.alt = nextProduct.nombre;
+    modalRefs.category.textContent = nextProduct.categoria;
+    modalRefs.name.textContent = nextProduct.nombre;
+    modalRefs.price.textContent = window.productUtils.formatCurrency(nextProduct.precio);
+    modalRefs.description.textContent = nextProduct.descripcion;
+    modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(nextProduct);
+
+    refreshModalArrows();
+  }
+
+  function openModal(index) {
+    const filtered = getFilteredProducts();
+    const product = filtered[index];
+    openProductModal(product);
   }
 
   async function fetchProducts() {
@@ -340,6 +392,27 @@
 
   modalRefs.whatsapp.addEventListener("click", () => {
     trackWhatsappClick(state.activeProduct);
+  });
+
+  if (modalRefs.prev) {
+    modalRefs.prev.addEventListener("click", () => moveModalCategory(-1));
+  }
+
+  if (modalRefs.next) {
+    modalRefs.next.addEventListener("click", () => moveModalCategory(1));
+  }
+
+  modalEl.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      moveModalCategory(-1);
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      moveModalCategory(1);
+    }
   });
 
   gridEl.addEventListener("keydown", (event) => {

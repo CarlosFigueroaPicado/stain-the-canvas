@@ -166,6 +166,41 @@ h3 {
   object-fit: cover;
 }
 
+.modal-image-shell {
+  position: relative;
+}
+
+.modal-image-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--brand-border);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--brand-primary-dark);
+  font-size: 1.45rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.modal-image-nav.prev {
+  left: 0.55rem;
+}
+
+.modal-image-nav.next {
+  right: 0.55rem;
+}
+
+.modal-image-nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .product-detail-card {
   padding: 2rem;
 }

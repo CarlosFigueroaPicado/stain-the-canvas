@@ -8,7 +8,11 @@
   }
 
   const state = {
-    activeProduct: null
+    activeProduct: null,
+    cards: [],
+    allProducts: [],
+    modalCategoryItems: [],
+    modalCategoryIndex: 0
   };
 
   const modalRefs = {
@@ -17,7 +21,9 @@
     name: document.getElementById("homeModalProductName"),
     price: document.getElementById("homeModalProductPrice"),
     description: document.getElementById("homeModalProductDescription"),
-    whatsapp: document.getElementById("homeModalWhatsappBtn")
+    whatsapp: document.getElementById("homeModalWhatsappBtn"),
+    prev: document.getElementById("homeModalPrevBtn"),
+    next: document.getElementById("homeModalNextBtn")
   };
 
   const productModal = new bootstrap.Modal(modalEl);
@@ -146,8 +152,17 @@
     statusEl.classList.add("d-none");
   }
 
-  function openModal(index) {
-    const product = state.cards[index];
+  function refreshModalArrows() {
+    const many = state.modalCategoryItems.length > 1;
+    if (modalRefs.prev) {
+      modalRefs.prev.disabled = !many;
+    }
+    if (modalRefs.next) {
+      modalRefs.next.disabled = !many;
+    }
+  }
+
+  function openProductModal(product) {
     if (!product) {
       return;
     }
@@ -163,7 +178,47 @@
     modalRefs.description.textContent = product.descripcion;
     modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(product);
 
+    const source = Array.isArray(state.allProducts) && state.allProducts.length
+      ? state.allProducts
+      : state.cards;
+    const sameCategory = source.filter((item) => item.id && item.categoria === product.categoria);
+    state.modalCategoryItems = sameCategory.length ? sameCategory : [product];
+    const foundIndex = state.modalCategoryItems.findIndex((item) => item.id === product.id);
+    state.modalCategoryIndex = foundIndex >= 0 ? foundIndex : 0;
+    refreshModalArrows();
+
     productModal.show();
+  }
+
+  function moveModalCategory(step) {
+    if (state.modalCategoryItems.length <= 1) {
+      return;
+    }
+
+    const total = state.modalCategoryItems.length;
+    state.modalCategoryIndex = (state.modalCategoryIndex + step + total) % total;
+    const nextProduct = state.modalCategoryItems[state.modalCategoryIndex];
+    if (!nextProduct) {
+      return;
+    }
+
+    state.activeProduct = nextProduct;
+    trackProductView(nextProduct);
+
+    modalRefs.image.src = nextProduct.imagenUrl;
+    modalRefs.image.alt = nextProduct.nombre;
+    modalRefs.category.textContent = nextProduct.categoria;
+    modalRefs.name.textContent = nextProduct.nombre;
+    modalRefs.price.textContent = formatCurrency(nextProduct.precio);
+    modalRefs.description.textContent = nextProduct.descripcion;
+    modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(nextProduct);
+
+    refreshModalArrows();
+  }
+
+  function openModal(index) {
+    const product = state.cards[index];
+    openProductModal(product);
   }
 
   function renderCards(products) {
@@ -237,8 +292,8 @@
     const table = window.appConfig.productsTable;
     const result = await client
       .from(table)
-      .select("id,nombre,categoria,descripcion,precio,imagen_url")
-      .in("id", ids);
+      .select("id,nombre,categoria,descripcion,precio,imagen_url,created_at")
+      .order("created_at", { ascending: false });
 
     if (result.error) {
       console.error("No se pudieron cargar destacados desde Supabase:", result.error);
@@ -249,7 +304,24 @@
       return;
     }
 
-    const merged = mergeFeaturedRows(result.data);
+    const allProducts = (result.data || []).map((row) => {
+      if (window.productUtils && typeof window.productUtils.normalizeProduct === "function") {
+        const normalized = window.productUtils.normalizeProduct(row);
+        return {
+          id: normalized.id,
+          nombre: normalized.nombre,
+          categoria: normalized.categoria,
+          descripcion: normalized.descripcion,
+          precio: normalized.precio,
+          imagenUrl: normalized.imagenUrl || ""
+        };
+      }
+
+      return row;
+    });
+
+    state.allProducts = allProducts;
+    const merged = mergeFeaturedRows(allProducts);
     renderCards(merged);
     hideStatus();
   }
@@ -292,6 +364,27 @@
 
   modalRefs.whatsapp.addEventListener("click", () => {
     trackWhatsappClick(state.activeProduct);
+  });
+
+  if (modalRefs.prev) {
+    modalRefs.prev.addEventListener("click", () => moveModalCategory(-1));
+  }
+
+  if (modalRefs.next) {
+    modalRefs.next.addEventListener("click", () => moveModalCategory(1));
+  }
+
+  modalEl.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      moveModalCategory(-1);
+      return;
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      moveModalCategory(1);
+    }
   });
 
   renderCards(featuredDefaults);

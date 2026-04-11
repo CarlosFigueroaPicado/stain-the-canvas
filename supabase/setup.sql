@@ -79,9 +79,12 @@ create table if not exists public.admin_users (
 
 create index if not exists idx_visitas_fecha on public.visitas (fecha desc);
 create index if not exists idx_visitas_session_id on public.visitas (session_id);
+create index if not exists idx_visitas_session_fecha on public.visitas (session_id, fecha desc);
 create index if not exists idx_eventos_tipo_fecha on public.eventos (tipo, fecha desc);
 create index if not exists idx_eventos_producto_id on public.eventos (producto_id);
 create index if not exists idx_eventos_categoria on public.eventos (categoria);
+create index if not exists idx_eventos_session_fecha on public.eventos (session_id, fecha desc);
+create index if not exists idx_eventos_session_tipo_producto_fecha on public.eventos (session_id, tipo, producto_id, fecha desc);
 
 alter table public.productos enable row level security;
 alter table public.visitas enable row level security;

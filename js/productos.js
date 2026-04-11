@@ -94,6 +94,58 @@
     }
   }
 
+  async function isImageReferencedElsewhere(client, table, currentProductId, url) {
+    if (!url) {
+      return false;
+    }
+
+    try {
+      const [mainRef, galleryRef] = await Promise.all([
+        client.from(table).select("id", { count: "exact", head: true }).eq("imagen_url", url).neq("id", currentProductId),
+        client
+          .from(table)
+          .select("id", { count: "exact", head: true })
+          .contains("gallery_urls", [url])
+          .neq("id", currentProductId)
+      ]);
+
+      if (mainRef.error || galleryRef.error) {
+        console.warn("No se pudieron verificar referencias de imagen antes de borrar.", {
+          main: mainRef.error,
+          gallery: galleryRef.error
+        });
+        return true;
+      }
+
+      const mainCount = Number(mainRef.count || 0);
+      const galleryCount = Number(galleryRef.count || 0);
+      return mainCount + galleryCount > 0;
+    } catch (error) {
+      console.warn("Error verificando referencias de imagen:", error);
+      return true;
+    }
+  }
+
+  async function resolveRemovableStoragePaths(client, table, currentProductId, imageUrls) {
+    const urls = Array.isArray(imageUrls) ? imageUrls : [];
+    const checks = await Promise.all(
+      urls.map(async (url) => {
+        const path = extractStoragePathFromPublicUrl(url);
+        if (!path) {
+          return { path: "", skip: true };
+        }
+
+        const referenced = await isImageReferencedElsewhere(client, table, currentProductId, url);
+        return { path, skip: referenced };
+      })
+    );
+
+    return {
+      removable: checks.filter((item) => item.path && !item.skip).map((item) => item.path),
+      skipped: checks.filter((item) => item.path && item.skip).length
+    };
+  }
+
   function clearPreviewObjectUrl() {
     if (state.previewObjectUrl) {
       URL.revokeObjectURL(state.previewObjectUrl);
@@ -471,16 +523,25 @@
         });
       }
 
-      const paths = Array.from(imageUrls)
-        .map((url) => extractStoragePathFromPublicUrl(url))
-        .filter(Boolean);
+      const cleanupPlan = await resolveRemovableStoragePaths(
+        client,
+        table,
+        productId,
+        Array.from(imageUrls)
+      );
 
-      if (paths.length > 0) {
-        const storageResult = await client.storage.from(window.appConfig.bucket).remove(paths);
+      if (cleanupPlan.removable.length > 0) {
+        const storageResult = await client.storage
+          .from(window.appConfig.bucket)
+          .remove(cleanupPlan.removable);
         if (storageResult.error) {
           console.warn("No se pudo eliminar imagen del storage:", storageResult.error);
           storageCleanupWarning = " El producto se elimino, pero algunas imagenes no pudieron borrarse del storage.";
         }
+      }
+
+      if (cleanupPlan.skipped > 0) {
+        storageCleanupWarning += ` ${cleanupPlan.skipped} imagen(es) se conservaron por estar asociadas a otros productos.`;
       }
 
       setStatus(`Producto eliminado correctamente.${storageCleanupWarning}`, "success");

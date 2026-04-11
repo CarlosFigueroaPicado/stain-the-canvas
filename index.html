@@ -164,6 +164,7 @@
       class="modal fade"
       id="homeProductModal"
       tabindex="-1"
+      data-bs-focus="true"
       aria-labelledby="homeProductModalLabel"
       aria-hidden="true"
     >
@@ -181,12 +182,20 @@
           <div class="modal-body pt-2">
             <div class="row g-4 align-items-start">
               <div class="col-md-6">
-                <img
-                  id="homeModalProductImage"
-                  class="img-fluid rounded-4 modal-product-image"
-                  src=""
-                  alt="Imagen del producto"
-                />
+                <div class="modal-image-shell">
+                  <button type="button" id="homeModalPrevBtn" class="modal-image-nav prev" aria-label="Producto anterior">
+                    &#8249;
+                  </button>
+                  <img
+                    id="homeModalProductImage"
+                    class="img-fluid rounded-4 modal-product-image"
+                    src=""
+                    alt="Imagen del producto"
+                  />
+                  <button type="button" id="homeModalNextBtn" class="modal-image-nav next" aria-label="Producto siguiente">
+                    &#8250;
+                  </button>
+                </div>
               </div>
               <div class="col-md-6">
                 <p id="homeModalProductCategory" class="small text-uppercase letter-space text-brand mb-2"></p>
