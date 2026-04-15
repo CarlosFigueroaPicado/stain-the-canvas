@@ -5,8 +5,8 @@
     activeCategory: "Todos",
     searchTerm: "",
     activeProduct: null,
-    modalCategoryItems: [],
-    modalCategoryIndex: 0
+    modalImages: [],
+    modalImageIndex: 0
   };
 
   let searchDebounceTimer = null;
@@ -304,13 +304,28 @@
   }
 
   function refreshModalArrows() {
-    const many = state.modalCategoryItems.length > 1;
+    const many = state.modalImages.length > 1;
     if (modalRefs.prev) {
       modalRefs.prev.disabled = !many;
     }
     if (modalRefs.next) {
       modalRefs.next.disabled = !many;
     }
+  }
+
+  function renderModalImage(index) {
+    const total = state.modalImages.length;
+    if (total === 0 || !state.activeProduct) {
+      return;
+    }
+
+    const nextIndex = ((index % total) + total) % total;
+    state.modalImageIndex = nextIndex;
+
+    const nextImage = state.modalImages[nextIndex];
+    modalRefs.image.src = nextImage;
+    modalRefs.image.alt = `${state.activeProduct.nombre} - imagen ${nextIndex + 1}`;
+    refreshModalArrows();
   }
 
   function openProductModal(product) {
@@ -320,52 +335,24 @@
 
     state.activeProduct = product;
     trackProductView(product);
+    state.modalImages = getProductImages(product);
+    renderModalImage(0);
 
-    const imageUrl = getProductImages(product)[0];
-    modalRefs.image.src = imageUrl;
-    modalRefs.image.alt = product.nombre;
     modalRefs.category.textContent = product.categoria;
     modalRefs.name.textContent = product.nombre;
     modalRefs.price.textContent = window.productUtils.formatCurrency(product.precio);
     modalRefs.description.textContent = product.descripcion;
     modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(product);
 
-    const sameCategory = state.products.filter(
-      (item) => item.id && item.categoria === product.categoria
-    );
-    state.modalCategoryItems = sameCategory.length ? sameCategory : [product];
-    const foundIndex = state.modalCategoryItems.findIndex((item) => item.id === product.id);
-    state.modalCategoryIndex = foundIndex >= 0 ? foundIndex : 0;
-    refreshModalArrows();
-
     productModal.show();
   }
 
-  function moveModalCategory(step) {
-    if (state.modalCategoryItems.length <= 1) {
+  function moveModalImage(step) {
+    if (state.modalImages.length <= 1) {
       return;
     }
 
-    const total = state.modalCategoryItems.length;
-    state.modalCategoryIndex = (state.modalCategoryIndex + step + total) % total;
-    const nextProduct = state.modalCategoryItems[state.modalCategoryIndex];
-    if (!nextProduct) {
-      return;
-    }
-
-    state.activeProduct = nextProduct;
-    trackProductView(nextProduct);
-
-    const imageUrl = getProductImages(nextProduct)[0];
-    modalRefs.image.src = imageUrl;
-    modalRefs.image.alt = nextProduct.nombre;
-    modalRefs.category.textContent = nextProduct.categoria;
-    modalRefs.name.textContent = nextProduct.nombre;
-    modalRefs.price.textContent = window.productUtils.formatCurrency(nextProduct.precio);
-    modalRefs.description.textContent = nextProduct.descripcion;
-    modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(nextProduct);
-
-    refreshModalArrows();
+    renderModalImage(state.modalImageIndex + step);
   }
 
   function openModal(index) {
@@ -470,23 +457,23 @@
   });
 
   if (modalRefs.prev) {
-    modalRefs.prev.addEventListener("click", () => moveModalCategory(-1));
+    modalRefs.prev.addEventListener("click", () => moveModalImage(-1));
   }
 
   if (modalRefs.next) {
-    modalRefs.next.addEventListener("click", () => moveModalCategory(1));
+    modalRefs.next.addEventListener("click", () => moveModalImage(1));
   }
 
   modalEl.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      moveModalCategory(-1);
+      moveModalImage(-1);
       return;
     }
 
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      moveModalCategory(1);
+      moveModalImage(1);
     }
   });
 

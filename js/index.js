@@ -12,8 +12,8 @@
     activeProduct: null,
     cards: [],
     allProducts: [],
-    modalCategoryItems: [],
-    modalCategoryIndex: 0
+    modalImages: [],
+    modalImageIndex: 0
   };
 
   const modalRefs = {
@@ -87,6 +87,29 @@
       : "";
   }
 
+  function placeholderImage(label) {
+    if (window.productUtils && typeof window.productUtils.buildPlaceholderImage === "function") {
+      return window.productUtils.buildPlaceholderImage(label, "900x700");
+    }
+
+    const text = encodeURIComponent((label || "Producto") + " artesanal");
+    return `https://placehold.co/900x700/F5E8DA/2B2B2B?text=${text}`;
+  }
+
+  function getProductImages(product) {
+    const gallery = Array.isArray(product && product.galleryUrls) ? product.galleryUrls : [];
+    const base = [product && product.imagenUrl ? product.imagenUrl : "", ...gallery]
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+
+    const unique = Array.from(new Set(base));
+    if (unique.length > 0) {
+      return unique;
+    }
+
+    return [placeholderImage(product && product.nombre ? product.nombre : "Producto")];
+  }
+
   async function trackVisitSafe() {
     if (!window.analyticsModule || typeof window.analyticsModule.trackVisit !== "function") {
       return;
@@ -154,13 +177,28 @@
   }
 
   function refreshModalArrows() {
-    const many = state.modalCategoryItems.length > 1;
+    const many = state.modalImages.length > 1;
     if (modalRefs.prev) {
       modalRefs.prev.disabled = !many;
     }
     if (modalRefs.next) {
       modalRefs.next.disabled = !many;
     }
+  }
+
+  function renderModalImage(index) {
+    const total = state.modalImages.length;
+    if (total === 0 || !state.activeProduct) {
+      return;
+    }
+
+    const nextIndex = ((index % total) + total) % total;
+    state.modalImageIndex = nextIndex;
+
+    const nextImage = state.modalImages[nextIndex];
+    modalRefs.image.src = nextImage;
+    modalRefs.image.alt = `${state.activeProduct.nombre} - imagen ${nextIndex + 1}`;
+    refreshModalArrows();
   }
 
   function openProductModal(product) {
@@ -170,51 +208,24 @@
 
     state.activeProduct = product;
     trackProductView(product);
+    state.modalImages = getProductImages(product);
+    renderModalImage(0);
 
-    modalRefs.image.src = product.imagenUrl;
-    modalRefs.image.alt = product.nombre;
     modalRefs.category.textContent = product.categoria;
     modalRefs.name.textContent = product.nombre;
     modalRefs.price.textContent = formatCurrency(product.precio);
     modalRefs.description.textContent = product.descripcion;
     modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(product);
 
-    const source = Array.isArray(state.allProducts) && state.allProducts.length
-      ? state.allProducts
-      : state.cards;
-    const sameCategory = source.filter((item) => item.id && item.categoria === product.categoria);
-    state.modalCategoryItems = sameCategory.length ? sameCategory : [product];
-    const foundIndex = state.modalCategoryItems.findIndex((item) => item.id === product.id);
-    state.modalCategoryIndex = foundIndex >= 0 ? foundIndex : 0;
-    refreshModalArrows();
-
     productModal.show();
   }
 
-  function moveModalCategory(step) {
-    if (state.modalCategoryItems.length <= 1) {
+  function moveModalImage(step) {
+    if (state.modalImages.length <= 1) {
       return;
     }
 
-    const total = state.modalCategoryItems.length;
-    state.modalCategoryIndex = (state.modalCategoryIndex + step + total) % total;
-    const nextProduct = state.modalCategoryItems[state.modalCategoryIndex];
-    if (!nextProduct) {
-      return;
-    }
-
-    state.activeProduct = nextProduct;
-    trackProductView(nextProduct);
-
-    modalRefs.image.src = nextProduct.imagenUrl;
-    modalRefs.image.alt = nextProduct.nombre;
-    modalRefs.category.textContent = nextProduct.categoria;
-    modalRefs.name.textContent = nextProduct.nombre;
-    modalRefs.price.textContent = formatCurrency(nextProduct.precio);
-    modalRefs.description.textContent = nextProduct.descripcion;
-    modalRefs.whatsapp.href = window.productUtils.buildWhatsappLink(nextProduct);
-
-    refreshModalArrows();
+    renderModalImage(state.modalImageIndex + step);
   }
 
   function openModal(index) {
@@ -263,7 +274,12 @@
         categoria: normalized.categoria || fallback.categoria,
         descripcion: normalized.descripcion || fallback.descripcion,
         precio: Number.isFinite(normalized.precio) ? normalized.precio : fallback.precio,
-        imagenUrl: normalized.imagenUrl || fallback.imagenUrl
+        imagenUrl: normalized.imagenUrl || fallback.imagenUrl,
+        galleryUrls: Array.isArray(normalized.galleryUrls)
+          ? normalized.galleryUrls.slice()
+          : Array.isArray(fallback.galleryUrls)
+            ? fallback.galleryUrls.slice()
+            : []
       };
     }
 
@@ -340,23 +356,23 @@
   });
 
   if (modalRefs.prev) {
-    modalRefs.prev.addEventListener("click", () => moveModalCategory(-1));
+    modalRefs.prev.addEventListener("click", () => moveModalImage(-1));
   }
 
   if (modalRefs.next) {
-    modalRefs.next.addEventListener("click", () => moveModalCategory(1));
+    modalRefs.next.addEventListener("click", () => moveModalImage(1));
   }
 
   modalEl.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      moveModalCategory(-1);
+      moveModalImage(-1);
       return;
     }
 
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      moveModalCategory(1);
+      moveModalImage(1);
     }
   });
 
