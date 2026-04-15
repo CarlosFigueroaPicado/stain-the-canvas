@@ -42,12 +42,15 @@
     }
 
     if (!state.dashboardReady) {
-      const ok = window.dashboardModule.initDashboard();
-      state.dashboardReady = Boolean(ok);
+      const initResult = window.dashboardModule.initDashboard();
+      state.dashboardReady = Boolean(initResult && initResult.success && initResult.data === true);
     }
 
     if (state.dashboardReady) {
-      await window.dashboardModule.cargarDashboard();
+      const loadResult = await window.dashboardModule.cargarDashboard();
+      if (!loadResult || !loadResult.success) {
+        console.error((loadResult && loadResult.error) || "No se pudo cargar dashboard.");
+      }
     }
   }
 

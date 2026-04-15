@@ -1,4 +1,5 @@
 (function productosModule() {
+  const productsService = window.stcServices && window.stcServices.products;
   const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
   const ALLOWED_IMAGE_TYPES = new Set([
     "image/jpeg",
@@ -20,7 +21,7 @@
     descripcion: null,
     imagen: null,
     imagenUrl: null,
-    imagePreview: null,
+    imagePreviewContainer: null,
     saveBtn: null,
     resetBtn: null
   };
@@ -29,7 +30,7 @@
     initialized: false,
     products: [],
     editingId: null,
-    previewObjectUrl: ""
+    previewObjectUrls: []
   };
 
   function getAlertClass(kind) {
@@ -61,107 +62,88 @@
     return `https://placehold.co/320x240/F5E8DA/2B2B2B?text=${text}`;
   }
 
-  function toSlug(value) {
-    return String(value || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 40);
-  }
 
-  function extractStoragePathFromPublicUrl(url) {
-    const raw = String(url || "").trim();
-    if (!raw) {
-      return "";
-    }
-
-    if (!/^https?:\/\//i.test(raw)) {
-      return raw.replace(/^\/+/, "");
-    }
-
-    try {
-      const parsed = new URL(raw);
-      const marker = `/storage/v1/object/public/${window.appConfig.bucket}/`;
-      const path = parsed.pathname;
-      const markerIndex = path.indexOf(marker);
-      if (markerIndex === -1) {
-        return "";
+  function clearPreviewObjectUrls() {
+    state.previewObjectUrls.forEach((url) => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (_) {
+        // Ignoramos errores al revocar para mantener limpio el flujo de preview.
       }
-
-      return decodeURIComponent(path.slice(markerIndex + marker.length));
-    } catch (_) {
-      return "";
-    }
+    });
+    state.previewObjectUrls = [];
   }
 
-  async function isImageReferencedElsewhere(client, table, currentProductId, url) {
-    if (!url) {
-      return false;
-    }
-
-    try {
-      const [mainRef, galleryRef] = await Promise.all([
-        client.from(table).select("id", { count: "exact", head: true }).eq("imagen_url", url).neq("id", currentProductId),
-        client
-          .from(table)
-          .select("id", { count: "exact", head: true })
-          .contains("gallery_urls", [url])
-          .neq("id", currentProductId)
-      ]);
-
-      if (mainRef.error || galleryRef.error) {
-        console.warn("No se pudieron verificar referencias de imagen antes de borrar.", {
-          main: mainRef.error,
-          gallery: galleryRef.error
-        });
-        return true;
-      }
-
-      const mainCount = Number(mainRef.count || 0);
-      const galleryCount = Number(galleryRef.count || 0);
-      return mainCount + galleryCount > 0;
-    } catch (error) {
-      console.warn("Error verificando referencias de imagen:", error);
-      return true;
-    }
-  }
-
-  async function resolveRemovableStoragePaths(client, table, currentProductId, imageUrls) {
-    const urls = Array.isArray(imageUrls) ? imageUrls : [];
-    const checks = await Promise.all(
-      urls.map(async (url) => {
-        const path = extractStoragePathFromPublicUrl(url);
-        if (!path) {
-          return { path: "", skip: true };
-        }
-
-        const referenced = await isImageReferencedElsewhere(client, table, currentProductId, url);
-        return { path, skip: referenced };
-      })
-    );
-
-    return {
-      removable: checks.filter((item) => item.path && !item.skip).map((item) => item.path),
-      skipped: checks.filter((item) => item.path && item.skip).length
-    };
-  }
-
-  function clearPreviewObjectUrl() {
-    if (state.previewObjectUrl) {
-      URL.revokeObjectURL(state.previewObjectUrl);
-      state.previewObjectUrl = "";
-    }
-  }
-
-  function setImagePreview(url) {
-    if (!url) {
-      refs.imagePreview.classList.add("d-none");
-      refs.imagePreview.removeAttribute("src");
+  function setImagePreview(urls, label) {
+    if (!refs.imagePreviewContainer) {
       return;
     }
 
-    refs.imagePreview.src = url;
-    refs.imagePreview.classList.remove("d-none");
+    const source = Array.isArray(urls) ? urls : [urls];
+    const cleaned = Array.from(new Set(source.map((item) => String(item || "").trim()).filter(Boolean)));
+
+    if (cleaned.length === 0) {
+      refs.imagePreviewContainer.classList.add("d-none");
+      refs.imagePreviewContainer.innerHTML = "";
+      return;
+    }
+
+    const safeLabel = window.productUtils.escapeHtml(String(label || "Preview"));
+
+    if (cleaned.length === 1) {
+      refs.imagePreviewContainer.innerHTML = `
+        <img class="admin-image-preview" src="${window.productUtils.escapeHtml(cleaned[0])}" alt="${safeLabel}" />
+      `;
+      refs.imagePreviewContainer.classList.remove("d-none");
+      return;
+    }
+
+    const carouselId = "adminPreviewCarousel";
+    const indicators = cleaned
+      .map((_, index) => {
+        const activeClass = index === 0 ? "active" : "";
+        const ariaCurrent = index === 0 ? 'aria-current="true"' : "";
+        return `
+          <button
+            type="button"
+            data-bs-target="#${carouselId}"
+            data-bs-slide-to="${index}"
+            class="${activeClass}"
+            ${ariaCurrent}
+            aria-label="Imagen ${index + 1} de ${cleaned.length}"
+          ></button>
+        `;
+      })
+      .join("");
+
+    const items = cleaned
+      .map((url, index) => {
+        const activeClass = index === 0 ? "active" : "";
+        return `
+          <div class="carousel-item ${activeClass}">
+            <img class="d-block w-100 admin-image-preview" src="${window.productUtils.escapeHtml(url)}" alt="${safeLabel} ${index + 1}" />
+          </div>
+        `;
+      })
+      .join("");
+
+    refs.imagePreviewContainer.innerHTML = `
+      <div id="${carouselId}" class="carousel slide admin-preview-carousel" data-bs-ride="false">
+        <div class="carousel-indicators">
+          ${indicators}
+        </div>
+        <div class="carousel-inner">
+          ${items}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#${carouselId}" data-bs-slide="prev" aria-label="Imagen previa">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#${carouselId}" data-bs-slide="next" aria-label="Imagen siguiente">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+    `;
+    refs.imagePreviewContainer.classList.remove("d-none");
   }
 
   function setLoading(loading) {
@@ -179,8 +161,8 @@
     state.editingId = null;
     refs.productId.value = "";
     refs.saveBtn.textContent = "Guardar producto";
-    clearPreviewObjectUrl();
-    setImagePreview("");
+    clearPreviewObjectUrls();
+    setImagePreview([]);
   }
 
   function fillForm(product) {
@@ -193,7 +175,20 @@
     refs.imagenUrl.value = product.imagenUrl;
     refs.imagen.value = "";
     refs.saveBtn.textContent = "Actualizar producto";
-    setImagePreview(product.imagenUrl || placeholderImage(product.nombre));
+
+    const gallery = Array.isArray(product.galleryUrls) ? product.galleryUrls : [];
+    const previewImages = Array.from(
+      new Set(
+        [product.imagenUrl, ...gallery]
+          .map((item) => String(item || "").trim())
+          .filter(Boolean)
+      )
+    );
+
+    setImagePreview(
+      previewImages.length > 0 ? previewImages : [placeholderImage(product.nombre)],
+      product.nombre
+    );
   }
 
   function getFormInput() {
@@ -204,15 +199,6 @@
       descripcion: refs.descripcion.value,
       imagenUrl: refs.imagenUrl.value
     };
-  }
-
-  function isHttpUrl(value) {
-    try {
-      const parsed = new URL(value);
-      return parsed.protocol === "http:" || parsed.protocol === "https:";
-    } catch (_) {
-      return false;
-    }
   }
 
   function validateSelectedFile(file) {
@@ -245,86 +231,17 @@
     return "";
   }
 
-  function validateProductInput(input, selectedFiles) {
-    const nombre = String(input.nombre || "").trim();
-    const categoria = String(input.categoria || "").trim();
-    const descripcion = String(input.descripcion || "").trim();
-    const precio = Number.parseFloat(input.precio);
-    const imageUrl = String(input.imagenUrl || "").trim();
-
-    if (nombre.length < 3) {
-      return "El nombre debe tener al menos 3 caracteres.";
-    }
-
-    if (!categoria) {
-      return "Selecciona una categoria valida.";
-    }
-
-    if (!Number.isFinite(precio) || precio < 0) {
-      return "El precio debe ser un numero mayor o igual a 0.";
-    }
-
-    if (descripcion.length < 10) {
-      return "La descripcion debe tener al menos 10 caracteres.";
-    }
-
-    if (imageUrl && !isHttpUrl(imageUrl)) {
-      return "La URL de imagen debe iniciar con http:// o https://";
-    }
-
-    const fileError = validateSelectedFiles(selectedFiles);
-    if (fileError) {
-      return fileError;
-    }
-
-    return "";
-  }
-
-  async function uploadFile(file, prefix) {
-    const fileError = validateSelectedFile(file);
-    if (fileError) {
-      throw new Error(fileError);
-    }
-
-    const client = window.getSupabaseClient();
-    if (!client) {
-      throw new Error("No se pudo conectar a Supabase para subir la imagen.");
-    }
-
-    const extension = (file.name.split(".").pop() || "jpg").toLowerCase();
-    const base = toSlug(prefix || file.name.replace(`.${extension}`, "")) || "producto";
-    const path = `catalogo/${Date.now()}-${base}.${extension}`;
-
-    const upload = await client.storage.from(window.appConfig.bucket).upload(path, file, {
-      cacheControl: "3600",
-      upsert: false
-    });
-
-    if (upload.error) {
-      throw new Error(upload.error.message);
-    }
-
-    const publicData = client.storage.from(window.appConfig.bucket).getPublicUrl(path);
-    const publicUrl = publicData && publicData.data ? publicData.data.publicUrl : "";
-
-    if (!publicUrl) {
-      throw new Error("No se pudo generar URL publica de la imagen.");
-    }
-
-    return publicUrl;
-  }
-
   async function uploadFiles(files, prefix) {
-    const selected = Array.isArray(files) ? files : [];
-    const uploaded = [];
-
-    for (let index = 0; index < selected.length; index += 1) {
-      const file = selected[index];
-      const url = await uploadFile(file, `${prefix || "producto"}-${index + 1}`);
-      uploaded.push(url);
+    if (!productsService || typeof productsService.uploadFiles !== "function") {
+      throw new Error("Servicio de productos no disponible para subir imagenes.");
     }
 
-    return uploaded;
+    const uploadResult = await productsService.uploadFiles(files, prefix);
+    if (!uploadResult || !uploadResult.success) {
+      throw new Error((uploadResult && uploadResult.error) || "No se pudieron subir las imagenes.");
+    }
+
+    return Array.isArray(uploadResult.data) ? uploadResult.data : [];
   }
 
   function renderTable() {
@@ -369,30 +286,22 @@
   }
 
   async function cargarProductos() {
-    const client = window.getSupabaseClient();
-    if (!client) {
+    if (!productsService || typeof productsService.getProducts !== "function") {
       setStatus("No se pudo conectar a Supabase. Revisa la configuracion.", "danger");
       return;
     }
 
     try {
-      const table = window.appConfig.productsTable;
-      let result = await client
-        .from(table)
-        .select("id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at")
-        .order("created_at", { ascending: false });
-
-      if (result.error && String(result.error.message || "").includes("created_at")) {
-        result = await client
-          .from(table)
-          .select("id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at");
+      const productsResult = await productsService.getProducts();
+      if (!productsResult || !productsResult.success) {
+        setStatus(
+          (productsResult && productsResult.error) || "No se pudieron cargar productos.",
+          "danger"
+        );
+        return;
       }
 
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
-
-      state.products = (result.data || []).map((row) => window.productUtils.normalizeProduct(row));
+      state.products = Array.isArray(productsResult.data) ? productsResult.data : [];
       renderTable();
       setStatus(`Productos cargados: ${state.products.length}.`, "success");
     } catch (error) {
@@ -409,8 +318,7 @@
       return;
     }
 
-    const client = window.getSupabaseClient();
-    if (!client) {
+    if (!productsService || typeof productsService.createProduct !== "function" || typeof productsService.updateProduct !== "function") {
       setStatus("No se pudo conectar a Supabase. Revisa la configuracion.", "danger");
       return;
     }
@@ -420,10 +328,9 @@
     try {
       const input = getFormInput();
       const selectedFiles = refs.imagen.files ? Array.from(refs.imagen.files) : [];
-      const validationError = validateProductInput(input, selectedFiles);
-
-      if (validationError) {
-        setStatus(validationError, "danger");
+      const fileError = validateSelectedFiles(selectedFiles);
+      if (fileError) {
+        setStatus(fileError, "danger");
         return;
       }
 
@@ -452,17 +359,14 @@
         galleryUrls
       });
 
-      const table = window.appConfig.productsTable;
-      let result;
-
-      if (state.editingId) {
-        result = await client.from(table).update(payload).eq("id", state.editingId);
-      } else {
-        result = await client.from(table).insert(payload);
-      }
-
-      if (result.error) {
-        throw new Error(result.error.message);
+      const saveResult = state.editingId
+        ? await productsService.updateProduct(state.editingId, payload)
+        : await productsService.createProduct(payload);
+      if (!saveResult || !saveResult.success) {
+        const message =
+          (saveResult && saveResult.error) || "No se pudo guardar el producto. Intenta nuevamente.";
+        setStatus(message, "danger");
+        return;
       }
 
       const successMessage =
@@ -477,7 +381,10 @@
       await cargarProductos();
     } catch (error) {
       console.error("No se pudo guardar el producto:", error);
-      setStatus(`No se pudo guardar el producto: ${error.message}`, "danger");
+      setStatus(
+        `No se pudo guardar el producto: ${(error && error.message) || "Error inesperado."}`,
+        "danger"
+      );
     } finally {
       setLoading(false);
     }
@@ -494,54 +401,29 @@
       return;
     }
 
-    const client = window.getSupabaseClient();
-    if (!client) {
+    if (!productsService || typeof productsService.deleteProduct !== "function") {
       setStatus("No se pudo conectar a Supabase. Revisa la configuracion.", "danger");
       return;
     }
 
     try {
       setLoading(true);
-      const table = window.appConfig.productsTable;
       const currentProduct = state.products.find((item) => item.id === productId);
-      const result = await client.from(table).delete().eq("id", productId);
-
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
-
       let storageCleanupWarning = "";
-      const imageUrls = new Set();
-      if (currentProduct && currentProduct.imagenUrl) {
-        imageUrls.add(currentProduct.imagenUrl);
-      }
-      if (currentProduct && Array.isArray(currentProduct.galleryUrls)) {
-        currentProduct.galleryUrls.forEach((url) => {
-          if (url) {
-            imageUrls.add(url);
-          }
-        });
+      const cleanup = await productsService.deleteProduct(productId, currentProduct);
+      if (!cleanup || !cleanup.success) {
+        setStatus((cleanup && cleanup.error) || "No se pudo eliminar el producto.", "danger");
+        return;
       }
 
-      const cleanupPlan = await resolveRemovableStoragePaths(
-        client,
-        table,
-        productId,
-        Array.from(imageUrls)
-      );
+      const cleanupInfo = cleanup.data || { skipped: 0, cleanupError: false };
 
-      if (cleanupPlan.removable.length > 0) {
-        const storageResult = await client.storage
-          .from(window.appConfig.bucket)
-          .remove(cleanupPlan.removable);
-        if (storageResult.error) {
-          console.warn("No se pudo eliminar imagen del storage:", storageResult.error);
-          storageCleanupWarning = " El producto se elimino, pero algunas imagenes no pudieron borrarse del storage.";
-        }
+      if (cleanupInfo.cleanupError) {
+        storageCleanupWarning = " El producto se elimino, pero algunas imagenes no pudieron borrarse del storage.";
       }
 
-      if (cleanupPlan.skipped > 0) {
-        storageCleanupWarning += ` ${cleanupPlan.skipped} imagen(es) se conservaron por estar asociadas a otros productos.`;
+      if (cleanupInfo.skipped > 0) {
+        storageCleanupWarning += ` ${cleanupInfo.skipped} imagen(es) se conservaron por estar asociadas a otros productos.`;
       }
 
       setStatus(`Producto eliminado correctamente.${storageCleanupWarning}`, "success");
@@ -601,24 +483,25 @@
     });
 
     refs.imagen.addEventListener("change", () => {
-      clearPreviewObjectUrl();
+      clearPreviewObjectUrls();
 
       if (!refs.imagen.files || refs.imagen.files.length === 0) {
-        setImagePreview(refs.imagenUrl.value.trim());
+        setImagePreview(refs.imagenUrl.value.trim(), refs.nombre.value.trim() || "Preview");
         return;
       }
 
-      const file = refs.imagen.files[0];
-      const fileError = validateSelectedFile(file);
+      const selected = Array.from(refs.imagen.files);
+      const fileError = validateSelectedFiles(selected);
       if (fileError) {
         setStatus(fileError, "danger");
         refs.imagen.value = "";
-        setImagePreview(refs.imagenUrl.value.trim());
+        setImagePreview(refs.imagenUrl.value.trim(), refs.nombre.value.trim() || "Preview");
         return;
       }
 
-      state.previewObjectUrl = URL.createObjectURL(file);
-      setImagePreview(state.previewObjectUrl);
+      const previewUrls = selected.map((file) => URL.createObjectURL(file));
+      state.previewObjectUrls = previewUrls;
+      setImagePreview(previewUrls, refs.nombre.value.trim() || "Preview");
     });
 
     refs.form.addEventListener("submit", handleSubmit);
@@ -636,7 +519,7 @@
     refs.descripcion = document.getElementById("descripcion");
     refs.imagen = document.getElementById("imagen");
     refs.imagenUrl = document.getElementById("imagenUrl");
-    refs.imagePreview = document.getElementById("imagePreview");
+    refs.imagePreviewContainer = document.getElementById("imagePreviewContainer");
     refs.saveBtn = document.getElementById("saveBtn");
     refs.resetBtn = document.getElementById("resetBtn");
 
@@ -652,7 +535,7 @@
         refs.descripcion &&
         refs.imagen &&
         refs.imagenUrl &&
-        refs.imagePreview &&
+        refs.imagePreviewContainer &&
         refs.saveBtn &&
         refs.resetBtn
     );

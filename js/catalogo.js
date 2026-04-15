@@ -1,4 +1,5 @@
 (function catalogPage() {
+  const productsService = window.stcServices && window.stcServices.products;
   const state = {
     products: [],
     activeCategory: "Todos",
@@ -70,6 +71,91 @@
     }
 
     countBadgeEl.textContent = `${visibleCount} de ${state.products.length} productos`;
+  }
+
+  function getProductImages(product) {
+    const gallery = Array.isArray(product && product.galleryUrls) ? product.galleryUrls : [];
+    const base = [product && product.imagenUrl ? product.imagenUrl : "", ...gallery]
+      .map((item) => String(item || "").trim())
+      .filter(Boolean);
+
+    const unique = Array.from(new Set(base));
+    if (unique.length > 0) {
+      return unique;
+    }
+
+    return [placeholderImage(product && product.nombre ? product.nombre : "Producto")];
+  }
+
+  function getCardMediaHtml(product, index) {
+    const productImages = getProductImages(product);
+    const productName = window.productUtils.escapeHtml(product.nombre);
+
+    if (productImages.length <= 1) {
+      return `<img src="${window.productUtils.escapeHtml(productImages[0])}" class="card-img-top product-card-image" alt="${productName}" loading="lazy" />`;
+    }
+
+    const carouselId = `productCardCarousel-${index}-${String(product.id || "item").replace(/[^a-zA-Z0-9_-]/g, "")}`;
+
+    const indicators = productImages
+      .map((_, imageIndex) => {
+        const activeClass = imageIndex === 0 ? "active" : "";
+        const ariaCurrent = imageIndex === 0 ? 'aria-current="true"' : "";
+        return `
+          <button
+            type="button"
+            data-bs-target="#${carouselId}"
+            data-bs-slide-to="${imageIndex}"
+            class="${activeClass}"
+            ${ariaCurrent}
+            aria-label="Imagen ${imageIndex + 1} de ${productImages.length}"
+            data-skip-modal="true"
+          ></button>
+        `;
+      })
+      .join("");
+
+    const items = productImages
+      .map((url, imageIndex) => {
+        const activeClass = imageIndex === 0 ? "active" : "";
+        return `
+          <div class="carousel-item ${activeClass}">
+            <img src="${window.productUtils.escapeHtml(url)}" class="d-block w-100 product-card-image" alt="${productName} - imagen ${imageIndex + 1}" loading="lazy" />
+          </div>
+        `;
+      })
+      .join("");
+
+    return `
+      <div id="${carouselId}" class="carousel slide product-card-carousel" data-bs-ride="false" data-skip-modal="true">
+        <div class="carousel-indicators">
+          ${indicators}
+        </div>
+        <div class="carousel-inner">
+          ${items}
+        </div>
+        <button
+          class="carousel-control-prev"
+          type="button"
+          data-bs-target="#${carouselId}"
+          data-bs-slide="prev"
+          aria-label="Imagen anterior"
+          data-skip-modal="true"
+        >
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        </button>
+        <button
+          class="carousel-control-next"
+          type="button"
+          data-bs-target="#${carouselId}"
+          data-bs-slide="next"
+          aria-label="Imagen siguiente"
+          data-skip-modal="true"
+        >
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+    `;
   }
 
   function normalizeSearchText(value) {
@@ -181,12 +267,12 @@
 
     gridEl.innerHTML = products
       .map((product, index) => {
-        const imageUrl = product.imagenUrl || placeholderImage(product.nombre);
+        const cardMedia = getCardMediaHtml(product, index);
 
         return `
           <div class="col-12 col-md-6 col-xl-4">
             <article class="card product-card h-100 border-0" data-action="open-modal" data-index="${index}" tabindex="0" role="button" aria-label="Abrir detalle de ${window.productUtils.escapeHtml(product.nombre)}">
-              <img src="${window.productUtils.escapeHtml(imageUrl)}" class="card-img-top product-card-image" alt="${window.productUtils.escapeHtml(product.nombre)}" loading="lazy" />
+              ${cardMedia}
               <div class="card-body d-flex flex-column">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <p class="small text-uppercase letter-space text-brand mb-0">${window.productUtils.escapeHtml(product.categoria)}</p>
@@ -235,7 +321,7 @@
     state.activeProduct = product;
     trackProductView(product);
 
-    const imageUrl = product.imagenUrl || placeholderImage(product.nombre);
+    const imageUrl = getProductImages(product)[0];
     modalRefs.image.src = imageUrl;
     modalRefs.image.alt = product.nombre;
     modalRefs.category.textContent = product.categoria;
@@ -270,7 +356,7 @@
     state.activeProduct = nextProduct;
     trackProductView(nextProduct);
 
-    const imageUrl = nextProduct.imagenUrl || placeholderImage(nextProduct.nombre);
+    const imageUrl = getProductImages(nextProduct)[0];
     modalRefs.image.src = imageUrl;
     modalRefs.image.alt = nextProduct.nombre;
     modalRefs.category.textContent = nextProduct.categoria;
@@ -289,8 +375,7 @@
   }
 
   async function fetchProducts() {
-    const client = window.getSupabaseClient();
-    if (!client) {
+    if (!productsService || typeof productsService.getProducts !== "function") {
       setStatus("No se pudo conectar a Supabase. Revisa la configuracion.", "danger");
       return;
     }
@@ -298,23 +383,13 @@
     setStatus("Cargando productos...", "info");
 
     try {
-      const table = window.appConfig.productsTable;
-      let result = await client
-        .from(table)
-        .select("id,nombre,categoria,descripcion,precio,imagen_url,created_at")
-        .order("created_at", { ascending: false });
-
-      if (result.error && String(result.error.message || "").includes("created_at")) {
-        result = await client
-          .from(table)
-          .select("id,nombre,categoria,descripcion,precio,imagen_url,created_at");
+      const result = await productsService.getProducts();
+      if (!result || !result.success) {
+        setStatus((result && result.error) || "No se pudieron cargar productos.", "danger");
+        return;
       }
 
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
-
-      state.products = (result.data || []).map((row) => window.productUtils.normalizeProduct(row));
+      state.products = Array.isArray(result.data) ? result.data : [];
 
       if (state.products.length === 0) {
         gridEl.innerHTML = "";
@@ -328,7 +403,7 @@
       renderProducts();
     } catch (error) {
       console.error("Error al cargar productos en catalogo:", error);
-      setStatus(`Error al obtener productos: ${error.message}`, "danger");
+      setStatus("Error al obtener productos.", "danger");
     }
   }
 

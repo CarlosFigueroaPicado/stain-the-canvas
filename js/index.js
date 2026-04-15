@@ -1,4 +1,5 @@
 (function homeFeaturedProducts() {
+  const productsService = window.stcServices && window.stcServices.products;
   const gridEl = document.getElementById("homeFeaturedGrid");
   const statusEl = document.getElementById("homeFeaturedStatus");
   const modalEl = document.getElementById("homeProductModal");
@@ -279,49 +280,21 @@
   }
 
   async function loadFromSupabase() {
-    if (!window.getSupabaseClient || !window.appConfig) {
+    if (!productsService || typeof productsService.fetchFeaturedProducts !== "function") {
       return;
     }
 
-    const client = window.getSupabaseClient();
-    if (!client) {
-      return;
-    }
-
-    const ids = featuredDefaults.map((item) => item.id);
-    const table = window.appConfig.productsTable;
-    const result = await client
-      .from(table)
-      .select("id,nombre,categoria,descripcion,precio,imagen_url,created_at")
-      .order("created_at", { ascending: false });
-
-    if (result.error) {
-      console.error("No se pudieron cargar destacados desde Supabase:", result.error);
+    const result = await productsService.fetchFeaturedProducts(featuredDefaults);
+    if (!result || !result.success) {
       setStatus(
-        "No se pudieron cargar los destacados desde Supabase. Se muestran los destacados principales.",
+        (result && result.error) || "No se pudieron cargar los destacados desde Supabase.",
         "danger"
       );
       return;
     }
 
-    const allProducts = (result.data || []).map((row) => {
-      if (window.productUtils && typeof window.productUtils.normalizeProduct === "function") {
-        const normalized = window.productUtils.normalizeProduct(row);
-        return {
-          id: normalized.id,
-          nombre: normalized.nombre,
-          categoria: normalized.categoria,
-          descripcion: normalized.descripcion,
-          precio: normalized.precio,
-          imagenUrl: normalized.imagenUrl || ""
-        };
-      }
-
-      return row;
-    });
-
-    state.allProducts = allProducts;
-    const merged = mergeFeaturedRows(allProducts);
+    const merged = Array.isArray(result.data) ? result.data : [];
+    state.allProducts = merged;
     renderCards(merged);
     hideStatus();
   }

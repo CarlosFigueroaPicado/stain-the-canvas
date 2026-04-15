@@ -28,11 +28,14 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js"></script>
+    <script src="js/runtime/auth.api.js"></script>
+    <script src="js/runtime/auth.service.js"></script>
     <script src="js/auth.js"></script>
     <script>
       (async function enforceAdminAccess() {
         try {
-          if (!window.adminAuth || !(await window.adminAuth.requireAdmin())) {
+          const accessResult = window.adminAuth ? await window.adminAuth.requireAdmin() : null;
+          if (!accessResult || !accessResult.success || accessResult.data !== true) {
             return;
           }
           document.documentElement.classList.remove("admin-auth-pending");
@@ -252,8 +255,8 @@
                     <input class="form-control" id="imagenUrl" name="imagenUrl" type="url" placeholder="https://..." />
                   </div>
 
-                  <div class="mt-3 d-flex align-items-center gap-3">
-                    <img id="imagePreview" class="admin-image-preview d-none" alt="Preview" />
+                  <div class="mt-3 d-flex align-items-start gap-3">
+                    <div id="imagePreviewContainer" class="admin-preview-container d-none" aria-live="polite"></div>
                     <small class="text-muted-brand">Vista previa de imagen</small>
                   </div>
 
@@ -401,7 +404,7 @@
 
           try {
             const result = await window.adminAuth.changePassword(password);
-            if (!result || !result.ok) {
+            if (!result || !result.success) {
               setPasswordStatus(
                 (result && result.error) || "No se pudo actualizar la contrasena.",
                 "danger"
@@ -423,6 +426,13 @@
       })();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="src/styles/chartColors.js"></script>
+    <script src="js/runtime/analytics.api.js"></script>
+    <script src="js/runtime/dashboard.api.js"></script>
+    <script src="js/runtime/products.api.js"></script>
+    <script src="js/runtime/analytics.service.js"></script>
+    <script src="js/runtime/dashboard.service.js"></script>
+    <script src="js/runtime/products.service.js"></script>
     <script src="js/analytics.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/productos.js"></script>

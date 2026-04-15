@@ -154,6 +154,28 @@ h3 {
   object-fit: cover;
 }
 
+.product-card-carousel .carousel-indicators {
+  margin-bottom: 0.45rem;
+}
+
+.product-card-carousel .carousel-indicators button {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+}
+
+.product-card-carousel .carousel-control-prev,
+.product-card-carousel .carousel-control-next {
+  width: 2.4rem;
+}
+
+.product-card-carousel .carousel-control-prev-icon,
+.product-card-carousel .carousel-control-next-icon {
+  background-color: rgba(43, 43, 43, 0.55);
+  border-radius: 999px;
+  background-size: 56% 56%;
+}
+
 .modal-brand {
   background: var(--brand-surface-2);
   border: 1px solid var(--brand-border);
@@ -220,11 +242,38 @@ h3 {
 }
 
 .admin-image-preview {
-  width: 80px;
+  width: 88px;
   height: 80px;
   object-fit: cover;
   border-radius: 0.75rem;
   border: 1px solid var(--brand-border);
+}
+
+.admin-preview-container {
+  width: 88px;
+  flex: 0 0 auto;
+}
+
+.admin-preview-carousel .carousel-indicators {
+  margin-bottom: -0.15rem;
+}
+
+.admin-preview-carousel .carousel-indicators button {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 999px;
+}
+
+.admin-preview-carousel .carousel-control-prev,
+.admin-preview-carousel .carousel-control-next {
+  width: 1.45rem;
+}
+
+.admin-preview-carousel .carousel-control-prev-icon,
+.admin-preview-carousel .carousel-control-next-icon {
+  background-color: rgba(43, 43, 43, 0.55);
+  border-radius: 999px;
+  background-size: 52% 52%;
 }
 
 .form-control,

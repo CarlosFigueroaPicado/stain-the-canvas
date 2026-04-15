@@ -10,7 +10,11 @@
     return;
   }
 
-  const redirectTarget = window.adminAuth.getRedirectTarget("admin.html");
+  const redirectResult = window.adminAuth.getRedirectTarget("admin.html");
+  const redirectTarget =
+    redirectResult && redirectResult.success && redirectResult.data
+      ? redirectResult.data
+      : "admin.html";
 
   function showStatus(message, kind) {
     statusEl.className = kind === "danger" ? "alert alert-danger mt-3" : "alert alert-success mt-3";
@@ -23,16 +27,21 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
   }
 
-  function openCurtain() {
+  function openCurtain(options) {
+    const config = options && typeof options === "object" ? options : {};
+    const shouldFocus = config.focus !== false;
+
     if (shellEl.classList.contains("is-open")) {
       return;
     }
 
     shellEl.classList.add("is-open");
     curtainEl.setAttribute("aria-expanded", "true");
-    setTimeout(() => {
-      userEl.focus();
-    }, 220);
+    if (shouldFocus) {
+      setTimeout(() => {
+        userEl.focus();
+      }, 220);
+    }
   }
 
   function setLoading(loading) {
@@ -45,12 +54,33 @@
     }
   }
 
-  curtainEl.addEventListener("click", openCurtain);
+  curtainEl.addEventListener("click", () => {
+    openCurtain();
+  });
+
+  curtainEl.addEventListener("keydown", (event) => {
+    const key = String(event.key || "").toLowerCase();
+    if (key === "enter" || key === " ") {
+      event.preventDefault();
+      openCurtain();
+    }
+  });
+
+  const reducedMotionQuery =
+    typeof window.matchMedia === "function"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)")
+      : null;
+  const openDelay = reducedMotionQuery && reducedMotionQuery.matches ? 0 : 180;
+
+  // Evita que la cortina bloquee el primer intento de login al cargar la pagina.
+  setTimeout(() => {
+    openCurtain({ focus: false });
+  }, openDelay);
 
   window.adminAuth
     .isAuthenticated()
-    .then((ok) => {
-      if (ok) {
+    .then((result) => {
+      if (result && result.success && result.data === true) {
         window.location.replace(redirectTarget);
       }
     })
@@ -75,7 +105,7 @@
 
       const result = await window.adminAuth.login(user, pass);
 
-      if (!result || !result.ok) {
+      if (!result || !result.success) {
         showStatus(
           (result && result.error) || "Credenciales incorrectas. Intenta nuevamente.",
           "danger"
