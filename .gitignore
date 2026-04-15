@@ -16,3 +16,7 @@ skills-lock.json
 # OS files
 .DS_Store
 Thumbs.db
+
+# Dependencies and test artifacts
+node_modules/
+coverage/
