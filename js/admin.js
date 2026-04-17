@@ -16,6 +16,10 @@ const state = {
   productosReady: false
 };
 
+function revealAdminPage() {
+  document.documentElement.classList.remove("admin-auth-pending");
+}
+
 function setNavState(activeSection) {
   const isDashboard = activeSection === "dashboard";
   refs.dashboardBtn.classList.toggle("btn-brand", isDashboard);
@@ -79,15 +83,17 @@ function bindEvents() {
 
 async function init() {
   if (!refs.dashboardBtn || !refs.productosBtn || !refs.dashboardSection || !refs.productosSection) {
+    revealAdminPage();
     return;
   }
 
   const authResult = await requireAdmin({ redirect: true });
   if (!authResult.success || authResult.data !== true) {
+    revealAdminPage();
     return;
   }
 
-  document.documentElement.classList.remove("admin-auth-pending");
+  revealAdminPage();
   initAdminAuthControls();
   bindEvents();
   await openDashboard();
@@ -95,4 +101,5 @@ async function init() {
 
 init().catch((error) => {
   console.error("Error inicializando panel admin:", error);
+  revealAdminPage();
 });

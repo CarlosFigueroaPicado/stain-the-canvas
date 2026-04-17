@@ -167,6 +167,13 @@ export async function requireAdmin(options = {}) {
   const config = options && typeof options === "object" ? options : {};
   const shouldRedirect = config.redirect !== false;
 
+  function redirectToLogin() {
+    const currentPage = sanitizeRedirect(
+      (globalThis.location.pathname.split("/").pop() || "admin.html").trim()
+    );
+    globalThis.location.replace(`login.html?redirect=${encodeURIComponent(currentPage)}`);
+  }
+
   try {
     const authResult = await isAuthenticated();
     if (authResult.success && authResult.data === true) {
@@ -175,15 +182,17 @@ export async function requireAdmin(options = {}) {
     }
 
     if (shouldRedirect) {
-      const currentPage = sanitizeRedirect(
-        (globalThis.location.pathname.split("/").pop() || "admin.html").trim()
-      );
-      globalThis.location.replace(`login.html?redirect=${encodeURIComponent(currentPage)}`);
+      redirectToLogin();
     }
 
     return ok(false);
   } catch (error) {
     console.error("Error en requireAdmin:", error);
+    if (shouldRedirect) {
+      redirectToLogin();
+      return ok(false);
+    }
+
     return fail("No se pudo validar acceso de administrador.");
   }
 }
