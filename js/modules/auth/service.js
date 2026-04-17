@@ -4,6 +4,15 @@ import { getState, setState } from "../../core/store.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function mapAuthErrorMessage(errorMessage) {
+  const message = String(errorMessage || "").trim().toLowerCase();
+  if (message === "no_client" || message === "no client") {
+    return "No se pudo inicializar la conexion con Supabase. Verifica la configuracion publica (URL y anon key).";
+  }
+
+  return String(errorMessage || "No se pudo iniciar sesion.");
+}
+
 function sanitizeRedirect(value) {
   const raw = String(value || "").trim();
   return /^[a-zA-Z0-9_-]+\.html$/.test(raw) ? raw : "admin.html";
@@ -101,7 +110,7 @@ export async function login(username, password) {
     const signInResult = await authApi.signInWithPassword(email, pass);
     if (signInResult.error) {
       console.error("Error en signInWithPassword:", signInResult.error);
-      return fail(signInResult.error.message || "No se pudo iniciar sesion.");
+      return fail(mapAuthErrorMessage(signInResult.error.message));
     }
 
     const userResult = await resolveCurrentUser();

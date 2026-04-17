@@ -21,15 +21,33 @@ function json(body, status) {
 
 export function GET() {
   const config = {
-    url: readEnv("STC_SUPABASE_URL", "VITE_SUPABASE_URL"),
+    url: readEnv(
+      "STC_SUPABASE_URL",
+      "VITE_SUPABASE_URL",
+      "SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "PUBLIC_SUPABASE_URL"
+    ),
     anonKey: readEnv(
       "STC_SUPABASE_PUBLISHABLE_KEY",
       "STC_SUPABASE_ANON_KEY",
-      "VITE_SUPABASE_ANON_KEY"
+      "VITE_SUPABASE_ANON_KEY",
+      "SUPABASE_PUBLISHABLE_KEY",
+      "SUPABASE_ANON_KEY",
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+      "PUBLIC_SUPABASE_ANON_KEY"
     ),
-    bucket: readEnv("STC_SUPABASE_BUCKET", "VITE_SUPABASE_BUCKET") || "productos",
-    productsTable: readEnv("STC_PRODUCTS_TABLE", "VITE_PRODUCTS_TABLE") || "productos",
-    whatsappNumber: readEnv("STC_WHATSAPP_NUMBER", "VITE_WHATSAPP_NUMBER") || "50589187562"
+    bucket:
+      readEnv("STC_SUPABASE_BUCKET", "VITE_SUPABASE_BUCKET", "SUPABASE_BUCKET", "PUBLIC_SUPABASE_BUCKET") ||
+      "productos",
+    productsTable:
+      readEnv("STC_PRODUCTS_TABLE", "VITE_PRODUCTS_TABLE", "PRODUCTS_TABLE", "PUBLIC_PRODUCTS_TABLE") ||
+      "productos",
+    whatsappNumber:
+      readEnv("STC_WHATSAPP_NUMBER", "VITE_WHATSAPP_NUMBER", "WHATSAPP_NUMBER", "PUBLIC_WHATSAPP_NUMBER") ||
+      "50589187562"
   };
 
   if (!config.url || !config.anonKey) {
