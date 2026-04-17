@@ -1,7 +1,5 @@
-import { describe, it, expect } from "vitest";
-import "../src/styles/chartColors.js";
-
-const chartColors = globalThis.stcChartColors;
+import { describe, expect, it } from "vitest";
+import * as chartColors from "../js/shared/chart-colors.js";
 
 describe("dashboard.colors", () => {
   it("array tiene mas de 3 colores", () => {

@@ -1,114 +1,98 @@
-(function adminOrchestrator() {
-  const refs = {
-    dashboardBtn: document.getElementById("goDashboardBtn"),
-    productosBtn: document.getElementById("goProductosBtn"),
-    dashboardSection: document.getElementById("dashboardSection"),
-    productosSection: document.getElementById("productosSection"),
-    refreshBtn: document.getElementById("refreshDashboardBtn")
-  };
+import { requireAdmin } from "./modules/auth/service.js";
+import { initAdminAuthControls } from "./modules/auth/ui/admin.js";
+import { initDashboardAdminUI, openDashboardAdmin } from "./modules/dashboard/ui/admin.js";
+import { initProductsAdminUI, openProductsAdmin } from "./modules/products/ui/admin.js";
 
-  const state = {
-    dashboardReady: false,
-    productosReady: false,
-    currentSection: "dashboard"
-  };
+const refs = {
+  dashboardBtn: document.getElementById("goDashboardBtn"),
+  productosBtn: document.getElementById("goProductosBtn"),
+  dashboardSection: document.getElementById("dashboardSection"),
+  productosSection: document.getElementById("productosSection"),
+  refreshBtn: document.getElementById("refreshDashboardBtn")
+};
 
-  function setNavState(activeSection) {
-    const isDashboard = activeSection === "dashboard";
+const state = {
+  dashboardReady: false,
+  productosReady: false
+};
 
-    refs.dashboardBtn.classList.toggle("btn-brand", isDashboard);
-    refs.dashboardBtn.classList.toggle("btn-outline-brand", !isDashboard);
-    refs.productosBtn.classList.toggle("btn-brand", !isDashboard);
-    refs.productosBtn.classList.toggle("btn-outline-brand", isDashboard);
+function setNavState(activeSection) {
+  const isDashboard = activeSection === "dashboard";
+  refs.dashboardBtn.classList.toggle("btn-brand", isDashboard);
+  refs.dashboardBtn.classList.toggle("btn-outline-brand", !isDashboard);
+  refs.productosBtn.classList.toggle("btn-brand", !isDashboard);
+  refs.productosBtn.classList.toggle("btn-outline-brand", isDashboard);
+  refs.dashboardBtn.setAttribute("aria-selected", String(isDashboard));
+  refs.productosBtn.setAttribute("aria-selected", String(!isDashboard));
+}
 
-    refs.dashboardBtn.setAttribute("aria-selected", String(isDashboard));
-    refs.productosBtn.setAttribute("aria-selected", String(!isDashboard));
+function showSection(sectionName) {
+  const showDashboard = sectionName === "dashboard";
+  refs.dashboardSection.classList.toggle("d-none", !showDashboard);
+  refs.productosSection.classList.toggle("d-none", showDashboard);
+  setNavState(sectionName);
+}
+
+async function openDashboard() {
+  showSection("dashboard");
+  if (!state.dashboardReady) {
+    state.dashboardReady = initDashboardAdminUI();
   }
 
-  function showSection(sectionName) {
-    const showDashboard = sectionName === "dashboard";
-    refs.dashboardSection.classList.toggle("d-none", !showDashboard);
-    refs.productosSection.classList.toggle("d-none", showDashboard);
-    setNavState(sectionName);
-    state.currentSection = sectionName;
+  if (state.dashboardReady) {
+    await openDashboardAdmin();
+  }
+}
+
+async function openProductos() {
+  showSection("productos");
+  if (!state.productosReady) {
+    state.productosReady = initProductsAdminUI();
   }
 
-  async function openDashboard() {
-    showSection("dashboard");
-
-    if (!window.dashboardModule) {
-      console.error("dashboardModule no esta disponible.");
-      return;
-    }
-
-    if (!state.dashboardReady) {
-      const initResult = window.dashboardModule.initDashboard();
-      state.dashboardReady = Boolean(initResult && initResult.success && initResult.data === true);
-    }
-
-    if (state.dashboardReady) {
-      const loadResult = await window.dashboardModule.cargarDashboard();
-      if (!loadResult || !loadResult.success) {
-        console.error((loadResult && loadResult.error) || "No se pudo cargar dashboard.");
-      }
-    }
+  if (state.productosReady) {
+    await openProductsAdmin();
   }
+}
 
-  async function openProductos() {
-    showSection("productos");
-
-    if (!window.productosModule) {
-      console.error("productosModule no esta disponible.");
-      return;
-    }
-
-    if (!state.productosReady) {
-      const ok = window.productosModule.initProductos();
-      state.productosReady = Boolean(ok);
-    }
-
-    if (state.productosReady) {
-      await window.productosModule.cargarProductos();
-    }
-  }
-
-  function bindEvents() {
-    refs.dashboardBtn.addEventListener("click", () => {
-      openDashboard().catch((error) => {
-        console.error("Error al abrir dashboard:", error);
-      });
-    });
-
-    refs.productosBtn.addEventListener("click", () => {
-      openProductos().catch((error) => {
-        console.error("Error al abrir productos:", error);
-      });
-    });
-
-    if (refs.refreshBtn) {
-      refs.refreshBtn.addEventListener("click", () => {
-        openDashboard().catch((error) => {
-          console.error("Error al refrescar dashboard:", error);
-        });
-      });
-    }
-  }
-
-  function init() {
-    if (
-      !refs.dashboardBtn ||
-      !refs.productosBtn ||
-      !refs.dashboardSection ||
-      !refs.productosSection
-    ) {
-      return;
-    }
-
-    bindEvents();
+function bindEvents() {
+  refs.dashboardBtn.addEventListener("click", () => {
     openDashboard().catch((error) => {
-      console.error("Error inicializando panel admin:", error);
+      console.error("Error al abrir dashboard:", error);
+    });
+  });
+
+  refs.productosBtn.addEventListener("click", () => {
+    openProductos().catch((error) => {
+      console.error("Error al abrir productos:", error);
+    });
+  });
+
+  if (refs.refreshBtn) {
+    refs.refreshBtn.addEventListener("click", () => {
+      openDashboard().catch((error) => {
+        console.error("Error al refrescar dashboard:", error);
+      });
     });
   }
+}
 
-  init();
-})();
+async function init() {
+  if (!refs.dashboardBtn || !refs.productosBtn || !refs.dashboardSection || !refs.productosSection) {
+    return;
+  }
+
+  const authResult = await requireAdmin({ redirect: true });
+  if (!authResult.success || authResult.data !== true) {
+    return;
+  }
+
+  document.documentElement.classList.remove("admin-auth-pending");
+  initAdminAuthControls();
+  bindEvents();
+  await openDashboard();
+}
+
+init().catch((error) => {
+  console.error("Error inicializando panel admin:", error);
+});

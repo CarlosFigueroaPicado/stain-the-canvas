@@ -1,94 +1,112 @@
 # Stain the Canvas
 
-## 📌 Descripción
-Catálogo digital para productos artesanales personalizados.  
-El proyecto permite mostrar productos, consultar detalles, contactar por WhatsApp y administrar el inventario con integración a Supabase.
+Catalogo web artesanal con panel admin, productos dinamicos y dashboard de analitica sobre Supabase.
 
-## 🚀 Tecnologías utilizadas
-- HTML
-- CSS
-- JavaScript
-- Bootstrap
-- Supabase
+## Stack
 
-## 🎯 Funcionalidades
-- Catálogo de productos
-- Vista de detalle por producto
-- Botón de WhatsApp con mensaje prellenado
-- Panel admin protegido con Supabase Auth
-- Gestión de productos (crear, editar y eliminar)
-- Subida de imágenes a Supabase Storage
+- HTML + CSS + JavaScript modular nativo
+- Bootstrap 5
+- Supabase Auth, Database y Storage
+- Vitest para pruebas unitarias ligeras
+- Vercel para deploy estatico + `api/config`
 
-## 🗄️ Base de datos
-Tabla `productos`:
-- `id`
-- `nombre`
-- `descripcion`
-- `precio`
-- `imagen_url`
-- `categoria`
+## Arquitectura
 
-Nota: en este proyecto también se usan campos de soporte como `created_at` y `updated_at`.
+La app usa una sola fuente de verdad en `js/`:
 
-## 🎨 Diseño
-Colores principales:
-- `#C86B4A`
-- `#F5E8DA`
-- `#2B2B2B`
-
-Tipografía:
-- Cormorant Garamond
-- Noto Sans
-
-## ⚙️ Instalación
-1. Clonar repositorio:
-   ```bash
-   git clone https://github.com/CarlosFigueroaPicado/stain-the-canvas.git
-   ```
-2. Entrar al proyecto:
-   ```bash
-   cd stain-the-canvas
-   ```
-3. Abrir `index.html` en el navegador.
-
-## 🔗 Integración Supabase
-Este proyecto utiliza Supabase para base de datos, autenticación del panel admin y almacenamiento de imágenes.
-
-Configura en `js/supabase.js`:
-- `SUPABASE_URL`: URL del proyecto Supabase
-- `SUPABASE_ANON_KEY`: clave pública `anon/publishable`
-- `SUPABASE_BUCKET`: bucket de imágenes (`productos`)
-
-### Seguridad de claves
-- `SUPABASE_ANON_KEY` es pública por diseño en apps frontend.
-- Nunca uses `service_role` ni `sb_secret` en cliente web.
-- La seguridad real se aplica con RLS/policies en base de datos y Storage.
-
-### Usuario administrador
-1. Crea un usuario en **Supabase Auth > Users**.
-2. Usa ese correo y contraseña en `login.html`.
-3. Aplica `supabase/setup.sql` para que solo usuarios autenticados puedan escribir.
-
-### Bucket PRODUCTOS
-Debes crear un bucket público llamado `productos` (PRODUCTOS) en Supabase Storage para servir imágenes del catálogo.
-
-## 📸 Funcionalidad de imágenes
-- Upload de imágenes a Supabase Storage desde el panel admin.
-- Obtención de URL pública para persistirla en `imagen_url`.
-- Renderizado automático de la imagen en catálogo y detalle en modal.
-
-## 📁 Estructura del proyecto
 ```text
-.
-├── admin.html
-├── catalogo.html
-├── index.html
-├── login.html
-├── css/
-├── js/
-├── assets/
-└── supabase/
+js/
+  core/
+    config.js
+    result.js
+    store.js
+    supabase-client.js
+  shared/
+    chart-colors.js
+    dashboard-helpers.js
+    product-utils.js
+  modules/
+    auth/
+      api.js
+      service.js
+      ui/
+    analytics/
+      api.js
+      service.js
+    dashboard/
+      api.js
+      service.js
+      ui/
+    products/
+      api.js
+      service.js
+      ui/
 ```
 
-## 👨‍💻 Autor
-Nombre del equipo
+Separacion aplicada:
+
+- `api`: acceso a Supabase
+- `service`: validacion y logica de negocio
+- `ui`: renderizado y eventos del DOM
+- `core`: configuracion, cliente y store global
+- `shared`: helpers puros reutilizables
+
+## Seguridad
+
+- La autenticacion admin usa `supabase.auth.getSession()` y validacion de rol real.
+- El frontend no usa `localStorage` para conceder acceso admin.
+- La seguridad real depende de RLS y policies en `supabase/setup.sql`.
+- El cliente rechaza claves tipo `service_role` o `sb_secret`.
+- Las inserciones de productos validan nombre, precio, descripcion, imagen y `featured`.
+
+## Variables de entorno
+
+Crea tus variables a partir de `.env.example`:
+
+```env
+STC_SUPABASE_URL=https://your-project-ref.supabase.co
+STC_SUPABASE_PUBLISHABLE_KEY=your-public-anon-or-publishable-key
+STC_SUPABASE_BUCKET=productos
+STC_PRODUCTS_TABLE=productos
+STC_WHATSAPP_NUMBER=50589187562
+```
+
+`api/config.js` expone solo configuracion publica. Tambien acepta `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` como fallback para compatibilidad local.
+
+## Supabase
+
+Aplica `supabase/setup.sql` en el SQL Editor. Ese script crea:
+
+- `productos` con soporte para `gallery_urls` y `featured`
+- `visitas` y `eventos` para analitica
+- `admin_users` para control de acceso
+- RLS, policies y triggers de rate limit basicos
+- RPC `get_dashboard_metrics`
+
+Para crear un admin:
+
+1. Crea el usuario en Supabase Auth.
+2. Marca `app_metadata.role = "admin"` o registra su `user_id` en `admin_users`.
+3. Inicia sesion desde `login.html`.
+
+## Desarrollo
+
+Para correr pruebas:
+
+```bash
+pnpm test:ci
+```
+
+Para desarrollo local con variables de Vercel, usa `vercel dev` o cualquier servidor estatico que tambien sirva `api/config`.
+
+## Deploy en Vercel
+
+- `vercel.json` agrega headers de seguridad y CSP.
+- `api/config.js` entrega la configuracion publica de Supabase.
+- Las paginas consumen `/api/config`, asi que no dependen de valores hardcodeados.
+
+## Notas
+
+- Los productos destacados del home salen de base de datos usando el campo `featured`.
+- Si no hay productos destacados, el home usa los productos mas recientes cargados.
+- El store global centraliza `user` y `products` para evitar llamadas duplicadas.

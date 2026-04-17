@@ -8,7 +8,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["src/modules/products/**/*.js", "src/styles/chartColors.js"]
+      include: ["js/modules/products/**/*.js", "js/shared/product-utils.js", "js/shared/chart-colors.js"]
     }
   }
 });

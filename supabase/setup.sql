@@ -15,6 +15,7 @@ create table if not exists public.productos (
   precio numeric(10,2) not null default 0 check (precio >= 0),
   imagen_url text,
   gallery_urls jsonb not null default '[]'::jsonb,
+  featured boolean not null default false,
   vistas integer not null default 0,
   clicks integer not null default 0,
   created_at timestamptz not null default now(),
@@ -23,6 +24,7 @@ create table if not exists public.productos (
 
 alter table public.productos
   add column if not exists gallery_urls jsonb not null default '[]'::jsonb,
+  add column if not exists featured boolean not null default false,
   add column if not exists created_at timestamptz not null default now(),
   add column if not exists updated_at timestamptz not null default now(),
   add column if not exists vistas integer not null default 0,
@@ -80,6 +82,7 @@ create table if not exists public.admin_users (
 create index if not exists idx_visitas_fecha on public.visitas (fecha desc);
 create index if not exists idx_visitas_session_id on public.visitas (session_id);
 create index if not exists idx_visitas_session_fecha on public.visitas (session_id, fecha desc);
+create index if not exists idx_productos_featured_created_at on public.productos (featured desc, created_at desc);
 create index if not exists idx_eventos_tipo_fecha on public.eventos (tipo, fecha desc);
 create index if not exists idx_eventos_producto_id on public.eventos (producto_id);
 create index if not exists idx_eventos_categoria on public.eventos (categoria);

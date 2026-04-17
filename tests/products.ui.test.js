@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { shouldUseCarousel } from "../src/modules/products/products.ui.js";
+import { describe, expect, it } from "vitest";
+import { shouldUseCarousel } from "../js/modules/products/ui/shared.js";
 
 describe("products.ui", () => {
   it("entrada null -> false", () => {
