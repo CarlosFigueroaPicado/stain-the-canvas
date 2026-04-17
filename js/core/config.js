@@ -1,6 +1,9 @@
 import { fail, ok } from "./result.js";
 
 const DEFAULT_CONFIG = Object.freeze({
+  url: "https://mmfpivsfjolohoowhgit.supabase.co",
+  anonKey:
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tZnBpdnNmam9sb2hvb3doZ2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjQ3MTAsImV4cCI6MjA5MTE0MDcxMH0.7eIIhxG3tfZTGQ2DB8kA-OHl86NYZfQfaV0cGjemu6w",
   bucket: "productos",
   productsTable: "productos",
   whatsappNumber: "50589187562"
@@ -28,31 +31,51 @@ function normalizeConfig(source) {
 }
 
 async function fetchRemoteConfig() {
-  const response = await fetch("/api/config", {
-    method: "GET",
-    headers: {
-      Accept: "application/json"
-    },
-    cache: "no-store"
-  });
+  const endpointCandidates = [
+    "/api/config",
+    "/api/config/",
+    "./api/config",
+    "./api/config/"
+  ];
+  const failures = [];
 
-  if (!response.ok) {
-    let details = "";
+  for (let index = 0; index < endpointCandidates.length; index += 1) {
+    const endpoint = endpointCandidates[index];
+
     try {
-      const body = await response.json();
-      details = String(body.message || body.error || "").trim();
-    } catch {
-      try {
-        details = String(await response.text()).trim();
-      } catch {
-        details = "";
-      }
-    }
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+          Accept: "application/json"
+        },
+        cache: "no-store"
+      });
 
-    throw new Error(details ? `config_http_${response.status}:${details}` : `config_http_${response.status}`);
+      if (!response.ok) {
+        let details = "";
+        try {
+          const body = await response.json();
+          details = String(body.message || body.error || "").trim();
+        } catch {
+          try {
+            details = String(await response.text()).trim();
+          } catch {
+            details = "";
+          }
+        }
+
+        failures.push(`${endpoint}:config_http_${response.status}${details ? `:${details}` : ""}`);
+        continue;
+      }
+
+      return response.json();
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error || "error_desconocido");
+      failures.push(`${endpoint}:${reason}`);
+    }
   }
 
-  return response.json();
+  throw new Error(failures.join(" | "));
 }
 
 export function getAppConfigSync() {
@@ -79,6 +102,14 @@ export async function loadAppConfig() {
       return ok(cachedConfig);
     }
 
+    const fromDefaults = normalizeConfig(DEFAULT_CONFIG);
+    if (fromDefaults.url && fromDefaults.anonKey) {
+      cachedConfig = fromDefaults;
+      return ok(cachedConfig);
+    }
+
+    let remoteErrorReason = "";
+
     try {
       const remote = normalizeConfig(await fetchRemoteConfig());
       if (remote.url && remote.anonKey) {
@@ -88,8 +119,7 @@ export async function loadAppConfig() {
       }
     } catch (error) {
       console.warn("No se pudo cargar /api/config:", error);
-      const reason = error instanceof Error ? error.message : String(error || "error_desconocido");
-      return fail(`No se pudo cargar /api/config (${reason}).`);
+      remoteErrorReason = error instanceof Error ? error.message : String(error || "error_desconocido");
     }
 
     const fallback = normalizeConfig(globalThis.__STC_CONFIG__ || {});
@@ -98,7 +128,11 @@ export async function loadAppConfig() {
       return ok(cachedConfig);
     }
 
-    return fail("No se encontro configuracion publica de Supabase. Define variables en Vercel o window.__STC_CONFIG__.");
+    return fail(
+      remoteErrorReason
+        ? `No se pudo cargar /api/config (${remoteErrorReason}) y no hay fallback de configuracion publica.`
+        : "No se encontro configuracion publica de Supabase. Define variables en Vercel o window.__STC_CONFIG__."
+    );
   })().finally(() => {
     loadingPromise = null;
   });
