@@ -1,6 +1,15 @@
 import { loadAppConfig } from "./config.js";
 
 let cachedClient = null;
+let lastSupabaseClientError = "";
+
+function setClientError(message) {
+  lastSupabaseClientError = String(message || "").trim();
+}
+
+export function getLastSupabaseClientError() {
+  return lastSupabaseClientError;
+}
 
 function isUnsafeKey(value) {
   const key = String(value || "").trim();
@@ -14,24 +23,28 @@ export async function getSupabaseClient() {
 
   const configResult = await loadAppConfig();
   if (!configResult.success) {
-    console.error(configResult.error);
+    setClientError(configResult.error || "No se pudo cargar la configuracion publica de Supabase.");
+    console.error(lastSupabaseClientError);
     return null;
   }
 
   const sdk = globalThis.supabase;
   if (!sdk || typeof sdk.createClient !== "function") {
-    console.error("Supabase SDK no se cargo correctamente.");
+    setClientError("No se pudo cargar el SDK de Supabase desde el CDN. Verifica bloqueo de red/CSP.");
+    console.error(lastSupabaseClientError);
     return null;
   }
 
   const config = configResult.data;
   if (!config.url || !config.anonKey) {
-    console.error("La configuracion publica de Supabase esta incompleta.");
+    setClientError("La configuracion publica de Supabase esta incompleta (falta URL o anon key).");
+    console.error(lastSupabaseClientError);
     return null;
   }
 
   if (isUnsafeKey(config.anonKey)) {
-    console.error("La clave configurada parece secreta. Usa una publishable key o anon key publica.");
+    setClientError("La clave configurada parece secreta. Usa una publishable key o anon key publica.");
+    console.error(lastSupabaseClientError);
     return null;
   }
 
@@ -42,6 +55,7 @@ export async function getSupabaseClient() {
       detectSessionInUrl: true
     }
   });
+  setClientError("");
 
   return cachedClient;
 }

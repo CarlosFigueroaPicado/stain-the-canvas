@@ -1,13 +1,15 @@
 import * as authApi from "./api.js";
 import { fail, ok } from "../../core/result.js";
 import { getState, setState } from "../../core/store.js";
+import { getLastSupabaseClientError } from "../../core/supabase-client.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function mapAuthErrorMessage(errorMessage) {
   const message = String(errorMessage || "").trim().toLowerCase();
   if (message === "no_client" || message === "no client") {
-    return "No se pudo inicializar la conexion con Supabase. Verifica la configuracion publica (URL y anon key).";
+    const detailed = getLastSupabaseClientError();
+    return detailed || "No se pudo inicializar la conexion con Supabase. Verifica la configuracion publica (URL y anon key).";
   }
 
   return String(errorMessage || "No se pudo iniciar sesion.");

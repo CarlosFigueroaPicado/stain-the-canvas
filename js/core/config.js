@@ -37,7 +37,19 @@ async function fetchRemoteConfig() {
   });
 
   if (!response.ok) {
-    throw new Error(`config_http_${response.status}`);
+    let details = "";
+    try {
+      const body = await response.json();
+      details = String(body.message || body.error || "").trim();
+    } catch {
+      try {
+        details = String(await response.text()).trim();
+      } catch {
+        details = "";
+      }
+    }
+
+    throw new Error(details ? `config_http_${response.status}:${details}` : `config_http_${response.status}`);
   }
 
   return response.json();
@@ -76,6 +88,8 @@ export async function loadAppConfig() {
       }
     } catch (error) {
       console.warn("No se pudo cargar /api/config:", error);
+      const reason = error instanceof Error ? error.message : String(error || "error_desconocido");
+      return fail(`No se pudo cargar /api/config (${reason}).`);
     }
 
     const fallback = normalizeConfig(globalThis.__STC_CONFIG__ || {});
@@ -84,9 +98,7 @@ export async function loadAppConfig() {
       return ok(cachedConfig);
     }
 
-    return fail(
-      "No se encontro configuracion publica de Supabase. Define variables de entorno en Vercel o window.__STC_CONFIG__."
-    );
+    return fail("No se encontro configuracion publica de Supabase. Define variables en Vercel o window.__STC_CONFIG__.");
   })().finally(() => {
     loadingPromise = null;
   });
