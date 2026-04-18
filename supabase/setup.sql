@@ -83,6 +83,7 @@ create index if not exists idx_visitas_fecha on public.visitas (fecha desc);
 create index if not exists idx_visitas_session_id on public.visitas (session_id);
 create index if not exists idx_visitas_session_fecha on public.visitas (session_id, fecha desc);
 create index if not exists idx_productos_featured_created_at on public.productos (featured desc, created_at desc);
+create index if not exists idx_productos_gallery_urls_gin on public.productos using gin (gallery_urls jsonb_path_ops);
 create index if not exists idx_eventos_tipo_fecha on public.eventos (tipo, fecha desc);
 create index if not exists idx_eventos_producto_id on public.eventos (producto_id);
 create index if not exists idx_eventos_categoria on public.eventos (categoria);

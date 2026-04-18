@@ -9,6 +9,15 @@ export async function getSession() {
   return client.auth.getSession();
 }
 
+export async function getUser() {
+  const client = await getSupabaseClient();
+  if (!client) {
+    return { data: { user: null }, error: { message: "no_client" } };
+  }
+
+  return client.auth.getUser();
+}
+
 export async function signInWithPassword(email, password) {
   const client = await getSupabaseClient();
   if (!client) {

@@ -27,6 +27,24 @@ function getSessionUser(sessionResult) {
 }
 
 async function hasAdminAccess(user) {
+  if (!user || !user.id) {
+    return false;
+  }
+
+  // Prioriza validacion en tabla para evitar depender solo de claims potencialmente desactualizados.
+  try {
+    const membershipResult = await authApi.getAdminMembership(user.id);
+    if (!membershipResult.error && membershipResult.data) {
+      return true;
+    }
+
+    if (membershipResult.error) {
+      console.error("No se pudo validar membresia admin_users:", membershipResult.error);
+    }
+  } catch (error) {
+    console.error("Error consultando admin_users:", error);
+  }
+
   const appMeta = user && user.app_metadata ? user.app_metadata : {};
   const role = String(appMeta.role || "").toLowerCase();
   const isAdmin = appMeta.is_admin === true || String(appMeta.is_admin || "").toLowerCase() === "true";
@@ -35,22 +53,7 @@ async function hasAdminAccess(user) {
     return true;
   }
 
-  if (!user || !user.id) {
-    return false;
-  }
-
-  try {
-    const membershipResult = await authApi.getAdminMembership(user.id);
-    if (membershipResult.error) {
-      console.error("No se pudo validar membresia admin_users:", membershipResult.error);
-      return false;
-    }
-
-    return Boolean(membershipResult.data);
-  } catch (error) {
-    console.error("Error consultando admin_users:", error);
-    return false;
-  }
+  return false;
 }
 
 export function getRedirectTarget(defaultTarget) {
@@ -72,14 +75,20 @@ export async function resolveCurrentUser() {
       return fail("No se pudo conectar con Supabase.");
     }
 
-    const sessionUser = getSessionUser(sessionResult);
-    if (!sessionUser || !(await hasAdminAccess(sessionUser))) {
+    // getUser consulta Auth y ayuda a reducir decisiones basadas en datos stale del cliente.
+    const userResult = await authApi.getUser();
+    const resolvedUser =
+      !userResult.error && userResult.data && userResult.data.user
+        ? userResult.data.user
+        : getSessionUser(sessionResult);
+
+    if (!resolvedUser || !(await hasAdminAccess(resolvedUser))) {
       setState({ user: null });
       return ok(null);
     }
 
-    setState({ user: sessionUser });
-    return ok(sessionUser);
+    setState({ user: resolvedUser });
+    return ok(resolvedUser);
   } catch (error) {
     console.error("No se pudo resolver la sesion actual:", error);
     setState({ user: null });
