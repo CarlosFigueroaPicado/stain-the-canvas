@@ -121,6 +121,21 @@ h3 {
   border-radius: 999px;
   font-size: 0.85rem;
   padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.category-chip:hover,
+.category-chip:focus-visible {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 0.18rem rgba(200, 107, 74, 0.18);
+  outline: none;
+}
+
+.category-chip.active {
+  background: var(--brand-primary);
+  color: #fff;
+  border-color: var(--brand-primary);
 }
 
 .category-filter.active {

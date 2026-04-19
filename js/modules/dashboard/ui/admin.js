@@ -2,6 +2,7 @@ import { loadDashboardMetrics } from "../service.js";
 import { formatNumber, formatPercent } from "../../analytics/service.js";
 import { escapeHtml } from "../../../shared/product-utils.js";
 import * as chartColors from "../../../shared/chart-colors.js";
+import { getSupabaseClient } from "../../../core/supabase-client.js";
 
 const refs = {
   section: null,
@@ -12,6 +13,7 @@ const refs = {
   kpiClicks: null,
   kpiConversion: null,
   topTableBody: null,
+  topWhatsappTableBody: null,
   emptyState: null,
   lineCanvas: null,
   barCanvas: null,
@@ -25,6 +27,14 @@ const chartState = {
 };
 
 let initialized = false;
+const liveState = {
+  started: false,
+  client: null,
+  channel: null,
+  refreshTimerId: null,
+  pollingIntervalId: null,
+  isRefreshing: false
+};
 
 function showStatus(message, kind) {
   refs.status.className = kind === "danger" ? "alert alert-danger mb-4" : "alert alert-brand-subtle mb-4";
@@ -54,6 +64,7 @@ function cacheRefs() {
   refs.kpiClicks = document.getElementById("kpiTotalClicks");
   refs.kpiConversion = document.getElementById("kpiConversion");
   refs.topTableBody = document.getElementById("dashboardTopProductosBody");
+  refs.topWhatsappTableBody = document.getElementById("dashboardTopWhatsappBody");
   refs.emptyState = document.getElementById("dashboardEmptyState");
   refs.lineCanvas = document.getElementById("chartVisitas");
   refs.barCanvas = document.getElementById("chartTopProductos");
@@ -180,8 +191,119 @@ function renderTopTable(rows) {
     .join("");
 }
 
+function renderTopWhatsappTable(rows) {
+  if (!rows.length) {
+    refs.topWhatsappTableBody.innerHTML = `
+      <tr>
+        <td colspan="4" class="text-center text-muted-brand py-4">No hay clics de WhatsApp todavia.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  refs.topWhatsappTableBody.innerHTML = rows
+    .slice(0, 10)
+    .map((item, index) => {
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeHtml(item.nombre)}</td>
+          <td>${escapeHtml(item.categoria)}</td>
+          <td>${formatNumber(item.clicks)}</td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
 function toggleEmptyState(shouldShow) {
   refs.emptyState.classList.toggle("d-none", !shouldShow);
+}
+
+async function refreshDashboard(options = {}) {
+  const config = options && typeof options === "object" ? options : {};
+  const silent = config.silent === true;
+
+  if (!silent) {
+    showStatus("Cargando metricas del dashboard...", "info");
+  }
+
+  try {
+    destroyCharts();
+    const result = await loadDashboardMetrics(90);
+    if (!result.success) {
+      showStatus(`Error al cargar dashboard: ${result.error}`, "danger");
+      toggleEmptyState(true);
+      return;
+    }
+
+    const data = result.data;
+    renderKpis(data.totals);
+    renderLineChart(data.visitSeries);
+    renderBarChart(data.topProducts);
+    renderDoughnutChart(data.byCategory);
+    renderTopTable(data.topProducts);
+    renderTopWhatsappTable(data.topWhatsappProducts || []);
+    refs.updatedAt.textContent = `Actualizado: ${new Date().toLocaleString("es-NI")}`;
+    toggleEmptyState(data.totals.totalVisitas + data.totals.totalVistas + data.totals.totalClicks === 0);
+    hideStatus();
+  } catch (error) {
+    destroyCharts();
+    console.error("No se pudo cargar dashboard:", error);
+    showStatus(`Error al cargar dashboard: ${error.message || "Error inesperado."}`, "danger");
+    toggleEmptyState(true);
+  }
+}
+
+function scheduleRealtimeRefresh() {
+  if (liveState.refreshTimerId) {
+    clearTimeout(liveState.refreshTimerId);
+  }
+
+  liveState.refreshTimerId = setTimeout(async () => {
+    if (liveState.isRefreshing) {
+      return;
+    }
+
+    liveState.isRefreshing = true;
+    try {
+      await refreshDashboard({ silent: true });
+    } finally {
+      liveState.isRefreshing = false;
+    }
+  }, 450);
+}
+
+async function ensureRealtimeDashboard() {
+  if (liveState.started) {
+    return;
+  }
+
+  liveState.started = true;
+  liveState.client = await getSupabaseClient();
+  if (!liveState.client) {
+    return;
+  }
+
+  liveState.channel = liveState.client
+    .channel("admin-dashboard-live")
+    .on("postgres_changes", { event: "*", schema: "public", table: "visitas" }, scheduleRealtimeRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "eventos" }, scheduleRealtimeRefresh)
+    .on("postgres_changes", { event: "*", schema: "public", table: "productos" }, scheduleRealtimeRefresh)
+    .subscribe();
+
+  if (!liveState.pollingIntervalId) {
+    liveState.pollingIntervalId = globalThis.setInterval(() => {
+      scheduleRealtimeRefresh();
+    }, 30000);
+  }
+
+  globalThis.addEventListener("focus", scheduleRealtimeRefresh, { passive: true });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      scheduleRealtimeRefresh();
+    }
+  });
 }
 
 export function initDashboardAdminUI() {
@@ -208,30 +330,8 @@ export async function openDashboardAdmin() {
     return;
   }
 
-  showStatus("Cargando metricas del dashboard...", "info");
-
-  try {
-    destroyCharts();
-    const result = await loadDashboardMetrics(90);
-    if (!result.success) {
-      showStatus(`Error al cargar dashboard: ${result.error}`, "danger");
-      toggleEmptyState(true);
-      return;
-    }
-
-    const data = result.data;
-    renderKpis(data.totals);
-    renderLineChart(data.visitSeries);
-    renderBarChart(data.topProducts);
-    renderDoughnutChart(data.byCategory);
-    renderTopTable(data.topProducts);
-    refs.updatedAt.textContent = `Actualizado: ${new Date().toLocaleString("es-NI")}`;
-    toggleEmptyState(data.totals.totalVisitas + data.totals.totalVistas + data.totals.totalClicks === 0);
-    hideStatus();
-  } catch (error) {
-    destroyCharts();
-    console.error("No se pudo cargar dashboard:", error);
-    showStatus(`Error al cargar dashboard: ${error.message || "Error inesperado."}`, "danger");
-    toggleEmptyState(true);
-  }
+  await refreshDashboard({ silent: false });
+  ensureRealtimeDashboard().catch((error) => {
+    console.error("No se pudo inicializar dashboard en tiempo real:", error);
+  });
 }

@@ -165,19 +165,40 @@
           </div>
 
           <article class="admin-card p-4">
-            <h3 class="h4 mb-3">Tabla de top productos</h3>
-            <div class="table-responsive">
-              <table class="table align-middle dashboard-table mb-0">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Producto</th>
-                    <th>Categoria</th>
-                    <th>Vistas</th>
-                  </tr>
-                </thead>
-                <tbody id="dashboardTopProductosBody"></tbody>
-              </table>
+            <h3 class="h4 mb-3">Tablas de top productos</h3>
+            <div class="row g-4">
+              <div class="col-12 col-xl-6">
+                <h4 class="h6 text-uppercase letter-space text-muted-brand mb-2">Mas vistos</h4>
+                <div class="table-responsive">
+                  <table class="table align-middle dashboard-table mb-0">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th>Categoria</th>
+                        <th>Vistas</th>
+                      </tr>
+                    </thead>
+                    <tbody id="dashboardTopProductosBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="col-12 col-xl-6">
+                <h4 class="h6 text-uppercase letter-space text-muted-brand mb-2">Mas clic en WhatsApp</h4>
+                <div class="table-responsive">
+                  <table class="table align-middle dashboard-table mb-0">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th>Categoria</th>
+                        <th>Clicks</th>
+                      </tr>
+                    </thead>
+                    <tbody id="dashboardTopWhatsappBody"></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
             <div id="dashboardEmptyState" class="alert alert-brand-subtle mt-3 d-none" role="status">
               Aun no hay datos suficientes para analitica.

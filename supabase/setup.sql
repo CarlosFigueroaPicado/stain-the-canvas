@@ -79,6 +79,8 @@ create table if not exists public.admin_users (
   created_at timestamptz not null default now()
 );
 
+create schema if not exists private;
+
 create index if not exists idx_visitas_fecha on public.visitas (fecha desc);
 create index if not exists idx_visitas_session_id on public.visitas (session_id);
 create index if not exists idx_visitas_session_fecha on public.visitas (session_id, fecha desc);
@@ -306,6 +308,38 @@ create trigger trg_guard_eventos_insert
 before insert on public.eventos
 for each row execute function public.guard_eventos_insert();
 
+create or replace function private.sync_product_metrics_from_event()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if new.producto_id is null then
+    return new;
+  end if;
+
+  if new.tipo = 'view_producto' then
+    update public.productos
+    set vistas = vistas + 1
+    where id = new.producto_id;
+  elsif new.tipo = 'click_whatsapp' then
+    update public.productos
+    set clicks = clicks + 1
+    where id = new.producto_id;
+  end if;
+
+  return new;
+end;
+$$;
+
+revoke all on function private.sync_product_metrics_from_event() from public;
+
+drop trigger if exists trg_sync_product_metrics_on_event on public.eventos;
+create trigger trg_sync_product_metrics_on_event
+after insert on public.eventos
+for each row execute function private.sync_product_metrics_from_event();
+
 create or replace function public.get_dashboard_metrics(p_days integer default 90)
 returns jsonb
 language sql
@@ -331,7 +365,7 @@ totales as (
   select
     (select count(*) from visitas_src) as total_visitas,
     (select count(*) from eventos_src where tipo = 'view_producto') as total_vistas,
-    (select count(*) from eventos_src where tipo = 'click_whatsapp') as total_clicks
+    (select count(*) from eventos_src where tipo = 'click_whatsapp' and producto_id is not null) as total_clicks
 ),
 visitas_serie as (
   select
@@ -353,6 +387,20 @@ top_productos as (
     and es.producto_id is not null
   group by es.producto_id, nombre, categoria
   order by vistas desc
+  limit 10
+),
+top_productos_whatsapp as (
+  select
+    es.producto_id,
+    coalesce(p.nombre, concat('Producto ', left(es.producto_id::text, 8))) as nombre,
+    coalesce(nullif(p.categoria, ''), nullif(es.categoria, ''), 'Sin categoria') as categoria,
+    count(*)::int as clicks
+  from eventos_src es
+  left join public.productos p on p.id = es.producto_id
+  where es.tipo = 'click_whatsapp'
+    and es.producto_id is not null
+  group by es.producto_id, nombre, categoria
+  order by clicks desc
   limit 10
 ),
 categorias as (
@@ -392,6 +440,21 @@ select jsonb_build_object(
         order by vistas desc
       )
       from top_productos
+    ),
+    '[]'::jsonb
+  ),
+  'topWhatsappProducts', coalesce(
+    (
+      select jsonb_agg(
+        jsonb_build_object(
+          'id', producto_id,
+          'nombre', nombre,
+          'categoria', categoria,
+          'clicks', clicks
+        )
+        order by clicks desc
+      )
+      from top_productos_whatsapp
     ),
     '[]'::jsonb
   ),

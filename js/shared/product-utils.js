@@ -237,6 +237,8 @@ export function normalizeProduct(row) {
   const galleryUrls = getProductGalleryUrls(safeRow);
   const createdAt = String(pickFirst(safeRow, ["created_at", "fecha_creacion"], ""));
   const featured = toBoolean(pickFirst(safeRow, ["featured", "destacado"], false));
+  const clicks = Number.parseInt(String(pickFirst(safeRow, ["clicks"], 0)), 10);
+  const vistas = Number.parseInt(String(pickFirst(safeRow, ["vistas"], 0)), 10);
 
   return {
     id,
@@ -248,6 +250,8 @@ export function normalizeProduct(row) {
     galleryUrls: galleryUrls.length > 0 ? galleryUrls : imagenUrl ? [imagenUrl] : [],
     createdAt,
     featured,
+    clicks: Number.isFinite(clicks) ? clicks : 0,
+    vistas: Number.isFinite(vistas) ? vistas : 0,
     raw: safeRow
   };
 }

@@ -42,6 +42,25 @@ export async function countEventByType(tipo, sinceIso) {
   return query;
 }
 
+export async function countWhatsappClicksByProduct(sinceIso) {
+  const client = await getSupabaseClient();
+  if (!client) {
+    return { count: 0, error: { message: "no_client" } };
+  }
+
+  let query = client
+    .from("eventos")
+    .select("id", { count: "exact", head: true })
+    .eq("tipo", "click_whatsapp")
+    .not("producto_id", "is", null);
+
+  if (sinceIso) {
+    query = query.gte("fecha", sinceIso);
+  }
+
+  return query;
+}
+
 export async function fetchVisitasRange(from, to, sinceIso) {
   const client = await getSupabaseClient();
   if (!client) {
@@ -66,6 +85,25 @@ export async function fetchViewsRange(from, to, sinceIso) {
     .from("eventos")
     .select("producto_id,categoria,fecha")
     .eq("tipo", "view_producto")
+    .order("fecha", { ascending: true });
+
+  if (sinceIso) {
+    query = query.gte("fecha", sinceIso);
+  }
+
+  return query.range(from, to);
+}
+
+export async function fetchWhatsappClicksRange(from, to, sinceIso) {
+  const client = await getSupabaseClient();
+  if (!client) {
+    return { data: [], error: { message: "no_client" } };
+  }
+
+  let query = client
+    .from("eventos")
+    .select("producto_id,categoria,fecha")
+    .eq("tipo", "click_whatsapp")
     .order("fecha", { ascending: true });
 
   if (sinceIso) {

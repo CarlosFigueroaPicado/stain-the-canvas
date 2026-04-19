@@ -4,18 +4,27 @@ import { buildWhatsappLink, escapeHtml, formatCurrency, getProductImageUrls } fr
 import { trackEvent, trackVisit } from "../../analytics/service.js";
 import { loadAppConfig } from "../../../core/config.js";
 
-function pickHomeProducts(products) {
+function pickHomeProductsSource(products) {
   const source = Array.isArray(products) ? products : [];
+  const rankedByClicks = source
+    .filter((product) => Number(product && product.clicks) > 0)
+    .sort((a, b) => Number(b.clicks || 0) - Number(a.clicks || 0));
+
+  if (rankedByClicks.length > 0) {
+    return rankedByClicks;
+  }
+
   const featured = source.filter((product) => product.featured);
-  return (featured.length ? featured : source).slice(0, 3);
+  return featured.length ? featured : source;
 }
 
 export function initHomeProductsUI() {
   const gridEl = document.getElementById("homeFeaturedGrid");
   const statusEl = document.getElementById("homeFeaturedStatus");
   const modalEl = document.getElementById("homeProductModal");
+  const categoryFiltersEl = document.getElementById("homeCategoryFilters");
 
-  if (!gridEl || !statusEl || !modalEl) {
+  if (!gridEl || !statusEl || !modalEl || !categoryFiltersEl) {
     return;
   }
 
@@ -31,10 +40,12 @@ export function initHomeProductsUI() {
   };
 
   const state = {
+    products: [],
     cards: [],
     activeProduct: null,
     modalImages: [],
-    modalImageIndex: 0
+    modalImageIndex: 0,
+    activeCategory: "Todos"
   };
 
   const productModal = new globalThis.bootstrap.Modal(modalEl);
@@ -49,12 +60,41 @@ export function initHomeProductsUI() {
     statusEl.classList.add("d-none");
   }
 
+  function getFilteredHomeProducts() {
+    const source = pickHomeProductsSource(state.products);
+    const byCategory =
+      state.activeCategory === "Todos"
+        ? source
+        : source.filter((product) => product.categoria === state.activeCategory);
+
+    return byCategory.slice(0, 3);
+  }
+
+  function renderCategoryFilters() {
+    const fixedCategories = ["Bisuteria", "Pinatas", "Arreglos", "Decoraciones"];
+    const dynamicCategories = pickHomeProductsSource(state.products).map((product) => product.categoria).filter(Boolean);
+    const categories = Array.from(new Set(["Todos", ...fixedCategories, ...dynamicCategories]));
+
+    categoryFiltersEl.innerHTML = categories
+      .map((category) => {
+        const isActive = category === state.activeCategory;
+        const activeClass = isActive ? "active" : "";
+        const ariaPressed = isActive ? "true" : "false";
+        return `<button type="button" class="category-chip ${activeClass}" data-category="${escapeHtml(category)}" aria-pressed="${ariaPressed}">${escapeHtml(category)}</button>`;
+      })
+      .join("");
+  }
+
   function renderCards(products) {
     state.cards = Array.isArray(products) ? products : [];
 
     if (!state.cards.length) {
       gridEl.innerHTML = "";
-      setStatus("Aun no hay productos publicados para mostrar en inicio.", "danger");
+      const statusMessage =
+        state.activeCategory === "Todos"
+          ? "Aun no hay productos publicados para mostrar en inicio."
+          : `No hay productos destacados en la categoria ${state.activeCategory}.`;
+      setStatus(statusMessage, "danger");
       return;
     }
 
@@ -120,8 +160,12 @@ export function initHomeProductsUI() {
   }
 
   function bindGlobalWhatsappTracking() {
-    const topWhatsappBtn = document.getElementById("homeTopWhatsappBtn");
-    if (!topWhatsappBtn) {
+    const whatsappButtons = [
+      document.getElementById("homeTopWhatsappBtn"),
+      document.getElementById("homeIdeaWhatsappBtn")
+    ].filter(Boolean);
+
+    if (!whatsappButtons.length) {
       return;
     }
 
@@ -132,22 +176,40 @@ export function initHomeProductsUI() {
         }
 
         const text = encodeURIComponent("Hola, quiero informacion de sus productos");
-        topWhatsappBtn.href = `https://wa.me/${configResult.data.whatsappNumber}?text=${text}`;
+        const link = `https://wa.me/${configResult.data.whatsappNumber}?text=${text}`;
+        whatsappButtons.forEach((button) => {
+          button.href = link;
+        });
       })
       .catch((error) => {
         console.error("No se pudo cargar la configuracion publica para WhatsApp:", error);
       });
 
-    topWhatsappBtn.addEventListener("click", () => {
-      trackEvent({ tipo: "click_whatsapp" });
+    whatsappButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        trackEvent({ tipo: "click_whatsapp" });
+      });
     });
   }
 
   subscribe((nextState) => {
-    renderCards(pickHomeProducts(nextState.products));
+    state.products = Array.isArray(nextState.products) ? nextState.products : [];
+    renderCategoryFilters();
+    renderCards(getFilteredHomeProducts());
   });
 
   bindGlobalWhatsappTracking();
+
+  categoryFiltersEl.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-category]");
+    if (!button) {
+      return;
+    }
+
+    state.activeCategory = button.dataset.category || "Todos";
+    renderCategoryFilters();
+    renderCards(getFilteredHomeProducts());
+  });
 
   gridEl.addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-action='open-modal']");

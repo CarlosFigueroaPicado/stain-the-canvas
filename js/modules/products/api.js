@@ -16,32 +16,53 @@ export async function fetchProducts() {
   }
 
   const table = getTable();
-  let result = await client
-    .from(table)
-    .select("id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at,featured")
-    .order("featured", { ascending: false })
-    .order("created_at", { ascending: false });
+  const attempts = [
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at,featured,clicks,vistas",
+      orders: [
+        ["featured", { ascending: false }],
+        ["created_at", { ascending: false }]
+      ]
+    },
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at,featured",
+      orders: [
+        ["featured", { ascending: false }],
+        ["created_at", { ascending: false }]
+      ]
+    },
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at",
+      orders: [["created_at", { ascending: false }]]
+    },
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,featured",
+      orders: [["featured", { ascending: false }]]
+    },
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls"
+    }
+  ];
 
-  if (result.error) {
-    const message = String(result.error.message || "");
-    const missingCreatedAt = message.includes("created_at");
-    const missingFeatured = message.includes("featured");
+  let lastResult = null;
 
-    if (missingCreatedAt || missingFeatured) {
-      result = await client
-        .from(table)
-        .select("id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at")
-        .order("created_at", { ascending: false });
+  for (let index = 0; index < attempts.length; index += 1) {
+    const attempt = attempts[index];
+    let query = client.from(table).select(attempt.select);
+
+    (attempt.orders || []).forEach(([column, options]) => {
+      query = query.order(column, options);
+    });
+
+    const result = await query;
+    lastResult = result;
+
+    if (!result.error) {
+      return result;
     }
   }
 
-  if (result.error && String(result.error.message || "").includes("created_at")) {
-    result = await client
-      .from(table)
-      .select("id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls");
-  }
-
-  return result;
+  return lastResult || { data: [], error: { message: "No se pudieron cargar productos." } };
 }
 
 export async function insertProduct(payload) {

@@ -72,6 +72,31 @@ function aggregateTopProducts(viewRows, productMap) {
     .sort((a, b) => b.vistas - a.vistas);
 }
 
+function aggregateTopWhatsappProducts(clickRows, productMap) {
+  const counts = new Map();
+
+  (Array.isArray(clickRows) ? clickRows : []).forEach((row) => {
+    const productId = String(row && row.producto_id ? row.producto_id : "").trim();
+    if (!productId) {
+      return;
+    }
+
+    counts.set(productId, (counts.get(productId) || 0) + 1);
+  });
+
+  return Array.from(counts.entries())
+    .map(([id, clicks]) => {
+      const meta = productMap.get(id) || {};
+      return {
+        id,
+        clicks,
+        nombre: meta.nombre || `Producto ${id.slice(0, 8)}`,
+        categoria: meta.categoria || "Sin categoria"
+      };
+    })
+    .sort((a, b) => b.clicks - a.clicks);
+}
+
 function aggregateByCategory(viewRows, productMap) {
   const counts = new Map();
 
@@ -104,6 +129,7 @@ function normalizeRpcPayload(payload) {
     },
     visitSeries: Array.isArray(safePayload.visitSeries) ? safePayload.visitSeries : [],
     topProducts: Array.isArray(safePayload.topProducts) ? safePayload.topProducts : [],
+    topWhatsappProducts: Array.isArray(safePayload.topWhatsappProducts) ? safePayload.topWhatsappProducts : [],
     byCategory: Array.isArray(safePayload.byCategory) ? safePayload.byCategory : []
   };
 }
@@ -137,13 +163,15 @@ export async function loadDashboardMetrics(days = 90) {
     clicksCountResult,
     visitasRowsResult,
     viewRowsResult,
+    clickRowsResult,
     productsResult
   ] = await Promise.all([
     dashboardApi.countVisitas(sinceIso),
     dashboardApi.countEventByType("view_producto", sinceIso),
-    dashboardApi.countEventByType("click_whatsapp", sinceIso),
+    dashboardApi.countWhatsappClicksByProduct(sinceIso),
     fetchPagedRows((from, to) => dashboardApi.fetchVisitasRange(from, to, sinceIso), 1000),
     fetchPagedRows((from, to) => dashboardApi.fetchViewsRange(from, to, sinceIso), 1000),
+    fetchPagedRows((from, to) => dashboardApi.fetchWhatsappClicksRange(from, to, sinceIso), 1000),
     dashboardApi.fetchProductsLite()
   ]);
 
@@ -153,6 +181,7 @@ export async function loadDashboardMetrics(days = 90) {
     clicksCountResult,
     visitasRowsResult,
     viewRowsResult,
+    clickRowsResult,
     productsResult
   ];
 
@@ -171,6 +200,7 @@ export async function loadDashboardMetrics(days = 90) {
   const conversion = totalVistas > 0 ? (totalClicks / totalVistas) * 100 : 0;
   const visitasRows = Array.isArray(visitasRowsResult.data) ? visitasRowsResult.data : [];
   const viewRows = Array.isArray(viewRowsResult.data) ? viewRowsResult.data : [];
+  const clickRows = Array.isArray(clickRowsResult.data) ? clickRowsResult.data : [];
   const productMap = buildProductMap(productsResult.data || []);
 
   return ok({
@@ -182,6 +212,7 @@ export async function loadDashboardMetrics(days = 90) {
     },
     visitSeries: groupByDay(visitasRows, "fecha"),
     topProducts: aggregateTopProducts(viewRows, productMap),
+    topWhatsappProducts: aggregateTopWhatsappProducts(clickRows, productMap),
     byCategory: aggregateByCategory(viewRows, productMap)
   });
 }

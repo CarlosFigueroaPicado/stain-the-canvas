@@ -60,27 +60,38 @@
         <div class="container">
           <div class="row align-items-center g-4 g-lg-5">
             <div class="col-lg-6">
-              <p class="text-uppercase small fw-semibold letter-space mb-2">Catalogo digital</p>
-              <h1 class="display-4 mb-3">Detalles artesanales que cuentan historias</h1>
+              <p class="text-uppercase small fw-semibold letter-space mb-2">Catálogo Digital</p>
+              <h1 class="display-4 mb-3">Cada creación comienza con una idea.</h1>
               <p class="lead mb-4">
-                Descubre bisuteria, pinatas, arreglos y decoraciones organizadas en un solo lugar.
-                Encuentra tu producto y contactanos en segundos.
+                Descubre productos artesanales personalizados: bisutería, piñatas, arreglos y decoraciones hechas a mano según tu estilo y ocasión.
+              </p>
+              <p class="mb-4">
+                Explora nuestras creaciones o cuéntanos tu idea. Nosotros la convertimos en un producto único para ti.
               </p>
               <div class="d-flex flex-wrap gap-3">
                 <a class="btn btn-brand btn-lg rounded-pill px-4" href="catalogo.html">
-                  Ver catalogo
+                  Explora nuestras creaciones
                 </a>
-                <a class="btn btn-outline-brand btn-lg rounded-pill px-4" href="#homeFeaturedGrid">Ver destacados</a>
+                <a
+                  class="btn btn-outline-brand btn-lg rounded-pill px-4"
+                  id="homeIdeaWhatsappBtn"
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Cuentanos tu idea
+                </a>
               </div>
             </div>
             <div class="col-lg-6">
               <div class="hero-card p-4 p-lg-5">
                 <h2 class="h3 mb-3">Colecciones destacadas</h2>
-                <div class="d-flex flex-wrap gap-2 mb-4">
-                  <span class="category-chip">Bisuteria</span>
-                  <span class="category-chip">Pinatas</span>
-                  <span class="category-chip">Arreglos</span>
-                  <span class="category-chip">Decoraciones</span>
+                <div id="homeCategoryFilters" class="d-flex flex-wrap gap-2 mb-4" role="group" aria-label="Filtrar destacados por categoria">
+                  <button type="button" class="category-chip active" data-category="Todos" aria-pressed="true">Todos</button>
+                  <button type="button" class="category-chip" data-category="Bisuteria" aria-pressed="false">Bisuteria</button>
+                  <button type="button" class="category-chip" data-category="Pinatas" aria-pressed="false">Pinatas</button>
+                  <button type="button" class="category-chip" data-category="Arreglos" aria-pressed="false">Arreglos</button>
+                  <button type="button" class="category-chip" data-category="Decoraciones" aria-pressed="false">Decoraciones</button>
                 </div>
                 <p class="mb-0">
                   Un escaparate elegante para impulsar la visibilidad de tu emprendimiento, reducir la
