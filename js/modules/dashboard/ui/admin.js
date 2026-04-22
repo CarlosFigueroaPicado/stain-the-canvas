@@ -12,6 +12,33 @@ const refs = {
   kpiVistas: null,
   kpiClicks: null,
   kpiConversion: null,
+  insightTrafficTitle: null,
+  insightTrafficBody: null,
+  insightFunnelTitle: null,
+  insightFunnelBody: null,
+  insightProductsTitle: null,
+  insightProductsBody: null,
+  insightCategoriesTitle: null,
+  insightCategoriesBody: null,
+  insightWhatsappTitle: null,
+  insightWhatsappBody: null,
+  predictionTrafficTitle: null,
+  predictionTrafficBody: null,
+  predictionTrafficConfidence: null,
+  predictionFunnelTitle: null,
+  predictionFunnelBody: null,
+  predictionFunnelConfidence: null,
+  predictionProductsTitle: null,
+  predictionProductsBody: null,
+  predictionProductsConfidence: null,
+  predictionCategoriesTitle: null,
+  predictionCategoriesBody: null,
+  predictionCategoriesConfidence: null,
+  predictionWhatsappTitle: null,
+  predictionWhatsappBody: null,
+  predictionWhatsappConfidence: null,
+  alertsList: null,
+  recommendationsList: null,
   topTableBody: null,
   topWhatsappTableBody: null,
   emptyState: null,
@@ -63,6 +90,33 @@ function cacheRefs() {
   refs.kpiVistas = document.getElementById("kpiTotalVistas");
   refs.kpiClicks = document.getElementById("kpiTotalClicks");
   refs.kpiConversion = document.getElementById("kpiConversion");
+  refs.insightTrafficTitle = document.getElementById("insightTrafficTitle");
+  refs.insightTrafficBody = document.getElementById("insightTrafficBody");
+  refs.insightFunnelTitle = document.getElementById("insightFunnelTitle");
+  refs.insightFunnelBody = document.getElementById("insightFunnelBody");
+  refs.insightProductsTitle = document.getElementById("insightProductsTitle");
+  refs.insightProductsBody = document.getElementById("insightProductsBody");
+  refs.insightCategoriesTitle = document.getElementById("insightCategoriesTitle");
+  refs.insightCategoriesBody = document.getElementById("insightCategoriesBody");
+  refs.insightWhatsappTitle = document.getElementById("insightWhatsappTitle");
+  refs.insightWhatsappBody = document.getElementById("insightWhatsappBody");
+  refs.predictionTrafficTitle = document.getElementById("predictionTrafficTitle");
+  refs.predictionTrafficBody = document.getElementById("predictionTrafficBody");
+  refs.predictionTrafficConfidence = document.getElementById("predictionTrafficConfidence");
+  refs.predictionFunnelTitle = document.getElementById("predictionFunnelTitle");
+  refs.predictionFunnelBody = document.getElementById("predictionFunnelBody");
+  refs.predictionFunnelConfidence = document.getElementById("predictionFunnelConfidence");
+  refs.predictionProductsTitle = document.getElementById("predictionProductsTitle");
+  refs.predictionProductsBody = document.getElementById("predictionProductsBody");
+  refs.predictionProductsConfidence = document.getElementById("predictionProductsConfidence");
+  refs.predictionCategoriesTitle = document.getElementById("predictionCategoriesTitle");
+  refs.predictionCategoriesBody = document.getElementById("predictionCategoriesBody");
+  refs.predictionCategoriesConfidence = document.getElementById("predictionCategoriesConfidence");
+  refs.predictionWhatsappTitle = document.getElementById("predictionWhatsappTitle");
+  refs.predictionWhatsappBody = document.getElementById("predictionWhatsappBody");
+  refs.predictionWhatsappConfidence = document.getElementById("predictionWhatsappConfidence");
+  refs.alertsList = document.getElementById("dashboardAlertsList");
+  refs.recommendationsList = document.getElementById("dashboardRecommendationsList");
   refs.topTableBody = document.getElementById("dashboardTopProductosBody");
   refs.topWhatsappTableBody = document.getElementById("dashboardTopWhatsappBody");
   refs.emptyState = document.getElementById("dashboardEmptyState");
@@ -89,6 +143,123 @@ function renderKpis(totals) {
   refs.kpiVistas.textContent = formatNumber(totals.totalVistas);
   refs.kpiClicks.textContent = formatNumber(totals.totalClicks);
   refs.kpiConversion.textContent = formatPercent(totals.conversion);
+}
+
+function renderInsights(insights) {
+  const safe = insights && typeof insights === "object" ? insights : {};
+  const traffic = safe.traffic || {};
+  const funnel = safe.funnel || {};
+  const products = safe.products || {};
+  const categories = safe.categories || {};
+  const whatsapp = safe.whatsapp || {};
+
+  refs.insightTrafficTitle.textContent = traffic.title || "Trafico estable";
+  refs.insightTrafficBody.textContent = traffic.body || "Sin datos suficientes para analisis de trafico.";
+
+  refs.insightFunnelTitle.textContent = funnel.title || "Embudo con oportunidad de mejora";
+  refs.insightFunnelBody.textContent = funnel.body || "Sin datos suficientes para analisis de clientes.";
+
+  refs.insightProductsTitle.textContent = products.title || "Producto lider";
+  refs.insightProductsBody.textContent = products.body || "Sin datos suficientes para analisis de productos.";
+
+  refs.insightCategoriesTitle.textContent = categories.title || "Categoria lider";
+  refs.insightCategoriesBody.textContent = categories.body || "Sin datos suficientes para analisis por categoria.";
+
+  refs.insightWhatsappTitle.textContent = whatsapp.title || "Mayor intencion de compra";
+  refs.insightWhatsappBody.textContent = whatsapp.body || "Sin datos suficientes para analisis de WhatsApp.";
+}
+
+function applyConfidenceBadge(element, value) {
+  const safe = String(value || "baja").toLowerCase();
+  const text = safe === "alta" || safe === "media" || safe === "baja" ? safe : "baja";
+  element.textContent = text;
+  element.className = "badge rounded-pill border border-brand-subtle";
+
+  if (text === "alta") {
+    element.classList.add("text-bg-success");
+    return;
+  }
+
+  if (text === "media") {
+    element.classList.add("text-bg-warning");
+    return;
+  }
+
+  element.classList.add("text-bg-light");
+}
+
+function renderPredictions(predictions) {
+  const safe = predictions && typeof predictions === "object" ? predictions : {};
+  const traffic = safe.traffic || {};
+  const funnel = safe.funnel || {};
+  const products = safe.products || {};
+  const categories = safe.categories || {};
+  const whatsapp = safe.whatsapp || {};
+
+  refs.predictionTrafficTitle.textContent = traffic.title || "Prediccion de trafico (7 dias)";
+  refs.predictionTrafficBody.textContent = traffic.body || "Sin datos suficientes para proyectar trafico.";
+  applyConfidenceBadge(refs.predictionTrafficConfidence, traffic.confidence || "baja");
+
+  refs.predictionFunnelTitle.textContent = funnel.title || "Prediccion del embudo de clientes";
+  refs.predictionFunnelBody.textContent = funnel.body || "Sin datos suficientes para proyectar embudo de clientes.";
+  applyConfidenceBadge(refs.predictionFunnelConfidence, funnel.confidence || "baja");
+
+  refs.predictionProductsTitle.textContent = products.title || "Liderazgo de producto";
+  refs.predictionProductsBody.textContent = products.body || "Sin datos suficientes para proyectar producto lider.";
+  applyConfidenceBadge(refs.predictionProductsConfidence, products.confidence || "baja");
+
+  refs.predictionCategoriesTitle.textContent = categories.title || "Liderazgo por categoria";
+  refs.predictionCategoriesBody.textContent = categories.body || "Sin datos suficientes para proyectar categoria lider.";
+  applyConfidenceBadge(refs.predictionCategoriesConfidence, categories.confidence || "baja");
+
+  refs.predictionWhatsappTitle.textContent = whatsapp.title || "Intencion en WhatsApp";
+  refs.predictionWhatsappBody.textContent = whatsapp.body || "Sin datos suficientes para proyectar clics en WhatsApp.";
+  applyConfidenceBadge(refs.predictionWhatsappConfidence, whatsapp.confidence || "baja");
+}
+
+function renderActionPlan(actionPlan) {
+  const safe = actionPlan && typeof actionPlan === "object" ? actionPlan : {};
+  const alerts = Array.isArray(safe.alerts) ? safe.alerts : [];
+  const recommendations = Array.isArray(safe.recommendations) ? safe.recommendations : [];
+
+  if (!alerts.length) {
+    refs.alertsList.innerHTML = `
+      <div class="alert alert-brand-subtle mb-0">Sin alertas criticas en este momento.</div>
+    `;
+  } else {
+    refs.alertsList.innerHTML = alerts
+      .map((item) => {
+        const level = String(item.level || "media").toLowerCase();
+        const css = level === "alta" ? "alert-danger" : level === "media" ? "alert-warning" : "alert-brand-subtle";
+        return `
+          <article class="alert ${css} mb-0">
+            <p class="small text-uppercase letter-space mb-1">Prioridad ${escapeHtml(level)}</p>
+            <h4 class="h6 mb-1">${escapeHtml(item.title || "Alerta")}</h4>
+            <p class="mb-0 small">${escapeHtml(item.detail || "Sin detalle")}</p>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
+  if (!recommendations.length) {
+    refs.recommendationsList.innerHTML = `
+      <div class="alert alert-brand-subtle mb-0">Sin recomendaciones disponibles por falta de datos.</div>
+    `;
+    return;
+  }
+
+  refs.recommendationsList.innerHTML = recommendations
+    .map((item) => {
+      return `
+        <article class="border border-brand-subtle rounded-4 p-3 bg-white">
+          <p class="small text-uppercase letter-space text-muted-brand mb-1">Prioridad ${escapeHtml(String(item.priority || "media"))}</p>
+          <h4 class="h6 mb-1">${escapeHtml(item.title || "Recomendacion")}</h4>
+          <p class="mb-0 small text-muted-brand">${escapeHtml(item.action || "Sin accion sugerida")}</p>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function renderLineChart(series) {
@@ -239,6 +410,9 @@ async function refreshDashboard(options = {}) {
 
     const data = result.data;
     renderKpis(data.totals);
+    renderInsights(data.insights || {});
+    renderPredictions(data.predictions || {});
+    renderActionPlan(data.actionPlan || {});
     renderLineChart(data.visitSeries);
     renderBarChart(data.topProducts);
     renderDoughnutChart(data.byCategory);

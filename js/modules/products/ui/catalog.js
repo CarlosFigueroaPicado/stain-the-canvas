@@ -36,6 +36,16 @@ export function initCatalogProductsUI() {
     next: document.getElementById("modalNextBtn")
   };
 
+  if (Object.values(modalRefs).some((ref) => !ref)) {
+    console.error("Catalogo no pudo inicializarse: faltan elementos del modal de producto.");
+    return;
+  }
+
+  if (!globalThis.bootstrap || !globalThis.bootstrap.Modal) {
+    console.error("Catalogo no pudo inicializarse: Bootstrap Modal no esta disponible.");
+    return;
+  }
+
   const productModal = new globalThis.bootstrap.Modal(modalEl);
   let searchDebounceTimer = null;
 

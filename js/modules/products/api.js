@@ -1,6 +1,8 @@
 import { getAppConfigSync } from "../../core/config.js";
 import { getSupabaseClient } from "../../core/supabase-client.js";
 
+let preferredFetchAttemptIndex = 0;
+
 function getTable() {
   return getAppConfigSync().productsTable || "productos";
 }
@@ -45,9 +47,13 @@ export async function fetchProducts() {
   ];
 
   let lastResult = null;
+  const orderedAttempts = [
+    ...attempts.slice(preferredFetchAttemptIndex),
+    ...attempts.slice(0, preferredFetchAttemptIndex)
+  ];
 
-  for (let index = 0; index < attempts.length; index += 1) {
-    const attempt = attempts[index];
+  for (let index = 0; index < orderedAttempts.length; index += 1) {
+    const attempt = orderedAttempts[index];
     let query = client.from(table).select(attempt.select);
 
     (attempt.orders || []).forEach(([column, options]) => {
@@ -58,6 +64,7 @@ export async function fetchProducts() {
     lastResult = result;
 
     if (!result.error) {
+      preferredFetchAttemptIndex = attempts.findIndex((candidate) => candidate.select === attempt.select);
       return result;
     }
   }

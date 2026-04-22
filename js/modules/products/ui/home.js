@@ -39,6 +39,16 @@ export function initHomeProductsUI() {
     next: document.getElementById("homeModalNextBtn")
   };
 
+  if (Object.values(modalRefs).some((ref) => !ref)) {
+    console.error("Home no pudo inicializarse: faltan elementos del modal de producto.");
+    return;
+  }
+
+  if (!globalThis.bootstrap || !globalThis.bootstrap.Modal) {
+    console.error("Home no pudo inicializarse: Bootstrap Modal no esta disponible.");
+    return;
+  }
+
   const state = {
     products: [],
     cards: [],

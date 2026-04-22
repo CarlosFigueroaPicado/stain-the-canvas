@@ -82,6 +82,7 @@ function validateTrackEventPayload(payload) {
   const safe = payload && typeof payload === "object" ? payload : {};
   const tipo = String(safe.tipo || "").trim();
   const categoria = String(safe.categoria || "").trim();
+  const productId = String(safe.producto_id || "").trim();
 
   if (!ALLOWED_EVENT_TYPES.has(tipo)) {
     return fail("El evento requiere un tipo valido.");
@@ -91,9 +92,13 @@ function validateTrackEventPayload(payload) {
     return fail("La categoria del evento es demasiado larga.");
   }
 
+  if (productId && productId.length > 120) {
+    return fail("El identificador del producto es demasiado largo.");
+  }
+
   return ok({
     tipo,
-    producto_id: safe.producto_id || null,
+    producto_id: productId || null,
     categoria: categoria || null
   });
 }
