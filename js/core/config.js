@@ -2,7 +2,7 @@ import { fail, ok } from "./result.js";
 
 const DEFAULT_CONFIG = Object.freeze({
   // URL y anonKey se cargan solo desde window.__STC_CONFIG__ o /api/config.
-  // Nunca se embeben credenciales en cliente como fallback.
+  // Nunca se embeden credenciales en cliente como fallback.
   url: "",
   anonKey: "",
   bucket: "productos",

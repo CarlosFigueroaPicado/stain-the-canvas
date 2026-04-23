@@ -51,6 +51,11 @@ export function initCatalogProductsUI() {
 
   const productModal = new globalThis.bootstrap.Modal(modalEl);
   let searchDebounceTimer = null;
+  const liveAnnouncementEl = document.createElement("div");
+  liveAnnouncementEl.className = "visually-hidden";
+  liveAnnouncementEl.setAttribute("aria-live", "polite");
+  liveAnnouncementEl.setAttribute("aria-atomic", "true");
+  gridEl.parentElement?.appendChild(liveAnnouncementEl);
 
   function setStatus(message, kind) {
     statusEl.className = kind === "danger" ? "alert alert-danger" : "alert alert-brand-subtle";
@@ -278,8 +283,13 @@ export function initCatalogProductsUI() {
   }
 
   loadMoreBtnEl.addEventListener("click", () => {
+    const previous = state.visibleCount;
     state.visibleCount += state.pageSize;
     renderProducts();
+    const loadedNow = Math.max(0, state.visibleCount - previous);
+    if (loadedNow > 0) {
+      liveAnnouncementEl.textContent = `Se cargaron ${loadedNow} productos más.`;
+    }
   });
 
   gridEl.addEventListener("click", (event) => {

@@ -1,10 +1,10 @@
 export function normalizeErrorMessage(error, fallbackMessage) {
   if (!error) {
-    return String(fallbackMessage || "Operacion no completada.");
+    return String(fallbackMessage || "Operación no completada.");
   }
 
   if (typeof error === "string") {
-    return error.trim() || String(fallbackMessage || "Operacion no completada.");
+    return error.trim() || String(fallbackMessage || "Operación no completada.");
   }
 
   if (typeof error === "object" && error.message) {
@@ -14,11 +14,11 @@ export function normalizeErrorMessage(error, fallbackMessage) {
     }
   }
 
-  return String(fallbackMessage || "Operacion no completada.");
+  return String(fallbackMessage || "Operación no completada.");
 }
 
 export function formatFailureMessage(message, traceId) {
-  const base = String(message || "Operacion no completada.").trim();
+  const base = String(message || "Operación no completada.").trim();
   const trace = String(traceId || "").trim();
   return trace ? `${base} (ref: ${trace})` : base;
 }

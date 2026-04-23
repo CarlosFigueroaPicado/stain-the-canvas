@@ -207,7 +207,7 @@ function validateSelectedFile(file) {
 function validateSelectedFiles(files) {
   const selected = Array.isArray(files) ? files : [];
   if (selected.length > MAX_IMAGE_COUNT) {
-    return `Solo puedes subir hasta ${MAX_IMAGE_COUNT} imagenes por producto.`;
+    return `Solo puedes subir hasta ${MAX_IMAGE_COUNT} imágenes por producto.`;
   }
 
   for (let index = 0; index < selected.length; index += 1) {
@@ -231,7 +231,7 @@ function validateFormInput(input) {
   }
 
   if (descripcion.length < DESCRIPTION_MIN || descripcion.length > DESCRIPTION_MAX) {
-    return `La descripcion debe tener entre ${DESCRIPTION_MIN} y ${DESCRIPTION_MAX} caracteres.`;
+    return `La descripción debe tener entre ${DESCRIPTION_MIN} y ${DESCRIPTION_MAX} caracteres.`;
   }
 
   if (!Number.isFinite(precio) || precio < 0 || precio > MAX_PRICE) {
@@ -334,7 +334,7 @@ async function handleSubmit(event) {
     if (selectedFiles.length > 0) {
       const uploadResult = await uploadFiles(selectedFiles, input.nombre);
       if (!uploadResult.success) {
-        setStatus(uploadResult.error || "No se pudieron subir las imagenes.", "danger");
+        setStatus(uploadResult.error || "No se pudieron subir las imágenes.", "danger");
         return;
       }
 
@@ -398,7 +398,7 @@ async function handleDelete(productId) {
     let warningMessage = "";
 
     if (cleanupInfo.cleanupError) {
-      warningMessage = " El producto se elimino, pero algunas imagenes no pudieron borrarse del storage.";
+      warningMessage = " El producto se elimino, pero algunas imágenes no pudieron borrarse del storage.";
     }
 
     if (cleanupInfo.skipped > 0) {

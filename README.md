@@ -58,7 +58,7 @@ Separacion aplicada:
 - `api`: acceso a Supabase
 - `service`: validacion y logica de negocio
 - `ui`: renderizado y eventos del DOM
-- `core`: configuracion, cliente y store global
+- `core`: configuración, cliente y store global
 - `shared`: helpers puros reutilizables
 
 ## Seguridad
@@ -67,7 +67,7 @@ Separacion aplicada:
 - El frontend no usa `localStorage` para conceder acceso admin.
 - La seguridad real depende de RLS y policies en `supabase/setup.sql`.
 - El cliente rechaza claves tipo `service_role` o `sb_secret`.
-- El cliente no incluye URL/keys hardcodeadas: solo carga config publica desde `window.__STC_CONFIG__` o `/api/config`.
+- El cliente no incluye URL/keys hardcodeadas: solo carga config pública desde `window.__STC_CONFIG__` o `/api/config`.
 - Las inserciones de productos validan nombre, precio, descripcion, imagen y `featured`.
 
 ## Variables de entorno
@@ -82,7 +82,7 @@ STC_PRODUCTS_TABLE=productos
 STC_WHATSAPP_NUMBER=50589187562
 ```
 
-`api/config.js` expone solo configuracion publica desde variables de entorno del entorno de ejecucion.
+`api/config.js` expone solo configuración pública desde variables del entorno de ejecución.
 
 ## Supabase
 
@@ -126,7 +126,7 @@ npm run dev
 npm run serve
 ```
 
-Para desarrollo con autenticacion real, define variables publicas en tu entorno local de Vercel.
+Para desarrollo con autenticación real, define variables públicas en tu entorno local de Vercel.
 
 ## CI
 
@@ -136,7 +136,7 @@ Para desarrollo con autenticacion real, define variables publicas en tu entorno 
 ## Deploy en Vercel
 
 - `vercel.json` agrega headers de seguridad y CSP.
-- `api/config.js` entrega la configuracion publica de Supabase.
+- `api/config.js` entrega la configuración pública de Supabase.
 - Las paginas consumen `/api/config`, asi que no dependen de valores hardcodeados.
 
 ## Notas
@@ -145,9 +145,9 @@ Para desarrollo con autenticacion real, define variables publicas en tu entorno 
 - Si no hay productos destacados, el home usa los productos mas recientes cargados.
 - El store global centraliza `user` y `products` para evitar llamadas duplicadas.
 
-## Reglas de contribucion
+## Reglas de contribución
 
-- Mantener separacion por capas: `ui -> service -> api`.
+- Mantener separación por capas: `ui -> service -> api`.
 - No hardcodear credenciales ni secretos en cliente.
 - Agregar/actualizar pruebas Vitest en cambios de logica de negocio.
 - Priorizar mensajes de error claros y trazables (incluyendo referencia de error cuando aplique).
