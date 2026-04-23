@@ -8,6 +8,8 @@ const state = {
   products: [],
   activeCategory: "Todos",
   searchTerm: "",
+  pageSize: 9,
+  visibleCount: 9,
   activeProduct: null,
   modalImages: [],
   modalImageIndex: 0
@@ -20,8 +22,9 @@ export function initCatalogProductsUI() {
   const modalEl = document.getElementById("productModal");
   const searchInputEl = document.getElementById("productSearchInput");
   const countBadgeEl = document.getElementById("catalogCountBadge");
+  const loadMoreBtnEl = document.getElementById("catalogLoadMoreBtn");
 
-  if (!gridEl || !statusEl || !filtersEl || !modalEl) {
+  if (!gridEl || !statusEl || !filtersEl || !modalEl || !loadMoreBtnEl) {
     return;
   }
 
@@ -59,12 +62,12 @@ export function initCatalogProductsUI() {
     statusEl.classList.add("d-none");
   }
 
-  function updateCountBadge(visibleCount) {
+  function updateCountBadge(visibleCount, totalCount) {
     if (!countBadgeEl) {
       return;
     }
 
-    countBadgeEl.textContent = `${visibleCount} de ${state.products.length} productos`;
+    countBadgeEl.textContent = `${visibleCount} de ${totalCount} productos`;
   }
 
   function normalizeSearchText(value) {
@@ -119,22 +122,25 @@ export function initCatalogProductsUI() {
   }
 
   function renderProducts() {
-    const products = getFilteredProducts();
-    updateCountBadge(products.length);
+    const filtered = getFilteredProducts();
+    const visibleProducts = filtered.slice(0, state.visibleCount);
+    updateCountBadge(visibleProducts.length, filtered.length);
 
-    if (!products.length) {
+    if (!filtered.length) {
       gridEl.innerHTML = "";
       setStatus("No hay productos para los filtros aplicados.", "danger");
+      loadMoreBtnEl.classList.add("d-none");
+      loadMoreBtnEl.disabled = true;
       return;
     }
 
     hideStatus();
-    gridEl.innerHTML = products
+    gridEl.innerHTML = visibleProducts
       .map((product, index) => {
         const productImages = getProductImageUrls(product, "900x700");
         const productName = escapeHtml(product.nombre);
         const cardMedia = !shouldUseCarousel(productImages)
-          ? `<img src="${escapeHtml(productImages[0])}" class="card-img-top product-card-image" alt="${productName}" loading="lazy" />`
+          ? `<img src="${escapeHtml(productImages[0])}" class="card-img-top product-card-image" alt="${productName}" loading="lazy" decoding="async" fetchpriority="low" />`
           : `
               <div id="productCardCarousel-${index}" class="carousel slide product-card-carousel" data-bs-ride="false" data-skip-modal="true">
                 <div class="carousel-indicators">
@@ -154,7 +160,7 @@ export function initCatalogProductsUI() {
                       const activeClass = imageIndex === 0 ? "active" : "";
                       return `
                         <div class="carousel-item ${activeClass}">
-                          <img src="${escapeHtml(url)}" class="d-block w-100 product-card-image" alt="${productName} - imagen ${imageIndex + 1}" loading="lazy" />
+                          <img src="${escapeHtml(url)}" class="d-block w-100 product-card-image" alt="${productName} - imagen ${imageIndex + 1}" loading="lazy" decoding="async" fetchpriority="low" />
                         </div>
                       `;
                     })
@@ -195,6 +201,10 @@ export function initCatalogProductsUI() {
         `;
       })
       .join("");
+
+    const hasMore = visibleProducts.length < filtered.length;
+    loadMoreBtnEl.classList.toggle("d-none", !hasMore);
+    loadMoreBtnEl.disabled = !hasMore;
   }
 
   function renderModalImage(index) {
@@ -238,6 +248,7 @@ export function initCatalogProductsUI() {
 
   subscribe((nextState) => {
     state.products = Array.isArray(nextState.products) ? nextState.products : [];
+    state.visibleCount = state.pageSize;
     renderFilters();
     renderProducts();
   });
@@ -249,6 +260,7 @@ export function initCatalogProductsUI() {
     }
 
     state.activeCategory = button.dataset.category || "Todos";
+    state.visibleCount = state.pageSize;
     renderFilters();
     renderProducts();
   });
@@ -259,10 +271,16 @@ export function initCatalogProductsUI() {
       const nextTerm = event.target.value || "";
       searchDebounceTimer = setTimeout(() => {
         state.searchTerm = nextTerm;
+        state.visibleCount = state.pageSize;
         renderProducts();
       }, 120);
     });
   }
+
+  loadMoreBtnEl.addEventListener("click", () => {
+    state.visibleCount += state.pageSize;
+    renderProducts();
+  });
 
   gridEl.addEventListener("click", (event) => {
     const whatsappLink = event.target.closest("a[href*='wa.me/']");

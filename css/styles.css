@@ -140,7 +140,7 @@ h3 {
 
 .category-filter.active {
   background: var(--brand-primary);
-  color: var(--brand-text);
+  color: #fff;
 }
 
 .product-preview-card,
@@ -322,6 +322,15 @@ h3 {
 }
 
 .product-card:focus-visible {
+  outline: 3px solid rgba(200, 107, 74, 0.45);
+  outline-offset: 2px;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 3px solid rgba(200, 107, 74, 0.45);
   outline-offset: 2px;
 }

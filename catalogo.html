@@ -91,11 +91,16 @@
 
         <div class="d-flex flex-wrap gap-2 mb-4" id="categoryFilters"></div>
 
-        <div id="catalogStatus" class="alert alert-brand-subtle" role="status">
+        <div id="catalogStatus" class="alert alert-brand-subtle" role="status" aria-live="polite" aria-atomic="true">
           Cargando productos...
         </div>
 
         <div class="row g-4" id="productsGrid"></div>
+        <div class="d-flex justify-content-center mt-4">
+          <button id="catalogLoadMoreBtn" class="btn btn-outline-brand rounded-pill px-4 d-none" type="button">
+            Cargar mas productos
+          </button>
+        </div>
       </section>
     </main>
 

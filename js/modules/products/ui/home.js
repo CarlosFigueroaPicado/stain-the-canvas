@@ -115,7 +115,7 @@ export function initHomeProductsUI() {
         return `
           <div class="col-12 col-md-6 col-xl-4">
             <article class="card product-card h-100 border-0" data-action="open-modal" data-index="${index}" tabindex="0" role="button" aria-label="Abrir detalle de ${escapeHtml(product.nombre)}">
-              <img src="${escapeHtml(heroImage)}" class="card-img-top product-card-image" alt="${escapeHtml(product.nombre)}" loading="lazy" data-action="open-modal" data-index="${index}" />
+              <img src="${escapeHtml(heroImage)}" class="card-img-top product-card-image" alt="${escapeHtml(product.nombre)}" loading="lazy" decoding="async" fetchpriority="low" data-action="open-modal" data-index="${index}" />
               <div class="card-body d-flex flex-column">
                 <p class="small text-uppercase letter-space text-brand mb-2">${escapeHtml(product.categoria)}</p>
                 <h3 class="h4 mb-2">${escapeHtml(product.nombre)}</h3>

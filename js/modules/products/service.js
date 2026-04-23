@@ -2,6 +2,8 @@ import * as productsApi from "./api.js";
 import { fail, ok } from "../../core/result.js";
 import { getState, setState } from "../../core/store.js";
 import { buildProductPayload, normalizeProduct, validateProductInput } from "../../shared/product-utils.js";
+import { reportFailure } from "../../core/observability.js";
+import { formatFailureMessage, normalizeErrorMessage } from "../../shared/service-errors.js";
 import { getAppConfigSync } from "../../core/config.js";
 
 function normalizeProducts(rows) {
@@ -15,6 +17,11 @@ function setProducts(products) {
     productsLoaded: true,
     productsRequest: null
   });
+}
+
+function failWithTrace(scope, fallbackMessage, error, context = {}) {
+  const traceId = reportFailure(scope, error, context);
+  return fail(formatFailureMessage(normalizeErrorMessage(error, fallbackMessage), traceId));
 }
 
 export async function getProducts(options = {}) {
@@ -37,19 +44,18 @@ export async function getProducts(options = {}) {
           productsLoaded: false,
           productsRequest: null
         });
-        return fail(result.error.message || "No se pudieron cargar productos.");
+        return failWithTrace("products.getProducts.api", "No se pudieron cargar productos.", result.error);
       }
 
       const products = normalizeProducts(result.data || []);
       setProducts(products);
       return ok(products);
     } catch (error) {
-      console.error("Error al obtener productos:", error);
       setState({
         productsLoaded: false,
         productsRequest: null
       });
-      return fail("No se pudieron cargar productos.");
+      return failWithTrace("products.getProducts.catch", "No se pudieron cargar productos.", error);
     }
   })();
 
@@ -96,12 +102,16 @@ export async function uploadFiles(files, prefix) {
       const upload = await productsApi.uploadImage(path, file);
 
       if (upload.error) {
-        return fail(upload.error.message || "No se pudo subir la imagen.");
+        return failWithTrace("products.uploadFiles.upload", "No se pudo subir la imagen.", upload.error, {
+          path
+        });
       }
 
       const publicUrl = await productsApi.getPublicUrl(path);
       if (!publicUrl) {
-        return fail("No se pudo generar URL publica de la imagen.");
+        return failWithTrace("products.uploadFiles.publicUrl", "No se pudo generar URL publica de la imagen.", "public_url_vacia", {
+          path
+        });
       }
 
       uploaded.push(publicUrl);
@@ -109,8 +119,7 @@ export async function uploadFiles(files, prefix) {
 
     return ok(uploaded);
   } catch (error) {
-    console.error("Error al subir imagenes:", error);
-    return fail("No se pudieron subir las imagenes.");
+    return failWithTrace("products.uploadFiles.catch", "No se pudieron subir las imagenes.", error);
   }
 }
 
@@ -123,14 +132,13 @@ export async function createProduct(productInput) {
 
     const result = await productsApi.insertProduct(buildProductPayload(productInput));
     if (result.error) {
-      return fail(result.error.message || "No se pudo crear el producto.");
+      return failWithTrace("products.createProduct.api", "No se pudo crear el producto.", result.error);
     }
 
     await getProducts({ force: true });
     return ok(true);
   } catch (error) {
-    console.error("Error al crear producto:", error);
-    return fail("No se pudo crear el producto.");
+    return failWithTrace("products.createProduct.catch", "No se pudo crear el producto.", error);
   }
 }
 
@@ -147,14 +155,17 @@ export async function updateProduct(productId, productInput) {
 
     const result = await productsApi.updateProduct(productId, buildProductPayload(productInput));
     if (result.error) {
-      return fail(result.error.message || "No se pudo actualizar el producto.");
+      return failWithTrace("products.updateProduct.api", "No se pudo actualizar el producto.", result.error, {
+        productId
+      });
     }
 
     await getProducts({ force: true });
     return ok(true);
   } catch (error) {
-    console.error("Error al actualizar producto:", error);
-    return fail("No se pudo actualizar el producto.");
+    return failWithTrace("products.updateProduct.catch", "No se pudo actualizar el producto.", error, {
+      productId
+    });
   }
 }
 
@@ -204,7 +215,9 @@ export async function deleteProduct(productId, currentProduct) {
   try {
     const result = await productsApi.deleteProduct(productId);
     if (result.error) {
-      return fail(result.error.message || "No se pudo eliminar el producto.");
+      return failWithTrace("products.deleteProduct.api", "No se pudo eliminar el producto.", result.error, {
+        productId
+      });
     }
 
     const imageUrls = new Set();
@@ -240,12 +253,19 @@ export async function deleteProduct(productId, currentProduct) {
     if (removablePaths.length > 0) {
       const removal = await productsApi.removeStorage(removablePaths);
       cleanupError = Boolean(removal.error);
+      if (cleanupError) {
+        reportFailure("products.deleteProduct.cleanup", removal.error, {
+          productId,
+          removablePaths
+        });
+      }
     }
 
     await getProducts({ force: true });
     return ok({ skipped, cleanupError });
   } catch (error) {
-    console.error("Error al eliminar producto:", error);
-    return fail("No se pudo eliminar el producto.");
+    return failWithTrace("products.deleteProduct.catch", "No se pudo eliminar el producto.", error, {
+      productId
+    });
   }
 }

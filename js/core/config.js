@@ -1,11 +1,10 @@
 import { fail, ok } from "./result.js";
 
 const DEFAULT_CONFIG = Object.freeze({
-  // Fallback local para entornos estaticos sin /api/config (por ejemplo Live Server).
-  // En produccion, loadAppConfig prioriza window.__STC_CONFIG__ y /api/config.
-  url: "https://mmfpivsfjolohoowhgit.supabase.co",
-  anonKey:
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tZnBpdnNmam9sb2hvb3doZ2l0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NjQ3MTAsImV4cCI6MjA5MTE0MDcxMH0.7eIIhxG3tfZTGQ2DB8kA-OHl86NYZfQfaV0cGjemu6w",
+  // URL y anonKey se cargan solo desde window.__STC_CONFIG__ o /api/config.
+  // Nunca se embeben credenciales en cliente como fallback.
+  url: "",
+  anonKey: "",
   bucket: "productos",
   productsTable: "productos",
   whatsappNumber: "50589187562"
@@ -85,7 +84,7 @@ export function getAppConfigSync() {
     return cachedConfig;
   }
 
-  return normalizeConfig(globalThis.__STC_CONFIG__ || DEFAULT_CONFIG);
+  return normalizeConfig(globalThis.__STC_CONFIG__ || {});
 }
 
 export async function loadAppConfig() {
@@ -116,12 +115,6 @@ export async function loadAppConfig() {
     } catch (error) {
       console.warn("No se pudo cargar /api/config:", error);
       remoteErrorReason = error instanceof Error ? error.message : String(error || "error_desconocido");
-    }
-
-    const fromDefaults = normalizeConfig(DEFAULT_CONFIG);
-    if (fromDefaults.url && fromDefaults.anonKey) {
-      cachedConfig = fromDefaults;
-      return ok(cachedConfig);
     }
 
     const fallback = normalizeConfig(globalThis.__STC_CONFIG__ || {});

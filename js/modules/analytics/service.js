@@ -1,5 +1,7 @@
 import * as analyticsApi from "./api.js";
 import { fail, ok } from "../../core/result.js";
+import { reportFailure } from "../../core/observability.js";
+import { formatFailureMessage } from "../../shared/service-errors.js";
 
 const SESSION_KEY = "stc_session_id";
 const ALLOWED_EVENT_TYPES = new Set(["view_producto", "click_whatsapp"]);
@@ -114,14 +116,14 @@ export async function trackVisit() {
     });
 
     if (result.error) {
-      console.error("No se pudo registrar visita:", result.error);
-      return fail(result.error.message || "No se pudo registrar visita.");
+      const traceId = reportFailure("analytics.trackVisit.insert", result.error, { sessionId });
+      return fail(formatFailureMessage(result.error.message || "No se pudo registrar visita.", traceId));
     }
 
     return ok({ tracked: true });
   } catch (error) {
-    console.error("Error inesperado al registrar visita:", error);
-    return fail("No se pudo registrar visita.");
+    const traceId = reportFailure("analytics.trackVisit.catch", error);
+    return fail(formatFailureMessage("No se pudo registrar visita.", traceId));
   }
 }
 
@@ -142,13 +144,13 @@ export async function trackEvent(payload) {
     });
 
     if (result.error) {
-      console.error("No se pudo registrar evento:", result.error);
-      return fail(result.error.message || "No se pudo registrar evento.");
+      const traceId = reportFailure("analytics.trackEvent.insert", result.error, validation.data);
+      return fail(formatFailureMessage(result.error.message || "No se pudo registrar evento.", traceId));
     }
 
     return ok({ tracked: true });
   } catch (error) {
-    console.error("Error inesperado al registrar evento:", error);
-    return fail("No se pudo registrar evento.");
+    const traceId = reportFailure("analytics.trackEvent.catch", error);
+    return fail(formatFailureMessage("No se pudo registrar evento.", traceId));
   }
 }

@@ -1,9 +1,15 @@
 import { getState, subscribe } from "../../../core/store.js";
 import { createProduct, deleteProduct, getProducts, updateProduct, uploadFiles } from "../service.js";
-import { buildPlaceholderImage, escapeHtml, formatCurrency } from "../../../shared/product-utils.js";
+import { buildPlaceholderImage, escapeHtml, formatCurrency, isHttpUrl } from "../../../shared/product-utils.js";
 import { shouldUseCarousel } from "./shared.js";
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
+const MAX_IMAGE_COUNT = 5;
+const MAX_PRICE = 999999.99;
+const NAME_MIN = 3;
+const NAME_MAX = 120;
+const DESCRIPTION_MIN = 10;
+const DESCRIPTION_MAX = 1000;
 const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/png",
@@ -200,11 +206,40 @@ function validateSelectedFile(file) {
 
 function validateSelectedFiles(files) {
   const selected = Array.isArray(files) ? files : [];
+  if (selected.length > MAX_IMAGE_COUNT) {
+    return `Solo puedes subir hasta ${MAX_IMAGE_COUNT} imagenes por producto.`;
+  }
+
   for (let index = 0; index < selected.length; index += 1) {
     const fileError = validateSelectedFile(selected[index]);
     if (fileError) {
       return fileError;
     }
+  }
+
+  return "";
+}
+
+function validateFormInput(input) {
+  const nombre = String(input && input.nombre ? input.nombre : "").trim();
+  const descripcion = String(input && input.descripcion ? input.descripcion : "").trim();
+  const precio = Number.parseFloat(String(input && input.precio ? input.precio : ""));
+  const imagenUrl = String(input && input.imagenUrl ? input.imagenUrl : "").trim();
+
+  if (nombre.length < NAME_MIN || nombre.length > NAME_MAX) {
+    return `El nombre debe tener entre ${NAME_MIN} y ${NAME_MAX} caracteres.`;
+  }
+
+  if (descripcion.length < DESCRIPTION_MIN || descripcion.length > DESCRIPTION_MAX) {
+    return `La descripcion debe tener entre ${DESCRIPTION_MIN} y ${DESCRIPTION_MAX} caracteres.`;
+  }
+
+  if (!Number.isFinite(precio) || precio < 0 || precio > MAX_PRICE) {
+    return `El precio debe estar entre 0 y ${MAX_PRICE.toFixed(2)} NIO.`;
+  }
+
+  if (imagenUrl && !isHttpUrl(imagenUrl)) {
+    return "La URL de imagen debe iniciar con http:// o https://";
   }
 
   return "";
@@ -279,6 +314,12 @@ async function handleSubmit(event) {
 
   try {
     const input = getFormInput();
+    const inputError = validateFormInput(input);
+    if (inputError) {
+      setStatus(inputError, "danger");
+      return;
+    }
+
     const selectedFiles = refs.imagen.files ? Array.from(refs.imagen.files) : [];
     const fileError = validateSelectedFiles(selectedFiles);
 

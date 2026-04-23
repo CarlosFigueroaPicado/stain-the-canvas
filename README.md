@@ -43,6 +43,16 @@ js/
       ui/
 ```
 
+Diagrama operativo (alto nivel):
+
+```text
+UI (pages + modules/*/ui)
+  -> Service (modules/*/service)
+    -> API (modules/*/api)
+      -> Supabase (Auth, DB, Storage)
+  -> Core (config/store/result/supabase-client)
+```
+
 Separacion aplicada:
 
 - `api`: acceso a Supabase
@@ -57,6 +67,7 @@ Separacion aplicada:
 - El frontend no usa `localStorage` para conceder acceso admin.
 - La seguridad real depende de RLS y policies en `supabase/setup.sql`.
 - El cliente rechaza claves tipo `service_role` o `sb_secret`.
+- El cliente no incluye URL/keys hardcodeadas: solo carga config publica desde `window.__STC_CONFIG__` o `/api/config`.
 - Las inserciones de productos validan nombre, precio, descripcion, imagen y `featured`.
 
 ## Variables de entorno
@@ -71,7 +82,7 @@ STC_PRODUCTS_TABLE=productos
 STC_WHATSAPP_NUMBER=50589187562
 ```
 
-`api/config.js` expone solo configuracion publica. Tambien acepta `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` como fallback para compatibilidad local.
+`api/config.js` expone solo configuracion publica desde variables de entorno del entorno de ejecucion.
 
 ## Supabase
 
@@ -91,13 +102,36 @@ Para crear un admin:
 
 ## Desarrollo
 
-Para correr pruebas:
+1. Instala dependencias:
 
 ```bash
-pnpm test:ci
+npm ci
 ```
 
-Para desarrollo local con variables de Vercel, usa `vercel dev` o cualquier servidor estatico que tambien sirva `api/config`.
+2. Ejecuta pruebas:
+
+```bash
+npm run test:ci
+```
+
+3. Corre en modo local con `api/config`:
+
+```bash
+npm run dev
+```
+
+4. Servidor estatico rapido (sin API serverless):
+
+```bash
+npm run serve
+```
+
+Para desarrollo con autenticacion real, define variables publicas en tu entorno local de Vercel.
+
+## CI
+
+- Se ejecuta Vitest en cada Pull Request via `.github/workflows/ci.yml`.
+- Si los tests fallan, el workflow falla y el merge debe bloquearse con branch protection en GitHub.
 
 ## Deploy en Vercel
 
@@ -110,3 +144,11 @@ Para desarrollo local con variables de Vercel, usa `vercel dev` o cualquier serv
 - Los productos destacados del home salen de base de datos usando el campo `featured`.
 - Si no hay productos destacados, el home usa los productos mas recientes cargados.
 - El store global centraliza `user` y `products` para evitar llamadas duplicadas.
+
+## Reglas de contribucion
+
+- Mantener separacion por capas: `ui -> service -> api`.
+- No hardcodear credenciales ni secretos en cliente.
+- Agregar/actualizar pruebas Vitest en cambios de logica de negocio.
+- Priorizar mensajes de error claros y trazables (incluyendo referencia de error cuando aplique).
+- Evitar cambios fuera del alcance del issue/PR.

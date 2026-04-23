@@ -2,6 +2,8 @@ import * as authApi from "./api.js";
 import { fail, ok } from "../../core/result.js";
 import { getState, setState } from "../../core/store.js";
 import { getLastSupabaseClientError } from "../../core/supabase-client.js";
+import { reportFailure } from "../../core/observability.js";
+import { formatFailureMessage } from "../../shared/service-errors.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -120,8 +122,8 @@ export async function login(username, password) {
 
     const signInResult = await authApi.signInWithPassword(email, pass);
     if (signInResult.error) {
-      console.error("Error en signInWithPassword:", signInResult.error);
-      return fail(mapAuthErrorMessage(signInResult.error.message));
+      const traceId = reportFailure("auth.login.signIn", signInResult.error, { email });
+      return fail(formatFailureMessage(mapAuthErrorMessage(signInResult.error.message), traceId));
     }
 
     const userResult = await resolveCurrentUser();
@@ -138,8 +140,8 @@ export async function login(username, password) {
 
     return ok({ authenticated: true, user: userResult.data });
   } catch (error) {
-    console.error("Error inesperado en login:", error);
-    return fail("No se pudo iniciar sesion.");
+    const traceId = reportFailure("auth.login.catch", error, { username: String(username || "").trim() });
+    return fail(formatFailureMessage("No se pudo iniciar sesion.", traceId));
   }
 }
 
