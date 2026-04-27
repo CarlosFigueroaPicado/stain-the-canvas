@@ -3,6 +3,7 @@ import { getProducts } from "../service.js";
 import { buildWhatsappLink, escapeHtml, formatCurrency, getProductImageUrls } from "../../../shared/product-utils.js";
 import { trackEvent, trackVisit } from "../../analytics/service.js";
 import { loadAppConfig } from "../../../core/config.js";
+import { getSubcategoriesWithCache } from "../../subcategories/service.js";
 
 function pickHomeProductsSource(products) {
   const source = Array.isArray(products) ? products : [];
@@ -29,8 +30,10 @@ export function initHomeProductsUI() {
   }
 
   const modalRefs = {
+    title: document.getElementById("homeProductModalLabel"),
     image: document.getElementById("homeModalProductImage"),
     category: document.getElementById("homeModalProductCategory"),
+    subcategory: document.getElementById("homeModalProductSubcategory"),
     name: document.getElementById("homeModalProductName"),
     price: document.getElementById("homeModalProductPrice"),
     description: document.getElementById("homeModalProductDescription"),
@@ -55,7 +58,8 @@ export function initHomeProductsUI() {
     activeProduct: null,
     modalImages: [],
     modalImageIndex: 0,
-    activeCategory: "Todos"
+    activeCategory: "Todos",
+    subcategoryNames: {}
   };
 
   const productModal = new globalThis.bootstrap.Modal(modalEl);
@@ -70,6 +74,15 @@ export function initHomeProductsUI() {
     statusEl.classList.add("d-none");
   }
 
+  function getSubcategoryName(product) {
+    const id = String(product && product.subcategory_id ? product.subcategory_id : "").trim();
+    if (!id) {
+      return "";
+    }
+
+    return String(state.subcategoryNames[id] || "").trim();
+  }
+
   function getFilteredHomeProducts() {
     const source = pickHomeProductsSource(state.products);
     const byCategory =
@@ -81,7 +94,7 @@ export function initHomeProductsUI() {
   }
 
   function renderCategoryFilters() {
-    const fixedCategories = ["Bisuteria", "Pinatas", "Arreglos", "Decoraciones"];
+    const fixedCategories = ["Bisuteria", "Manualidades", "Arreglos", "Decoraciones"];
     const dynamicCategories = pickHomeProductsSource(state.products).map((product) => product.categoria).filter(Boolean);
     const categories = Array.from(new Set(["Todos", ...fixedCategories, ...dynamicCategories]));
 
@@ -112,13 +125,17 @@ export function initHomeProductsUI() {
     gridEl.innerHTML = state.cards
       .map((product, index) => {
         const heroImage = getProductImageUrls(product, "900x700")[0];
+        const subcategoryName = getSubcategoryName(product);
         return `
           <div class="col-12 col-md-6 col-xl-4">
             <article class="card product-card h-100 border-0" data-action="open-modal" data-index="${index}" tabindex="0" role="button" aria-label="Abrir detalle de ${escapeHtml(product.nombre)}">
               <img src="${escapeHtml(heroImage)}" class="card-img-top product-card-image" alt="${escapeHtml(product.nombre)}" loading="lazy" data-action="open-modal" data-index="${index}" />
               <div class="card-body d-flex flex-column">
-                <p class="small text-uppercase letter-space text-brand mb-2">${escapeHtml(product.categoria)}</p>
-                <h3 class="h4 mb-2">${escapeHtml(product.nombre)}</h3>
+                <h3 class="h4 mb-3">${escapeHtml(product.nombre)}</h3>
+                <div class="mb-2">
+                  <p class="small text-uppercase letter-space text-brand mb-0">${escapeHtml(product.categoria)}</p>
+                  <p class="small text-muted-brand mb-0">${subcategoryName ? escapeHtml(subcategoryName) : ""}</p>
+                </div>
                 <p class="fw-semibold mb-2">${escapeHtml(formatCurrency(product.precio))}</p>
                 <p class="text-muted-brand flex-grow-1 mb-3">${escapeHtml(product.descripcion)}</p>
                 <small class="text-muted-brand mt-auto">${product.featured ? "Destacado en tienda" : "Disponible en catalogo"}</small>
@@ -152,11 +169,56 @@ export function initHomeProductsUI() {
     state.activeProduct = product;
     state.modalImages = getProductImageUrls(product, "900x700");
     renderModalImage(0);
+    modalRefs.title.textContent = product.nombre;
     modalRefs.category.textContent = product.categoria;
-    modalRefs.name.textContent = product.nombre;
     modalRefs.price.textContent = formatCurrency(product.precio);
     modalRefs.description.textContent = product.descripcion;
     modalRefs.whatsapp.href = buildWhatsappLink(product);
+    modalRefs.subcategory.textContent = "";
+    modalRefs.subcategory.style.display = "none";
+
+    const resolveSubcategoryName = (item) => {
+      if (!item || typeof item !== "object") {
+        return "";
+      }
+
+      return String(
+        item.subcategory_name ||
+        item.subcategoria_nombre ||
+        (item.raw && (item.raw.subcategory_name || item.raw.subcategoria_nombre)) ||
+        ""
+      ).trim();
+    };
+    
+    // Load subcategory if exists
+    if (product.subcategory_id) {
+      getSubcategoriesWithCache().then((result) => {
+        const productSubcategoryId = String(product.subcategory_id || "").trim();
+        if (result.success && Array.isArray(result.data) && productSubcategoryId) {
+          const subcategoryInfo = result.data.find(
+            (sub) => String(sub && sub.id ? sub.id : "").trim() === productSubcategoryId
+          );
+          if (subcategoryInfo && subcategoryInfo.nombre) {
+            modalRefs.subcategory.textContent = subcategoryInfo.nombre;
+            modalRefs.subcategory.style.display = "block";
+            return;
+          }
+        }
+
+        const fallbackName = resolveSubcategoryName(product);
+        if (fallbackName) {
+          modalRefs.subcategory.textContent = fallbackName;
+          modalRefs.subcategory.style.display = "block";
+        }
+      }).catch(() => {
+        const fallbackName = resolveSubcategoryName(product);
+        if (fallbackName) {
+          modalRefs.subcategory.textContent = fallbackName;
+          modalRefs.subcategory.style.display = "block";
+        }
+      });
+    }
+    
     trackEvent({ tipo: "view_producto", producto_id: product.id, categoria: product.categoria || null });
     productModal.show();
   }
@@ -202,6 +264,32 @@ export function initHomeProductsUI() {
     });
   }
 
+  function loadSubcategoryNames() {
+    getSubcategoriesWithCache()
+      .then((result) => {
+        if (!result.success || !Array.isArray(result.data)) {
+          return;
+        }
+
+        const namesById = {};
+        result.data.forEach((subcategory) => {
+          const id = String(subcategory && subcategory.id ? subcategory.id : "").trim();
+          const name = String(subcategory && subcategory.nombre ? subcategory.nombre : "").trim();
+          if (id && name) {
+            namesById[id] = name;
+          }
+        });
+
+        state.subcategoryNames = namesById;
+        if (state.cards.length > 0) {
+          renderCards(getFilteredHomeProducts());
+        }
+      })
+      .catch(() => {
+        // Si falla la carga, simplemente dejamos la card sin subcategoria visible.
+      });
+  }
+
   subscribe((nextState) => {
     state.products = Array.isArray(nextState.products) ? nextState.products : [];
     renderCategoryFilters();
@@ -209,6 +297,7 @@ export function initHomeProductsUI() {
   });
 
   bindGlobalWhatsappTracking();
+  loadSubcategoryNames();
 
   categoryFiltersEl.addEventListener("click", (event) => {
     const button = event.target.closest("[data-category]");

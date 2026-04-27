@@ -3,6 +3,7 @@ import { getProducts } from "../service.js";
 import { buildWhatsappLink, escapeHtml, formatCurrency, getProductImageUrls } from "../../../shared/product-utils.js";
 import { trackEvent, trackVisit } from "../../analytics/service.js";
 import { shouldUseCarousel } from "./shared.js";
+import { getSubcategoriesWithCache } from "../../subcategories/service.js";
 
 const state = {
   products: [],
@@ -10,7 +11,8 @@ const state = {
   searchTerm: "",
   activeProduct: null,
   modalImages: [],
-  modalImageIndex: 0
+  modalImageIndex: 0,
+  subcategoryNames: {}
 };
 
 export function initCatalogProductsUI() {
@@ -26,8 +28,10 @@ export function initCatalogProductsUI() {
   }
 
   const modalRefs = {
+    title: document.getElementById("productModalLabel"),
     image: document.getElementById("modalProductImage"),
     category: document.getElementById("modalProductCategory"),
+    subcategory: document.getElementById("modalProductSubcategory"),
     name: document.getElementById("modalProductName"),
     price: document.getElementById("modalProductPrice"),
     description: document.getElementById("modalProductDescription"),
@@ -57,6 +61,15 @@ export function initCatalogProductsUI() {
 
   function hideStatus() {
     statusEl.classList.add("d-none");
+  }
+
+  function getSubcategoryName(product) {
+    const id = String(product && product.subcategory_id ? product.subcategory_id : "").trim();
+    if (!id) {
+      return "";
+    }
+
+    return String(state.subcategoryNames[id] || "").trim();
   }
 
   function updateCountBadge(visibleCount) {
@@ -98,7 +111,7 @@ export function initCatalogProductsUI() {
   }
 
   function renderFilters() {
-    const fixedCategories = ["Bisuteria", "Pinatas", "Arreglos", "Decoraciones"];
+    const fixedCategories = ["Bisuteria", "Manualidades", "Arreglos", "Decoraciones"];
     const dynamicCategories = state.products.map((product) => product.categoria).filter(Boolean);
     const unique = Array.from(new Set(["Todos", ...fixedCategories, ...dynamicCategories]));
 
@@ -133,6 +146,7 @@ export function initCatalogProductsUI() {
       .map((product, index) => {
         const productImages = getProductImageUrls(product, "900x700");
         const productName = escapeHtml(product.nombre);
+        const subcategoryName = getSubcategoryName(product);
         const cardMedia = !shouldUseCarousel(productImages)
           ? `<img src="${escapeHtml(productImages[0])}" class="card-img-top product-card-image" alt="${productName}" loading="lazy" />`
           : `
@@ -174,11 +188,11 @@ export function initCatalogProductsUI() {
             <article class="card product-card h-100 border-0" data-action="open-modal" data-index="${index}" tabindex="0" role="button" aria-label="Abrir detalle de ${productName}">
               ${cardMedia}
               <div class="card-body d-flex flex-column">
-                <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3 class="h4 mb-3">${productName}</h3>
+                <div class="mb-2">
                   <p class="small text-uppercase letter-space text-brand mb-0">${escapeHtml(product.categoria)}</p>
-                  <span class="badge rounded-pill text-bg-light border border-brand-subtle">${product.featured ? "Destacado" : "Artesanal"}</span>
+                  <p class="small text-muted-brand mb-0">${subcategoryName ? escapeHtml(subcategoryName) : ""}</p>
                 </div>
-                <h3 class="h4 mb-2">${productName}</h3>
                 <p class="fw-semibold fs-5 mb-3">${formatCurrency(product.precio)}</p>
                 <p class="text-muted-brand flex-grow-1 mb-4">${escapeHtml(product.descripcion)}</p>
                 <div class="d-flex flex-wrap gap-2">
@@ -219,13 +233,84 @@ export function initCatalogProductsUI() {
     state.activeProduct = product;
     state.modalImages = getProductImageUrls(product, "900x700");
     renderModalImage(0);
+    modalRefs.title.textContent = product.nombre;
     modalRefs.category.textContent = product.categoria;
-    modalRefs.name.textContent = product.nombre;
     modalRefs.price.textContent = formatCurrency(product.precio);
     modalRefs.description.textContent = product.descripcion;
     modalRefs.whatsapp.href = buildWhatsappLink(product);
+    modalRefs.subcategory.textContent = "";
+    modalRefs.subcategory.style.display = "none";
+
+    const resolveSubcategoryName = (item) => {
+      if (!item || typeof item !== "object") {
+        return "";
+      }
+
+      return String(
+        item.subcategory_name ||
+        item.subcategoria_nombre ||
+        (item.raw && (item.raw.subcategory_name || item.raw.subcategoria_nombre)) ||
+        ""
+      ).trim();
+    };
+    
+    // Load subcategory if exists
+    if (product.subcategory_id) {
+      getSubcategoriesWithCache().then((result) => {
+        const productSubcategoryId = String(product.subcategory_id || "").trim();
+        if (result.success && Array.isArray(result.data) && productSubcategoryId) {
+          const subcategoryInfo = result.data.find(
+            (sub) => String(sub && sub.id ? sub.id : "").trim() === productSubcategoryId
+          );
+          if (subcategoryInfo && subcategoryInfo.nombre) {
+            modalRefs.subcategory.textContent = subcategoryInfo.nombre;
+            modalRefs.subcategory.style.display = "block";
+            return;
+          }
+        }
+
+        const fallbackName = resolveSubcategoryName(product);
+        if (fallbackName) {
+          modalRefs.subcategory.textContent = fallbackName;
+          modalRefs.subcategory.style.display = "block";
+        }
+      }).catch(() => {
+        const fallbackName = resolveSubcategoryName(product);
+        if (fallbackName) {
+          modalRefs.subcategory.textContent = fallbackName;
+          modalRefs.subcategory.style.display = "block";
+        }
+      });
+    }
+    
     trackEvent({ tipo: "view_producto", producto_id: product.id, categoria: product.categoria || null });
     productModal.show();
+  }
+
+  function loadSubcategoryNames() {
+    getSubcategoriesWithCache()
+      .then((result) => {
+        if (!result.success || !Array.isArray(result.data)) {
+          return;
+        }
+
+        const namesById = {};
+        result.data.forEach((subcategory) => {
+          const id = String(subcategory && subcategory.id ? subcategory.id : "").trim();
+          const name = String(subcategory && subcategory.nombre ? subcategory.nombre : "").trim();
+          if (id && name) {
+            namesById[id] = name;
+          }
+        });
+
+        state.subcategoryNames = namesById;
+        if (state.products.length > 0) {
+          renderProducts();
+        }
+      })
+      .catch(() => {
+        // Sin subcategorias cargadas, la card sigue funcionando.
+      });
   }
 
   function moveModalImage(step) {
@@ -241,6 +326,8 @@ export function initCatalogProductsUI() {
     renderFilters();
     renderProducts();
   });
+
+  loadSubcategoryNames();
 
   filtersEl.addEventListener("click", (event) => {
     const button = event.target.closest("[data-category]");

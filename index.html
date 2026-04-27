@@ -97,7 +97,7 @@
                 <div id="homeCategoryFilters" class="d-flex flex-wrap gap-2 mb-4" role="group" aria-label="Filtrar destacados por categoria">
                   <button type="button" class="category-chip active" data-category="Todos" aria-pressed="true">Todos</button>
                   <button type="button" class="category-chip" data-category="Bisuteria" aria-pressed="false">Bisuteria</button>
-                  <button type="button" class="category-chip" data-category="Pinatas" aria-pressed="false">Pinatas</button>
+                  <button type="button" class="category-chip" data-category="Manualidades" aria-pressed="false">Manualidades</button>
                   <button type="button" class="category-chip" data-category="Arreglos" aria-pressed="false">Arreglos</button>
                   <button type="button" class="category-chip" data-category="Decoraciones" aria-pressed="false">Decoraciones</button>
                 </div>
@@ -170,8 +170,11 @@
                 </div>
               </div>
               <div class="col-md-6">
-                <p id="homeModalProductCategory" class="small text-uppercase letter-space text-brand mb-2"></p>
-                <h3 id="homeModalProductName" class="h2 mb-2"></h3>
+                <div class="mb-2">
+                  <p id="homeModalProductCategory" class="small text-uppercase letter-space text-brand mb-0"></p>
+                  <p id="homeModalProductSubcategory" class="small text-muted-brand mb-0" style="display: none;"></p>
+                </div>
+                <h3 id="homeModalProductName" class="h2 mb-2 d-none"></h3>
                 <p id="homeModalProductPrice" class="fs-4 fw-semibold mb-3"></p>
                 <p id="homeModalProductDescription" class="mb-4"></p>
                 <div class="d-flex flex-wrap gap-2">
@@ -200,15 +203,6 @@
             <p class="site-footer-copy mb-0">
               Disenamos piezas artesanales personalizadas en bisuteria, pinatas, arreglos y decoraciones.
             </p>
-          </section>
-
-          <section>
-            <p class="site-footer-kicker mb-2">Explorar</p>
-            <nav class="site-footer-links" aria-label="Navegacion del pie de pagina">
-              <a href="index.html">Inicio</a>
-              <a href="catalogo.html">Catalogo</a>
-              <a href="login.html">Acceso admin</a>
-            </nav>
           </section>
 
           <section>

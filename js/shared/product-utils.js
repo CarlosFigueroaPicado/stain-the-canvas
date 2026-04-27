@@ -1,6 +1,6 @@
 import { getAppConfigSync } from "../core/config.js";
 
-const CATEGORY_PINATAS = "Pinatas";
+const CATEGORY_MANUALIDADES = "Manualidades";
 
 function pickFirst(source, keys, fallback) {
   const input = source && typeof source === "object" ? source : {};
@@ -60,7 +60,7 @@ export function normalizeCategory(value) {
   const compact = normalized.replace(/[^a-z]/g, "");
 
   if (compact === "pinatas" || compact.includes("pinata")) {
-    return CATEGORY_PINATAS;
+    return CATEGORY_MANUALIDADES;
   }
 
   return raw;
@@ -196,6 +196,7 @@ export function buildProductPayload(productInput) {
   const input = productInput && typeof productInput === "object" ? productInput : {};
   const nombre = String(input.nombre || "").trim();
   const categoria = normalizeCategory(input.categoria);
+  const subcategoryId = String(input.subcategory_id || "").trim() || null;
   const descripcion = String(input.descripcion || "").trim();
   const precio = toNumber(input.precio, 0);
   const imagenUrl = String(input.imagenUrl || "").trim();
@@ -209,6 +210,7 @@ export function buildProductPayload(productInput) {
   return {
     nombre,
     categoria,
+    subcategory_id: subcategoryId,
     descripcion,
     precio,
     imagen_url: imagenUrl,
@@ -239,11 +241,13 @@ export function normalizeProduct(row) {
   const featured = toBoolean(pickFirst(safeRow, ["featured", "destacado"], false));
   const clicks = Number.parseInt(String(pickFirst(safeRow, ["clicks"], 0)), 10);
   const vistas = Number.parseInt(String(pickFirst(safeRow, ["vistas"], 0)), 10);
+  const subcategoryId = String(pickFirst(safeRow, ["subcategory_id"], "") || "").trim() || null;
 
   return {
     id,
     nombre,
     categoria,
+    subcategory_id: subcategoryId,
     descripcion,
     precio,
     imagenUrl,

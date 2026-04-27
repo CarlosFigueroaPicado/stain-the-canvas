@@ -1,7 +1,8 @@
 import { getState, subscribe } from "../../../core/store.js";
 import { createProduct, deleteProduct, getProducts, updateProduct, uploadFiles } from "../service.js";
-import { buildPlaceholderImage, escapeHtml, formatCurrency } from "../../../shared/product-utils.js";
+import { buildPlaceholderImage, escapeHtml, formatCurrency, normalizeCategory } from "../../../shared/product-utils.js";
 import { shouldUseCarousel } from "./shared.js";
+import { getSubcategoriesForCategory } from "../../subcategories/service.js";
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -20,11 +21,11 @@ const refs = {
   productId: null,
   nombre: null,
   categoria: null,
+  subcategory: null,
   precio: null,
   descripcion: null,
   featured: null,
   imagen: null,
-  imagenUrl: null,
   imagePreviewContainer: null,
   saveBtn: null,
   resetBtn: null
@@ -152,31 +153,55 @@ function resetForm() {
   refs.productId.value = "";
   refs.featured.checked = false;
   refs.saveBtn.textContent = "Guardar producto";
+  refs.subcategory.value = "";
   clearPreviewObjectUrls();
   setImagePreview([]);
+  populateSubcategoriesForCategory(refs.categoria.value);
+}
+
+function ensureCategoryOption(category) {
+  const normalized = normalizeCategory(category);
+  if (!normalized || !refs.categoria) {
+    return;
+  }
+
+  const exists = Array.from(refs.categoria.options).some(
+    (option) => String(option.value || "").trim() === normalized
+  );
+
+  if (!exists) {
+    const option = document.createElement("option");
+    option.value = normalized;
+    option.textContent = normalized;
+    refs.categoria.appendChild(option);
+  }
 }
 
 function fillForm(product) {
   state.editingId = product.id;
   refs.productId.value = product.id;
   refs.nombre.value = product.nombre;
-  refs.categoria.value = product.categoria;
+  const normalizedCategory = normalizeCategory(product.categoria);
+  ensureCategoryOption(normalizedCategory);
+  refs.categoria.value = normalizedCategory;
   refs.precio.value = String(product.precio);
   refs.descripcion.value = product.descripcion;
   refs.featured.checked = product.featured === true;
-  refs.imagenUrl.value = product.imagenUrl;
   refs.imagen.value = "";
   refs.saveBtn.textContent = "Actualizar producto";
   setImagePreview(product.galleryUrls.length ? product.galleryUrls : [product.imagenUrl], product.nombre);
+  
+  // Load subcategories for this category and set the current subcategory
+  populateSubcategoriesForCategory(normalizedCategory, product.subcategory_id);
 }
 
 function getFormInput() {
   return {
     nombre: refs.nombre.value,
     categoria: refs.categoria.value,
+    subcategory_id: refs.subcategory.value || null,
     precio: refs.precio.value,
     descripcion: refs.descripcion.value,
-    imagenUrl: refs.imagenUrl.value,
     featured: refs.featured.checked
   };
 }
@@ -287,7 +312,7 @@ async function handleSubmit(event) {
       return;
     }
 
-    let imageUrl = String(input.imagenUrl || "").trim();
+    let imageUrl = "";
     let galleryUrls = [];
 
     if (selectedFiles.length > 0) {
@@ -298,9 +323,7 @@ async function handleSubmit(event) {
       }
 
       galleryUrls = uploadResult.data || [];
-      imageUrl = galleryUrls[0] || imageUrl;
-    } else if (imageUrl) {
-      galleryUrls = [imageUrl];
+      imageUrl = galleryUrls[0] || "";
     } else if (state.editingId) {
       const current = getState().products.find((item) => item.id === state.editingId);
       galleryUrls = current && Array.isArray(current.galleryUrls) ? current.galleryUrls.slice() : [];
@@ -378,6 +401,41 @@ async function handleDelete(productId) {
   }
 }
 
+async function populateSubcategoriesForCategory(categoria, selectedSubcategoryId = null) {
+  const normalizedCategory = normalizeCategory(categoria);
+  if (!normalizedCategory) {
+    refs.subcategory.innerHTML = '<option value="">-- Sin subcategoria --</option>';
+    return;
+  }
+
+  try {
+    const result = await getSubcategoriesForCategory(normalizedCategory);
+    if (!result.success || !Array.isArray(result.data)) {
+      refs.subcategory.innerHTML = '<option value="">-- Sin subcategoria --</option>';
+      return;
+    }
+
+    const subcategories = result.data;
+    const selectedId = String(selectedSubcategoryId || "").trim();
+    let html = '<option value="">-- Sin subcategoria --</option>';
+    
+    subcategories.forEach((sub) => {
+      const isSelected = selectedId && String(sub && sub.id ? sub.id : "").trim() === selectedId ? "selected" : "";
+      html += `<option value="${escapeHtml(sub.id)}" ${isSelected}>${escapeHtml(sub.nombre)}</option>`;
+    });
+
+    refs.subcategory.innerHTML = html;
+    refs.subcategory.value = selectedId || "";
+
+    if (refs.subcategory.value !== (selectedId || "")) {
+      refs.subcategory.value = "";
+    }
+  } catch (error) {
+    console.error("Error al cargar subcategorías:", error);
+    refs.subcategory.innerHTML = '<option value="">-- Sin subcategoria --</option>';
+  }
+}
+
 function bindEvents() {
   refs.tableBody.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-action]");
@@ -407,21 +465,15 @@ function bindEvents() {
     setStatus("Formulario reiniciado.", "info");
   });
 
-  refs.imagenUrl.addEventListener("input", () => {
-    if (refs.imagen.files && refs.imagen.files.length > 0) {
-      return;
-    }
-
-    const imageUrl = refs.imagenUrl.value.trim();
-    setImagePreview(imageUrl ? [imageUrl] : [], refs.nombre.value.trim() || "Preview");
+  refs.categoria.addEventListener("change", () => {
+    populateSubcategoriesForCategory(refs.categoria.value);
   });
 
   refs.imagen.addEventListener("change", () => {
     clearPreviewObjectUrls();
 
     if (!refs.imagen.files || refs.imagen.files.length === 0) {
-      const imageUrl = refs.imagenUrl.value.trim();
-      setImagePreview(imageUrl ? [imageUrl] : [], refs.nombre.value.trim() || "Preview");
+      setImagePreview([], refs.nombre.value.trim() || "Preview");
       return;
     }
 
@@ -450,11 +502,11 @@ function cacheRefs() {
   refs.productId = document.getElementById("productId");
   refs.nombre = document.getElementById("nombre");
   refs.categoria = document.getElementById("categoria");
+  refs.subcategory = document.getElementById("subcategory");
   refs.precio = document.getElementById("precio");
   refs.descripcion = document.getElementById("descripcion");
   refs.featured = document.getElementById("featured");
   refs.imagen = document.getElementById("imagen");
-  refs.imagenUrl = document.getElementById("imagenUrl");
   refs.imagePreviewContainer = document.getElementById("imagePreviewContainer");
   refs.saveBtn = document.getElementById("saveBtn");
   refs.resetBtn = document.getElementById("resetBtn");

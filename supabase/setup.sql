@@ -473,3 +473,124 @@ select jsonb_build_object(
   )
 );
 $$;
+
+-- ============================================================================
+-- SUBCATEGORIES SYSTEM (added for improved catalog organization)
+-- Safe migration: maintains compatibility with existing products
+-- ============================================================================
+
+-- Create subcategories table
+create table if not exists public.subcategorias (
+  id uuid primary key default gen_random_uuid(),
+  nombre text not null,
+  categoria text not null,
+  descripcion text,
+  orden integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(categoria, nombre)
+);
+
+-- Add subcategory_id to productos (optional field for backward compatibility)
+alter table public.productos
+  add column if not exists subcategory_id uuid references public.subcategorias(id) on delete set null;
+
+-- Create indexes for performance
+create index if not exists idx_subcategorias_categoria on public.subcategorias (categoria);
+create index if not exists idx_subcategorias_is_active on public.subcategorias (is_active);
+create index if not exists idx_subcategorias_categoria_orden on public.subcategorias (categoria, orden);
+create index if not exists idx_productos_subcategory_id on public.productos (subcategory_id);
+
+-- Update timestamp trigger for subcategorias
+drop trigger if exists trg_subcategorias_updated_at on public.subcategorias;
+create trigger trg_subcategorias_updated_at
+before update on public.subcategorias
+for each row execute function public.set_updated_at();
+
+-- Enable RLS for subcategorias
+alter table public.subcategorias enable row level security;
+
+-- Public read policy for subcategorias
+drop policy if exists "Public can read subcategorias" on public.subcategorias;
+create policy "Public can read subcategorias"
+on public.subcategorias
+for select
+using (is_active = true);
+
+-- Admin insert policy for subcategorias
+drop policy if exists "Authenticated can insert subcategorias" on public.subcategorias;
+create policy "Authenticated can insert subcategorias"
+on public.subcategorias
+for insert
+with check (public.is_admin_user());
+
+-- Admin update policy for subcategorias
+drop policy if exists "Authenticated can update subcategorias" on public.subcategorias;
+create policy "Authenticated can update subcategorias"
+on public.subcategorias
+for update
+using (public.is_admin_user())
+with check (public.is_admin_user());
+
+-- Admin delete policy for subcategorias
+drop policy if exists "Authenticated can delete subcategorias" on public.subcategorias;
+create policy "Authenticated can delete subcategorias"
+on public.subcategorias
+for delete
+using (public.is_admin_user());
+
+-- ============================================================================
+-- INITIAL DATA: Insert categories and subcategories (customer-defined)
+-- ============================================================================
+
+-- Bisutería
+insert into public.subcategorias (nombre, categoria, orden, is_active)
+values 
+  ('Collares', 'Bisuteria', 1, true),
+  ('Pulseras', 'Bisuteria', 2, true),
+  ('Artes', 'Bisuteria', 3, true),
+  ('Gargantillas', 'Bisuteria', 4, true),
+  ('Anillos', 'Bisuteria', 5, true)
+on conflict (categoria, nombre) do nothing;
+
+-- Align legacy value with latest catalog naming
+update public.subcategorias
+set nombre = 'Artes'
+where categoria = 'Bisuteria' and nombre = 'Aretes';
+
+-- Accesorios
+insert into public.subcategorias (nombre, categoria, orden, is_active)
+values 
+  ('Llaveros', 'Accesorios', 1, true),
+  ('Porta lentes', 'Accesorios', 2, true),
+  ('Porta mascarillas', 'Accesorios', 3, true),
+  ('Colgantes de celular', 'Accesorios', 4, true)
+on conflict (categoria, nombre) do nothing;
+
+-- Arreglos
+insert into public.subcategorias (nombre, categoria, orden, is_active)
+values 
+  ('Cajas decoradas', 'Arreglos', 1, true),
+  ('Ramos', 'Arreglos', 2, true),
+  ('Detalles', 'Arreglos', 3, true)
+on conflict (categoria, nombre) do nothing;
+
+-- Decoraciones
+insert into public.subcategorias (nombre, categoria, orden, is_active)
+values 
+  ('Decoración para cumpleaños', 'Decoraciones', 1, true),
+  ('Decoración para bautizo', 'Decoraciones', 2, true),
+  ('Decoración para boda', 'Decoraciones', 3, true),
+  ('Centros de mesa', 'Decoraciones', 4, true)
+on conflict (categoria, nombre) do nothing;
+
+-- Manualidades
+insert into public.subcategorias (nombre, categoria, orden, is_active)
+values 
+  ('Piñatas', 'Manualidades', 1, true),
+  ('Flores', 'Manualidades', 2, true),
+  ('Tarjetas personalizadas', 'Manualidades', 3, true),
+  ('Letras decoradas', 'Manualidades', 4, true),
+  ('Murales', 'Manualidades', 5, true)
+on conflict (categoria, nombre) do nothing;

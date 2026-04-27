@@ -20,7 +20,21 @@ export async function fetchProducts() {
   const table = getTable();
   const attempts = [
     {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,created_at,featured,clicks,vistas",
+      orders: [
+        ["featured", { ascending: false }],
+        ["created_at", { ascending: false }]
+      ]
+    },
+    {
       select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at,featured,clicks,vistas",
+      orders: [
+        ["featured", { ascending: false }],
+        ["created_at", { ascending: false }]
+      ]
+    },
+    {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,created_at,featured",
       orders: [
         ["featured", { ascending: false }],
         ["created_at", { ascending: false }]
@@ -34,12 +48,23 @@ export async function fetchProducts() {
       ]
     },
     {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,created_at",
+      orders: [["created_at", { ascending: false }]]
+    },
+    {
       select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at",
       orders: [["created_at", { ascending: false }]]
     },
     {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,featured",
+      orders: [["featured", { ascending: false }]]
+    },
+    {
       select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,featured",
       orders: [["featured", { ascending: false }]]
+    },
+    {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls"
     },
     {
       select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls"
