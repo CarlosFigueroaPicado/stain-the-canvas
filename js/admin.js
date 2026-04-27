@@ -3,6 +3,8 @@ import { initAdminAuthControls } from "./modules/auth/ui/admin.js";
 import { initDashboardAdminUI, openDashboardAdmin } from "./modules/dashboard/ui/admin.js";
 import { initProductsAdminUI, openProductsAdmin } from "./modules/products/ui/admin.js";
 
+const DASHBOARD_ENABLED = false;
+
 const refs = {
   dashboardBtn: document.getElementById("goDashboardBtn"),
   productosBtn: document.getElementById("goProductosBtn"),
@@ -22,22 +24,30 @@ function revealAdminPage() {
 
 function setNavState(activeSection) {
   const isDashboard = activeSection === "dashboard";
-  refs.dashboardBtn.classList.toggle("btn-brand", isDashboard);
-  refs.dashboardBtn.classList.toggle("btn-outline-brand", !isDashboard);
+  if (refs.dashboardBtn) {
+    refs.dashboardBtn.classList.toggle("btn-brand", isDashboard);
+    refs.dashboardBtn.classList.toggle("btn-outline-brand", !isDashboard);
+    refs.dashboardBtn.setAttribute("aria-selected", String(isDashboard));
+  }
+
   refs.productosBtn.classList.toggle("btn-brand", !isDashboard);
   refs.productosBtn.classList.toggle("btn-outline-brand", isDashboard);
-  refs.dashboardBtn.setAttribute("aria-selected", String(isDashboard));
   refs.productosBtn.setAttribute("aria-selected", String(!isDashboard));
 }
 
 function showSection(sectionName) {
-  const showDashboard = sectionName === "dashboard";
+  const showDashboard = DASHBOARD_ENABLED && sectionName === "dashboard";
   refs.dashboardSection.classList.toggle("d-none", !showDashboard);
   refs.productosSection.classList.toggle("d-none", showDashboard);
-  setNavState(sectionName);
+  setNavState(showDashboard ? "dashboard" : "productos");
 }
 
 async function openDashboard() {
+  if (!DASHBOARD_ENABLED) {
+    await openProductos();
+    return;
+  }
+
   showSection("dashboard");
   if (!state.dashboardReady) {
     state.dashboardReady = initDashboardAdminUI();
@@ -60,11 +70,13 @@ async function openProductos() {
 }
 
 function bindEvents() {
-  refs.dashboardBtn.addEventListener("click", () => {
-    openDashboard().catch((error) => {
-      console.error("Error al abrir dashboard:", error);
+  if (DASHBOARD_ENABLED && refs.dashboardBtn) {
+    refs.dashboardBtn.addEventListener("click", () => {
+      openDashboard().catch((error) => {
+        console.error("Error al abrir dashboard:", error);
+      });
     });
-  });
+  }
 
   refs.productosBtn.addEventListener("click", () => {
     openProductos().catch((error) => {
@@ -73,11 +85,19 @@ function bindEvents() {
   });
 
   if (refs.refreshBtn) {
-    refs.refreshBtn.addEventListener("click", () => {
-      openDashboard().catch((error) => {
-        console.error("Error al refrescar dashboard:", error);
+    refs.refreshBtn.classList.toggle("d-none", !DASHBOARD_ENABLED);
+
+    if (DASHBOARD_ENABLED) {
+      refs.refreshBtn.addEventListener("click", () => {
+        openDashboard().catch((error) => {
+          console.error("Error al refrescar dashboard:", error);
+        });
       });
-    });
+    }
+  }
+
+  if (refs.dashboardBtn) {
+    refs.dashboardBtn.classList.toggle("d-none", !DASHBOARD_ENABLED);
   }
 }
 
@@ -96,7 +116,7 @@ async function init() {
   revealAdminPage();
   initAdminAuthControls();
   bindEvents();
-  await openDashboard();
+  await openProductos();
 }
 
 init().catch((error) => {
