@@ -42,13 +42,13 @@ export function initAdminAuthControls() {
     const confirm = String(confirmPasswordEl.value || "");
 
     if (password.length < 8) {
-      setPasswordStatus("La nueva contrasena debe tener al menos 8 caracteres.", "danger");
+      setPasswordStatus("La nueva contraseña debe tener al menos 8 caracteres.", "danger");
       newPasswordEl.focus();
       return;
     }
 
     if (password !== confirm) {
-      setPasswordStatus("La confirmacion no coincide con la nueva contrasena.", "danger");
+      setPasswordStatus("La confirmación no coincide con la nueva contraseña.", "danger");
       confirmPasswordEl.focus();
       return;
     }
@@ -59,11 +59,11 @@ export function initAdminAuthControls() {
     try {
       const result = await changePassword(password);
       if (!result || !result.success) {
-        setPasswordStatus((result && result.error) || "No se pudo actualizar la contrasena.", "danger");
+        setPasswordStatus((result && result.error) || "No se pudo actualizar la contraseña.", "danger");
         return;
       }
 
-      setPasswordStatus("Contrasena actualizada correctamente.", "success");
+      setPasswordStatus("Contraseña actualizada correctamente.", "success");
       setTimeout(() => {
         if (modal) {
           modal.hide();

@@ -6,7 +6,7 @@ describe("products.ui", () => {
     expect(shouldUseCarousel(null)).toBe(false);
   });
 
-  it("array vacio -> false", () => {
+  it("array vacío -> false", () => {
     expect(shouldUseCarousel([])).toBe(false);
   });
 
@@ -14,7 +14,7 @@ describe("products.ui", () => {
     expect(shouldUseCarousel(["https://example.com/img1.jpg"])).toBe(false);
   });
 
-  it("2+ imagenes -> true", () => {
+  it("2+ imágenes -> true", () => {
     expect(
       shouldUseCarousel([
         "https://example.com/img1.jpg",
@@ -23,7 +23,7 @@ describe("products.ui", () => {
     ).toBe(true);
   });
 
-  it("valores vacios no cuentan como imagenes", () => {
+  it("valores vacíos no cuentan como imágenes", () => {
     expect(shouldUseCarousel(["", "   ", null])).toBe(false);
   });
 });

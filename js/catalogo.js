@@ -3,5 +3,5 @@ import { initPublicAdminNav } from "./modules/auth/ui/public-nav.js";
 
 initCatalogProductsUI();
 initPublicAdminNav().catch((error) => {
-	console.error("No se pudo inicializar menu admin en catalogo:", error);
+	console.error("No se pudo inicializar menú admin en catálogo:", error);
 });

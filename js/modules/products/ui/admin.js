@@ -212,7 +212,7 @@ function validateSelectedFile(file) {
   }
 
   if (file.size > MAX_IMAGE_SIZE_BYTES) {
-    return "La imagen supera 5MB. Sube un archivo mas liviano.";
+    return "La imagen supera 5MB. Sube un archivo más liviano.";
   }
 
   const type = String(file.type || "").toLowerCase();
@@ -318,7 +318,7 @@ async function handleSubmit(event) {
     if (selectedFiles.length > 0) {
       const uploadResult = await uploadFiles(selectedFiles, input.nombre);
       if (!uploadResult.success) {
-        setStatus(uploadResult.error || "No se pudieron subir las imagenes.", "danger");
+        setStatus(uploadResult.error || "No se pudieron subir las imágenes.", "danger");
         return;
       }
 
@@ -380,7 +380,7 @@ async function handleDelete(productId) {
     let warningMessage = "";
 
     if (cleanupInfo.cleanupError) {
-      warningMessage = " El producto se elimino, pero algunas imagenes no pudieron borrarse del storage.";
+      warningMessage = " El producto se eliminó, pero algunas imágenes no pudieron borrarse del storage.";
     }
 
     if (cleanupInfo.skipped > 0) {

@@ -36,14 +36,14 @@
             data-bs-target="#adminNav"
             aria-controls="adminNav"
             aria-expanded="false"
-            aria-label="Alternar navegacion"
+            aria-label="Alternar navegación"
           >
             <span class="navbar-toggler-icon"></span>
           </button>
           <div class="collapse navbar-collapse" id="adminNav">
             <ul class="navbar-nav ms-auto mb-2 mb-lg-0 gap-lg-2 align-items-lg-center">
               <li class="nav-item"><a class="nav-link" href="index.html">Inicio</a></li>
-              <li class="nav-item"><a class="nav-link" href="catalogo.html">Catalogo</a></li>
+              <li class="nav-item"><a class="nav-link" href="catalogo.html">Catálogo</a></li>
               <li class="nav-item">
                 <button
                   id="openPasswordModalBtn"
@@ -52,12 +52,12 @@
                   data-bs-toggle="modal"
                   data-bs-target="#changePasswordModal"
                 >
-                  Cambiar contrasena
+                  Cambiar contraseña
                 </button>
               </li>
               <li class="nav-item">
                 <button id="logoutAdminBtn" class="btn btn-outline-brand rounded-pill px-3" type="button">
-                  Cerrar sesion
+                  Cerrar sesión
                 </button>
               </li>
             </ul>
@@ -70,16 +70,16 @@
       <section class="container">
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-end gap-3 mb-4">
           <div>
-            <p class="text-uppercase small fw-semibold letter-space mb-2">Panel de gestion</p>
+            <p class="text-uppercase small fw-semibold letter-space mb-2">Panel de gestión</p>
             <h1 class="mb-2">Admin de Stain the Canvas</h1>
             <p class="mb-0 text-muted-brand">
-              Dashboard de analitica y modulo independiente de productos.
+              Dashboard de analítica y módulo independiente de productos.
             </p>
           </div>
           <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-outline-brand rounded-pill px-4" href="catalogo.html">Ver catalogo</a>
+            <a class="btn btn-outline-brand rounded-pill px-4" href="catalogo.html">Ver catálogo</a>
             <button id="refreshDashboardBtn" class="btn btn-brand rounded-pill px-4" type="button">
-              Actualizar metricas
+              Actualizar métricas
             </button>
           </div>
         </div>
@@ -129,7 +129,7 @@
             </div>
             <div class="col-12 col-sm-6 col-xl-3">
               <article class="admin-card kpi-card p-4 h-100">
-                <p class="small text-uppercase letter-space text-muted-brand mb-2">Conversion</p>
+                <p class="small text-uppercase letter-space text-muted-brand mb-2">Conversión</p>
                 <p id="kpiConversion" class="kpi-value mb-0">0%</p>
               </article>
             </div>
@@ -137,13 +137,13 @@
 
           <article class="admin-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
-              <h2 class="h3 mb-0">Analisis automatico</h2>
+              <h2 class="h3 mb-0">Análisis automático</h2>
               <small class="text-muted-brand">Resumen claro del comportamiento actual</small>
             </div>
             <div class="row g-3">
               <div class="col-12 col-md-6 col-xl-4">
                 <article class="border border-brand-subtle rounded-4 p-3 h-100 bg-white">
-                  <h3 id="insightTrafficTitle" class="h6 mb-2">Trafico estable</h3>
+                  <h3 id="insightTrafficTitle" class="h6 mb-2">Tráfico estable</h3>
                   <p id="insightTrafficBody" class="mb-0 text-muted-brand small"></p>
                 </article>
               </div>
@@ -155,19 +155,19 @@
               </div>
               <div class="col-12 col-md-6 col-xl-4">
                 <article class="border border-brand-subtle rounded-4 p-3 h-100 bg-white">
-                  <h3 id="insightProductsTitle" class="h6 mb-2">Producto lider</h3>
+                  <h3 id="insightProductsTitle" class="h6 mb-2">Producto líder</h3>
                   <p id="insightProductsBody" class="mb-0 text-muted-brand small"></p>
                 </article>
               </div>
               <div class="col-12 col-md-6 col-xl-6">
                 <article class="border border-brand-subtle rounded-4 p-3 h-100 bg-white">
-                  <h3 id="insightCategoriesTitle" class="h6 mb-2">Categoria lider</h3>
+                  <h3 id="insightCategoriesTitle" class="h6 mb-2">Categoría líder</h3>
                   <p id="insightCategoriesBody" class="mb-0 text-muted-brand small"></p>
                 </article>
               </div>
               <div class="col-12 col-md-6 col-xl-6">
                 <article class="border border-brand-subtle rounded-4 p-3 h-100 bg-white">
-                  <h3 id="insightWhatsappTitle" class="h6 mb-2">Mayor intencion de compra</h3>
+                  <h3 id="insightWhatsappTitle" class="h6 mb-2">Mayor intención de compra</h3>
                   <p id="insightWhatsappBody" class="mb-0 text-muted-brand small"></p>
                 </article>
               </div>
@@ -176,14 +176,14 @@
 
           <article class="admin-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
-              <h2 class="h3 mb-0">Prediccion automatica</h2>
-              <small class="text-muted-brand">Proyeccion de corto plazo</small>
+              <h2 class="h3 mb-0">Predicción automática</h2>
+              <small class="text-muted-brand">Proyección de corto plazo</small>
             </div>
             <div class="row g-3">
               <div class="col-12 col-md-6 col-xl-4">
                 <article class="border border-brand-subtle rounded-4 p-3 h-100 bg-white">
                   <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                    <h3 id="predictionTrafficTitle" class="h6 mb-0">Prediccion de trafico (7 dias)</h3>
+                    <h3 id="predictionTrafficTitle" class="h6 mb-0">Predicción de tráfico (7 días)</h3>
                     <span id="predictionTrafficConfidence" class="badge rounded-pill text-bg-light border border-brand-subtle">baja</span>
                   </div>
                   <p id="predictionTrafficBody" class="mb-0 text-muted-brand small"></p>
@@ -192,7 +192,7 @@
               <div class="col-12 col-md-6 col-xl-4">
                 <article class="border border-brand-subtle rounded-4 p-3 h-100 bg-white">
                   <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                    <h3 id="predictionFunnelTitle" class="h6 mb-0">Prediccion del embudo de clientes</h3>
+                    <h3 id="predictionFunnelTitle" class="h6 mb-0">Predicción del embudo de clientes</h3>
                     <span id="predictionFunnelConfidence" class="badge rounded-pill text-bg-light border border-brand-subtle">baja</span>
                   </div>
                   <p id="predictionFunnelBody" class="mb-0 text-muted-brand small"></p>
@@ -210,7 +210,7 @@
               <div class="col-12 col-md-6 col-xl-6">
                 <article class="border border-brand-subtle rounded-4 p-3 h-100 bg-white">
                   <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                    <h3 id="predictionCategoriesTitle" class="h6 mb-0">Liderazgo por categoria</h3>
+                    <h3 id="predictionCategoriesTitle" class="h6 mb-0">Liderazgo por categoría</h3>
                     <span id="predictionCategoriesConfidence" class="badge rounded-pill text-bg-light border border-brand-subtle">baja</span>
                   </div>
                   <p id="predictionCategoriesBody" class="mb-0 text-muted-brand small"></p>
@@ -219,7 +219,7 @@
               <div class="col-12 col-md-6 col-xl-6">
                 <article class="border border-brand-subtle rounded-4 p-3 h-100 bg-white">
                   <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                    <h3 id="predictionWhatsappTitle" class="h6 mb-0">Intencion en WhatsApp</h3>
+                    <h3 id="predictionWhatsappTitle" class="h6 mb-0">Intención en WhatsApp</h3>
                     <span id="predictionWhatsappConfidence" class="badge rounded-pill text-bg-light border border-brand-subtle">baja</span>
                   </div>
                   <p id="predictionWhatsappBody" class="mb-0 text-muted-brand small"></p>
@@ -230,8 +230,8 @@
 
           <article class="admin-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
-              <h2 class="h3 mb-0">Plan de accion inteligente</h2>
-              <small class="text-muted-brand">Prioridades recomendadas para decision</small>
+              <h2 class="h3 mb-0">Plan de acción inteligente</h2>
+              <small class="text-muted-brand">Prioridades recomendadas para decisión</small>
             </div>
             <div class="row g-3">
               <div class="col-12 col-xl-5">
@@ -247,7 +247,7 @@
 
           <article class="admin-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
-              <h2 class="h3 mb-0">Tendencia de trafico</h2>
+              <h2 class="h3 mb-0">Tendencia de tráfico</h2>
               <small id="dashboardUpdatedAt" class="text-muted-brand">Actualizado: --</small>
             </div>
             <div class="chart-wrap">
@@ -266,7 +266,7 @@
             </div>
             <div class="col-12 col-lg-5">
               <article class="admin-card p-4 h-100">
-                <h3 class="h4 mb-3">Interes por categoria</h3>
+                <h3 class="h4 mb-3">Interés por categoría</h3>
                 <div class="chart-wrap chart-wrap-sm">
                   <canvas id="chartCategorias"></canvas>
                 </div>
@@ -278,14 +278,14 @@
             <h3 class="h4 mb-3">Tablas de top productos</h3>
             <div class="row g-4">
               <div class="col-12 col-xl-6">
-                <h4 class="h6 text-uppercase letter-space text-muted-brand mb-2">Mas vistos</h4>
+                <h4 class="h6 text-uppercase letter-space text-muted-brand mb-2">Más vistos</h4>
                 <div class="table-responsive">
                   <table class="table align-middle dashboard-table mb-0">
                     <thead>
                       <tr>
                         <th>#</th>
                         <th>Producto</th>
-                        <th>Categoria</th>
+                        <th>Categoría</th>
                         <th>Vistas</th>
                       </tr>
                     </thead>
@@ -294,14 +294,14 @@
                 </div>
               </div>
               <div class="col-12 col-xl-6">
-                <h4 class="h6 text-uppercase letter-space text-muted-brand mb-2">Mas clic en WhatsApp</h4>
+                <h4 class="h6 text-uppercase letter-space text-muted-brand mb-2">Más clic en WhatsApp</h4>
                 <div class="table-responsive">
                   <table class="table align-middle dashboard-table mb-0">
                     <thead>
                       <tr>
                         <th>#</th>
                         <th>Producto</th>
-                        <th>Categoria</th>
+                        <th>Categoría</th>
                         <th>Clicks</th>
                       </tr>
                     </thead>
@@ -311,7 +311,7 @@
               </div>
             </div>
             <div id="dashboardEmptyState" class="alert alert-brand-subtle mt-3 d-none" role="status">
-              Aun no hay datos suficientes para analitica.
+              Aún no hay datos suficientes para analítica.
             </div>
           </article>
         </section>
@@ -335,7 +335,7 @@
 
                   <div class="row g-3">
                     <div class="col-md-6">
-                      <label class="form-label" for="categoria">Categoria</label>
+                      <label class="form-label" for="categoria">Categoría</label>
                       <select class="form-select" id="categoria" name="categoria" required>
                         <option value="Bisuteria">Bisuteria</option>
                         <option value="Accesorios">Accesorios</option>
@@ -351,7 +351,7 @@
                   </div>
 
                   <div class="mt-3">
-                    <label class="form-label" for="subcategory">Subcategoria <span class="text-muted-brand">(opcional)</span></label>
+                    <label class="form-label" for="subcategory">Subcategoría <span class="text-muted-brand">(opcional)</span></label>
                     <select class="form-select" id="subcategory" name="subcategory">
                       <option value="">-- Sin subcategoria --</option>
                     </select>
@@ -359,7 +359,7 @@
                   </div>
 
                   <div class="mt-3">
-                    <label class="form-label" for="descripcion">Descripcion</label>
+                    <label class="form-label" for="descripcion">Descripción</label>
                     <textarea class="form-control" id="descripcion" name="descripcion" rows="4" required></textarea>
                   </div>
 
@@ -371,7 +371,7 @@
                   <div class="mt-3">
                     <label class="form-label" for="imagen">Imagen (subir archivo)</label>
                     <input class="form-control" id="imagen" name="imagen" type="file" accept="image/*" multiple />
-                    <div class="form-text">Puedes subir varias imagenes. La primera se usara como portada del producto.</div>
+                    <div class="form-text">Puedes subir varias imágenes. La primera se usará como portada del producto.</div>
                   </div>
 
                   <div class="mt-3 d-flex align-items-start gap-3">
@@ -396,7 +396,7 @@
                       <tr>
                         <th>Imagen</th>
                         <th>Nombre</th>
-                        <th>Categoria</th>
+                        <th>Categoría</th>
                         <th>Precio</th>
                         <th class="text-end">Acciones</th>
                       </tr>
@@ -415,13 +415,13 @@
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-brand">
           <div class="modal-header border-0 pb-0">
-            <h2 class="modal-title h4" id="changePasswordModalLabel">Cambiar contrasena</h2>
+            <h2 class="modal-title h4" id="changePasswordModalLabel">Cambiar contraseña</h2>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
           <div class="modal-body pt-2">
             <form id="changePasswordForm" novalidate>
               <div class="mb-3">
-                <label class="form-label" for="newPassword">Nueva contrasena</label>
+                <label class="form-label" for="newPassword">Nueva contraseña</label>
                 <input
                   class="form-control"
                   id="newPassword"
@@ -432,7 +432,7 @@
                 />
               </div>
               <div class="mb-3">
-                <label class="form-label" for="confirmPassword">Confirmar nueva contrasena</label>
+                <label class="form-label" for="confirmPassword">Confirmar nueva contraseña</label>
                 <input
                   class="form-control"
                   id="confirmPassword"
@@ -464,7 +464,7 @@
             <p class="site-footer-kicker mb-2">Stain the Canvas</p>
             <h2 class="h5 site-footer-title mb-2">Creaciones hechas para recordar momentos.</h2>
             <p class="site-footer-copy mb-0">
-              Disenamos piezas artesanales personalizadas en bisuteria, pinatas, arreglos y decoraciones.
+              Diseñamos piezas artesanales personalizadas en bisutería, piñatas, arreglos y decoraciones.
             </p>
           </section>
 
@@ -476,9 +476,9 @@
               target="_blank"
               rel="noopener noreferrer"
             >
-              Escribenos por WhatsApp
+              Escríbenos por WhatsApp
             </a>
-            <p class="site-footer-copy mt-2 mb-0">Respuesta rapida para cotizaciones y personalizaciones.</p>
+            <p class="site-footer-copy mt-2 mb-0">Respuesta rápida para cotizaciones y personalizaciones.</p>
           </section>
         </div>
 

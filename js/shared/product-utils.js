@@ -161,15 +161,15 @@ export function validateProductInput(productInput) {
   }
 
   if (!categoria) {
-    return "Selecciona una categoria valida.";
+    return "Selecciona una categoría válida.";
   }
 
   if (!Number.isFinite(precio) || precio < 0) {
-    return "El precio debe ser un numero mayor o igual a 0.";
+    return "El precio debe ser un número mayor o igual a 0.";
   }
 
   if (descripcion.length < 10) {
-    return "La descripcion debe tener al menos 10 caracteres.";
+    return "La descripción debe tener al menos 10 caracteres.";
   }
 
   if (
@@ -186,7 +186,7 @@ export function validateProductInput(productInput) {
 
   const invalidGalleryUrl = galleryUrls.find((url) => !isHttpUrl(url));
   if (invalidGalleryUrl) {
-    return "Las imagenes de galeria deben usar URLs http:// o https://";
+    return "Las imágenes de galería deben usar URLs http:// o https://";
   }
 
   return "";
@@ -231,7 +231,7 @@ export function normalizeProduct(row) {
     pickFirst(
       safeRow,
       ["descripcion", "description", "detalle", "detalles", "resumen"],
-      "Sin descripcion disponible."
+      "Sin descripción disponible."
     )
   );
   const precio = toNumber(pickFirst(safeRow, ["precio", "price", "valor"], 0), 0);

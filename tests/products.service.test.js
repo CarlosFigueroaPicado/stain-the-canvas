@@ -38,11 +38,11 @@ describe("products.service", () => {
     resetProductsState();
   });
 
-  it("rechaza producto invalido sin llamar al API", async () => {
+  it("rechaza producto inválido sin llamar al API", async () => {
     const result = await createProduct({
       nombre: "ab",
       categoria: "Bisuteria",
-      descripcion: "Descripcion valida del producto",
+      descripcion: "Descripción válida del producto",
       precio: 100
     });
 
@@ -50,7 +50,7 @@ describe("products.service", () => {
     expect(productsApiMock.insertProduct).not.toHaveBeenCalled();
   });
 
-  it("permite reintentar carga despues de un fallo inicial", async () => {
+  it("permite reintentar carga después de un fallo inicial", async () => {
     productsApiMock.fetchProducts
       .mockResolvedValueOnce({ data: null, error: { message: "boom" } })
       .mockResolvedValueOnce({
@@ -113,7 +113,7 @@ describe("products.service", () => {
     expect(result.data[0]).toEqual(expect.objectContaining({ id: "prod-1", featured: true }));
   });
 
-  it("crea producto valido y normaliza featured antes de guardar", async () => {
+  it("crea producto válido y normaliza featured antes de guardar", async () => {
     productsApiMock.insertProduct.mockResolvedValue({ data: null, error: null });
     productsApiMock.fetchProducts.mockResolvedValue({
       data: [
@@ -121,7 +121,7 @@ describe("products.service", () => {
           id: "prod-3",
           nombre: "Producto Mock",
           categoria: "Pinatas",
-          descripcion: "Producto de prueba con datos completos y validos.",
+          descripcion: "Producto de prueba con datos completos y válidos.",
           precio: 200,
           imagen_url: "https://example.com/mock.jpg",
           gallery_urls: ["https://example.com/mock.jpg"],
@@ -134,7 +134,7 @@ describe("products.service", () => {
     const result = await createProduct({
       nombre: "Producto Mock",
       categoria: "Piñatas",
-      descripcion: "Producto de prueba con datos completos y validos.",
+      descripcion: "Producto de prueba con datos completos y válidos.",
       precio: 200,
       imagenUrl: "https://example.com/mock.jpg",
       featured: "true"
@@ -143,8 +143,9 @@ describe("products.service", () => {
     expect(result).toEqual(expect.objectContaining({ success: true }));
     expect(productsApiMock.insertProduct).toHaveBeenCalledWith({
       nombre: "Producto Mock",
-      categoria: "Pinatas",
-      descripcion: "Producto de prueba con datos completos y validos.",
+      categoria: "Manualidades",
+      subcategory_id: null,
+      descripcion: "Producto de prueba con datos completos y válidos.",
       precio: 200,
       imagen_url: "https://example.com/mock.jpg",
       gallery_urls: ["https://example.com/mock.jpg"],

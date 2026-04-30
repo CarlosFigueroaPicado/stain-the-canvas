@@ -1,4 +1,4 @@
-@products @auth @dashboard, Actua como un desarrollador senior experto en:
+@products @auth @dashboard, Actúa como un desarrollador senior experto en:
 
 - Arquitectura frontend (modular, por capas, escalable)
 - JavaScript moderno (ES6+ sin frameworks)
@@ -24,7 +24,7 @@ Se utiliza Supabase como backend.
 
 ### 1. CODE REVIEW COMPLETO
 - Detecta errores, bugs y malas practicas
-- Identifica codigo duplicado o innecesario
+- Identifica código duplicado o innecesario
 - Evalua arquitectura (api, service, ui)
 - Revisa separacion de responsabilidades
 - Detecta problemas de escalabilidad
@@ -34,9 +34,9 @@ Se utiliza Supabase como backend.
 Aplica automaticamente:
 
 - Systematic Debugging (no asumir, analizar causa raiz)
-- Refactorizacion limpia (menos codigo, mas claridad)
+- Refactorización limpia (menos código, más claridad)
 - Naming profesional (variables, funciones, archivos)
-- Eliminacion de codigo muerto
+- Eliminación de código muerto
 - Separacion por capas (api / service / ui)
 - Optimizacion de rendimiento
 - Seguridad basica (inputs, datos, exposicion de claves)
@@ -67,7 +67,7 @@ Entrega:
 
 1. Lista clara de problemas encontrados
 2. Explicacion breve (tipo senior, directa)
-3. Codigo corregido (solo lo necesario, sin exagerar)
+3. Código corregido (solo lo necesario, sin exagerar)
 4. Nueva estructura recomendada
 5. Mejoras aplicadas
 
@@ -77,11 +77,11 @@ Entrega:
 - NO usar frameworks
 - NO agregar npm si no es necesario
 - Mantener compatibilidad con navegador
-- Codigo listo para produccion ligera
+- Código listo para producción ligera
 
 ## DONE WHEN
 
-- Codigo limpio, modular y entendible
+- Código limpio, modular y entendible
 - Sin duplicacion innecesaria
 - Arquitectura clara (api/service/ui)
 - Sin errores obvios

@@ -41,12 +41,12 @@ export function initCatalogProductsUI() {
   };
 
   if (Object.values(modalRefs).some((ref) => !ref)) {
-    console.error("Catalogo no pudo inicializarse: faltan elementos del modal de producto.");
+    console.error("Catálogo no pudo inicializarse: faltan elementos del modal de producto.");
     return;
   }
 
   if (!globalThis.bootstrap || !globalThis.bootstrap.Modal) {
-    console.error("Catalogo no pudo inicializarse: Bootstrap Modal no esta disponible.");
+    console.error("Catálogo no pudo inicializarse: Bootstrap Modal no está disponible.");
     return;
   }
 

@@ -132,8 +132,8 @@ export async function loadAppConfig() {
 
     return fail(
       remoteErrorReason
-        ? `No se pudo cargar /api/config (${remoteErrorReason}) y no hay fallback de configuracion publica.`
-        : "No se encontro configuracion publica de Supabase. Define variables en Vercel o window.__STC_CONFIG__."
+        ? `No se pudo cargar /api/config (${remoteErrorReason}) y no hay fallback de configuración pública.`
+        : "No se encontró configuración pública de Supabase. Define variables en Vercel o window.__STC_CONFIG__."
     );
   })().finally(() => {
     loadingPromise = null;

@@ -9,10 +9,10 @@ function mapAuthErrorMessage(errorMessage) {
   const message = String(errorMessage || "").trim().toLowerCase();
   if (message === "no_client" || message === "no client") {
     const detailed = getLastSupabaseClientError();
-    return detailed || "No se pudo inicializar la conexion con Supabase. Verifica la configuracion publica (URL y anon key).";
+    return detailed || "No se pudo inicializar la conexión con Supabase. Verifica la configuración pública (URL y anon key).";
   }
 
-  return String(errorMessage || "No se pudo iniciar sesion.");
+  return String(errorMessage || "No se pudo iniciar sesión.");
 }
 
 function sanitizeRedirect(value) {
@@ -31,7 +31,7 @@ async function hasAdminAccess(user) {
     return false;
   }
 
-  // Prioriza validacion en tabla para evitar depender solo de claims potencialmente desactualizados.
+  // Prioriza validación en tabla para evitar depender solo de claims potencialmente desactualizados.
   try {
     const membershipResult = await authApi.getAdminMembership(user.id);
     if (!membershipResult.error && membershipResult.data) {
@@ -39,7 +39,7 @@ async function hasAdminAccess(user) {
     }
 
     if (membershipResult.error) {
-      console.error("No se pudo validar membresia admin_users:", membershipResult.error);
+      console.error("No se pudo validar membresía admin_users:", membershipResult.error);
     }
   } catch (error) {
     console.error("Error consultando admin_users:", error);
@@ -63,7 +63,7 @@ export function getRedirectTarget(defaultTarget) {
     const requested = params.get("redirect");
     return ok(requested ? sanitizeRedirect(requested) : fallbackTarget);
   } catch {
-    return fail("No se pudo resolver la redireccion.");
+    return fail("No se pudo resolver la redirección.");
   }
 }
 
@@ -90,9 +90,9 @@ export async function resolveCurrentUser() {
     setState({ user: resolvedUser });
     return ok(resolvedUser);
   } catch (error) {
-    console.error("No se pudo resolver la sesion actual:", error);
+    console.error("No se pudo resolver la sesión actual:", error);
     setState({ user: null });
-    return fail("No se pudo validar la sesion de administrador.");
+    return fail("No se pudo validar la sesión de administrador.");
   }
 }
 
@@ -111,11 +111,11 @@ export async function login(username, password) {
     const pass = String(password || "");
 
     if (!email || !pass) {
-      return fail("Completa correo y contrasena.");
+      return fail("Completa correo y contraseña.");
     }
 
     if (!EMAIL_PATTERN.test(email)) {
-      return fail("Ingresa un correo valido.");
+      return fail("Ingresa un correo válido.");
     }
 
     const signInResult = await authApi.signInWithPassword(email, pass);
@@ -139,7 +139,7 @@ export async function login(username, password) {
     return ok({ authenticated: true, user: userResult.data });
   } catch (error) {
     console.error("Error inesperado en login:", error);
-    return fail("No se pudo iniciar sesion.");
+    return fail("No se pudo iniciar sesión.");
   }
 }
 
@@ -149,9 +149,9 @@ export async function logout() {
     setState({ user: null });
     return ok({ signedOut: true });
   } catch (error) {
-    console.error("Error al cerrar sesion:", error);
+    console.error("Error al cerrar sesión:", error);
     setState({ user: null });
-    return fail("No se pudo cerrar sesion correctamente.");
+    return fail("No se pudo cerrar sesión correctamente.");
   }
 }
 
@@ -159,18 +159,18 @@ export async function changePassword(newPassword) {
   try {
     const password = String(newPassword || "");
     if (password.length < 8) {
-      return fail("La nueva contrasena debe tener al menos 8 caracteres.");
+      return fail("La nueva contraseña debe tener al menos 8 caracteres.");
     }
 
     const result = await authApi.updatePassword(password);
     if (result.error) {
-      return fail(result.error.message || "No se pudo actualizar la contrasena.");
+      return fail(result.error.message || "No se pudo actualizar la contraseña.");
     }
 
     return ok({ passwordUpdated: true });
   } catch (error) {
-    console.error("Error inesperado al cambiar contrasena:", error);
-    return fail("No se pudo actualizar la contrasena.");
+    console.error("Error inesperado al cambiar contraseña:", error);
+    return fail("No se pudo actualizar la contraseña.");
   }
 }
 

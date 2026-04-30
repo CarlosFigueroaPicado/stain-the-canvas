@@ -101,7 +101,7 @@ export async function uploadFiles(files, prefix) {
 
       const publicUrl = await productsApi.getPublicUrl(path);
       if (!publicUrl) {
-        return fail("No se pudo generar URL publica de la imagen.");
+        return fail("No se pudo generar URL pública de la imagen.");
       }
 
       uploaded.push(publicUrl);
@@ -109,8 +109,8 @@ export async function uploadFiles(files, prefix) {
 
     return ok(uploaded);
   } catch (error) {
-    console.error("Error al subir imagenes:", error);
-    return fail("No se pudieron subir las imagenes.");
+    console.error("Error al subir imágenes:", error);
+    return fail("No se pudieron subir las imágenes.");
   }
 }
 

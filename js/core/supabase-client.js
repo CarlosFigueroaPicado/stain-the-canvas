@@ -23,7 +23,7 @@ export async function getSupabaseClient() {
 
   const configResult = await loadAppConfig();
   if (!configResult.success) {
-    setClientError(configResult.error || "No se pudo cargar la configuracion publica de Supabase.");
+    setClientError(configResult.error || "No se pudo cargar la configuración pública de Supabase.");
     console.error(lastSupabaseClientError);
     return null;
   }
@@ -37,13 +37,13 @@ export async function getSupabaseClient() {
 
   const config = configResult.data;
   if (!config.url || !config.anonKey) {
-    setClientError("La configuracion publica de Supabase esta incompleta (falta URL o anon key).");
+    setClientError("La configuración pública de Supabase está incompleta (falta URL o anon key).");
     console.error(lastSupabaseClientError);
     return null;
   }
 
   if (isUnsafeKey(config.anonKey)) {
-    setClientError("La clave configurada parece secreta. Usa una publishable key o anon key publica.");
+    setClientError("La clave configurada parece secreta. Usa una publishable key o anon key pública.");
     console.error(lastSupabaseClientError);
     return null;
   }

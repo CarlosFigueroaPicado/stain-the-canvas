@@ -75,7 +75,7 @@ export function initLoginPage() {
       }
     })
     .catch((error) => {
-      console.error("No se pudo validar sesion inicial de admin:", error);
+      console.error("No se pudo validar sesión inicial de admin:", error);
     });
 
   formEl.addEventListener("submit", async (event) => {
@@ -95,7 +95,7 @@ export function initLoginPage() {
       globalThis.location.replace(redirectTarget);
     } catch (error) {
       console.error("Error inesperado en login admin:", error);
-      showStatus("No se pudo iniciar sesion. Intenta nuevamente.", "danger");
+      showStatus("No se pudo iniciar sesión. Intenta nuevamente.", "danger");
     } finally {
       setLoading(false);
     }

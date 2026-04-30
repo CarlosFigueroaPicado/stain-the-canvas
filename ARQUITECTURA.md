@@ -311,7 +311,7 @@ handleLoginClick()
 
 ```
 Lectura Pública:
-  Catalogo (GET productos) 
+  Catálogo (GET productos) 
   → API → Supabase (RLS permite lectura)
 
 Escritura Admin:

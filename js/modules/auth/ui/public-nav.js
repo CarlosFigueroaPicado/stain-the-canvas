@@ -6,7 +6,7 @@ async function handleAdminLogout(event) {
   try {
     await logout();
   } catch (error) {
-    console.error("No se pudo cerrar sesion admin desde menu publico:", error);
+    console.error("No se pudo cerrar sesión admin desde menú público:", error);
   }
 
   globalThis.location.assign("index.html");

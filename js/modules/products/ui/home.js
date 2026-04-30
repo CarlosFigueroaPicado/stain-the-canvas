@@ -247,14 +247,14 @@ export function initHomeProductsUI() {
           return;
         }
 
-        const text = encodeURIComponent("Hola, quiero informacion de sus productos");
+        const text = encodeURIComponent("Hola, quiero información de sus productos");
         const link = `https://wa.me/${configResult.data.whatsappNumber}?text=${text}`;
         whatsappButtons.forEach((button) => {
           button.href = link;
         });
       })
       .catch((error) => {
-        console.error("No se pudo cargar la configuracion publica para WhatsApp:", error);
+        console.error("No se pudo cargar la configuración pública para WhatsApp:", error);
       });
 
     whatsappButtons.forEach((button) => {

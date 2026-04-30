@@ -177,11 +177,11 @@ function buildDashboardInsights(metrics) {
   const previous7Total = sumDayTotals(previous7);
   const trafficDelta = previous7Total > 0 ? ((last7Total - previous7Total) / previous7Total) * 100 : 0;
 
-  let trafficTitle = "Trafico estable";
+  let trafficTitle = "Tráfico estable";
   if (trafficDelta >= 8) {
-    trafficTitle = "El trafico esta subiendo";
+    trafficTitle = "El tráfico está subiendo";
   } else if (trafficDelta <= -8) {
-    trafficTitle = "El trafico esta bajando";
+    trafficTitle = "El tráfico está bajando";
   }
 
   const totalVisitas = Number(totals.totalVisitas || 0);
@@ -212,27 +212,27 @@ function buildDashboardInsights(metrics) {
       title: trafficTitle,
       body:
         previous7Total > 0
-          ? `En 7 dias hubo ${last7Total} visitas (${formatSignedPercent(trafficDelta)} vs la semana anterior).`
-          : `En 7 dias hubo ${last7Total} visitas. Aun no hay suficiente historial para comparar.`
+          ? `En 7 días hubo ${last7Total} visitas (${formatSignedPercent(trafficDelta)} vs la semana anterior).`
+          : `En 7 días hubo ${last7Total} visitas. Aún no hay suficiente historial para comparar.`
     },
     funnel: {
       title: funnelTitle,
       body: `De ${totalVisitas} visitas, ${totalVistas} llegaron a productos (${viewRate.toFixed(1)}%) y ${totalClicks} fueron a WhatsApp (${clickRate.toFixed(1)}%).`
     },
     products: {
-      title: topProduct ? `Producto que mas atrae: ${topProduct.nombre}` : "Aun no hay producto lider",
+      title: topProduct ? `Producto que más atrae: ${topProduct.nombre}` : "Aún no hay producto líder",
       body: topProduct
         ? `${Number(topProduct.vistas || 0)} vistas, equivalente al ${topProductShare.toFixed(1)}% del top 5.`
-        : "Todavia no hay datos suficientes para evaluar productos."
+        : "Todavía no hay datos suficientes para evaluar productos."
     },
     categories: {
-      title: topCategory ? `Categoria con mayor interes: ${topCategory.categoria}` : "Aun no hay categoria lider",
+      title: topCategory ? `Categoría con mayor interés: ${topCategory.categoria}` : "Aún no hay categoría líder",
       body: topCategory
-        ? `${Number(topCategory.total || 0)} vistas (${topCategoryShare.toFixed(1)}% del interes por categoria).`
-        : "Todavia no hay datos suficientes para evaluar categorias."
+        ? `${Number(topCategory.total || 0)} vistas (${topCategoryShare.toFixed(1)}% del interés por categoría).`
+        : "Todavía no hay datos suficientes para evaluar categorías."
     },
     whatsapp: {
-      title: topWhatsapp ? `Producto con mayor intencion de compra: ${topWhatsapp.nombre}` : "Aun no hay lider en WhatsApp",
+      title: topWhatsapp ? `Producto con mayor intención de compra: ${topWhatsapp.nombre}` : "Aún no hay líder en WhatsApp",
       body: topWhatsapp
         ? `${Number(topWhatsapp.clicks || 0)} clics en WhatsApp para este producto.`
         : "No hay clics en WhatsApp vinculados a productos en este periodo."
@@ -343,33 +343,33 @@ function buildDashboardPredictions(metrics) {
 
   return {
     traffic: {
-      title: "Lo esperado para trafico (7 dias)",
+      title: "Lo esperado para tráfico (7 días)",
       body: `Esperamos ${trafficPrediction.total} visitas. Rango probable: ${trafficPrediction.lower} a ${trafficPrediction.upper}.`,
       confidence: trafficPrediction.confidence
     },
     funnel: {
-      title: "Lo esperado para conversion",
-      body: `Se estiman ${predictedViews} vistas de producto y ${predictedClicks} clics a WhatsApp la proxima semana.`,
+      title: "Lo esperado para conversión",
+      body: `Se estiman ${predictedViews} vistas de producto y ${predictedClicks} clics a WhatsApp la próxima semana.`,
       confidence: conversionConfidence
     },
     products: {
-      title: topProduct ? `Producto con mayor probabilidad de liderar: ${topProduct.nombre}` : "Sin lider proyectado",
+      title: topProduct ? `Producto con mayor probabilidad de liderar: ${topProduct.nombre}` : "Sin líder proyectado",
       body: topProduct
         ? `Es probable que se mantenga arriba en vistas (ventaja actual: ${Math.max(0, topProductGap)}).`
         : "No hay datos suficientes para estimar el liderazgo por producto.",
       confidence: topProduct ? productConfidence : "baja"
     },
     categories: {
-      title: topCategory ? `Categoria con mayor probabilidad de liderar: ${topCategory.categoria}` : "Sin categoria lider proyectada",
+      title: topCategory ? `Categoría con mayor probabilidad de liderar: ${topCategory.categoria}` : "Sin categoría líder proyectada",
       body: topCategory
-        ? `Tiene una ventaja actual de ${Math.max(0, topCategoryGap)} eventos sobre la siguiente categoria.`
-        : "No hay datos suficientes para estimar el liderazgo por categoria.",
+        ? `Tiene una ventaja actual de ${Math.max(0, topCategoryGap)} eventos sobre la siguiente categoría.`
+        : "No hay datos suficientes para estimar el liderazgo por categoría.",
       confidence: topCategory ? categoryConfidence : "baja"
     },
     whatsapp: {
-      title: topWhatsapp ? `Producto con mayor probabilidad de clic en WhatsApp: ${topWhatsapp.nombre}` : "Sin lider proyectado en WhatsApp",
+      title: topWhatsapp ? `Producto con mayor probabilidad de clic en WhatsApp: ${topWhatsapp.nombre}` : "Sin líder proyectado en WhatsApp",
       body: topWhatsapp
-        ? `Se proyectan ${whatsappForecast} clics para este producto la proxima semana.`
+        ? `Se proyectan ${whatsappForecast} clics para este producto la próxima semana.`
         : "No hay datos suficientes para proyectar clics por producto.",
       confidence: topWhatsapp ? confidenceFromData(topWhatsappProducts.map((item) => Number(item.clicks || 0))) : "baja"
     }
@@ -392,7 +392,7 @@ function buildDashboardActionPlan(metrics) {
   if (totalVisitas < 30) {
     alerts.push({
       level: "media",
-      title: "Bajo volumen de trafico",
+      title: "Bajo volumen de tráfico",
       detail: "El volumen de visitas es bajo para sacar conclusiones robustas; prioriza campañas de alcance."
     });
   }
@@ -400,8 +400,8 @@ function buildDashboardActionPlan(metrics) {
   if (totalVistas > 0 && conversion < 10) {
     alerts.push({
       level: "alta",
-      title: "Baja conversion hacia WhatsApp",
-      detail: "Menos del 10% de vistas terminan en clic de WhatsApp; revisa propuesta de valor y llamados a la accion."
+      title: "Baja conversión hacia WhatsApp",
+      detail: "Menos del 10% de vistas terminan en clic de WhatsApp; revisa propuesta de valor y llamados a la acción."
     });
   }
 
@@ -410,8 +410,8 @@ function buildDashboardActionPlan(metrics) {
   if (topViewed && topClicked && topViewed.id !== topClicked.id) {
     alerts.push({
       level: "media",
-      title: "Desalineacion entre interes y contacto",
-      detail: `El producto mas visto es ${topViewed.nombre}, pero el mayor interes de contacto se concentra en ${topClicked.nombre}.`
+      title: "Desalineación entre interés y contacto",
+      detail: `El producto más visto es ${topViewed.nombre}, pero el mayor interés de contacto se concentra en ${topClicked.nombre}.`
     });
   }
 
@@ -419,8 +419,8 @@ function buildDashboardActionPlan(metrics) {
   if (topClicked) {
     recommendations.push({
       priority: "alta",
-      title: "Escalar producto con alta intencion",
-      action: `Destaca ${topClicked.nombre} en portada y pauta de WhatsApp para capitalizar su intencion de compra.`
+      title: "Escalar producto con alta intención",
+      action: `Destaca ${topClicked.nombre} en portada y pauta de WhatsApp para capitalizar su intención de compra.`
     });
   }
 
@@ -428,8 +428,8 @@ function buildDashboardActionPlan(metrics) {
   if (topCategory) {
     recommendations.push({
       priority: "media",
-      title: "Profundizar categoria lider",
-      action: `Amplia el catalogo y creatividades de ${topCategory.categoria} para sostener su traccion.`
+      title: "Profundizar categoría líder",
+      action: `Amplía el catálogo y creatividades de ${topCategory.categoria} para sostener su tracción.`
     });
   }
 
@@ -437,14 +437,14 @@ function buildDashboardActionPlan(metrics) {
     recommendations.push({
       priority: "alta",
       title: "Optimizar CTA de WhatsApp",
-      action: "Prueba copys mas directos, beneficios claros y ubicaciones visibles del boton en productos con muchas vistas."
+      action: "Prueba copys más directos, beneficios claros y ubicaciones visibles del botón en productos con muchas vistas."
     });
   }
 
   recommendations.push({
     priority: "media",
     title: "Monitorear rendimiento semanal",
-    action: "Revisa cada 7 dias variacion de trafico, conversion y liderazgo de productos para ajustar inventario y promociones."
+    action: "Revisa cada 7 días variación de tráfico, conversión y liderazgo de productos para ajustar inventario y promociones."
   });
 
   return {

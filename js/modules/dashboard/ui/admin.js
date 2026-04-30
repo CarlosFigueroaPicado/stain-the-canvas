@@ -153,20 +153,20 @@ function renderInsights(insights) {
   const categories = safe.categories || {};
   const whatsapp = safe.whatsapp || {};
 
-  refs.insightTrafficTitle.textContent = traffic.title || "Trafico estable";
-  refs.insightTrafficBody.textContent = traffic.body || "Sin datos suficientes para analisis de trafico.";
+  refs.insightTrafficTitle.textContent = traffic.title || "Tráfico estable";
+  refs.insightTrafficBody.textContent = traffic.body || "Sin datos suficientes para análisis de tráfico.";
 
   refs.insightFunnelTitle.textContent = funnel.title || "Embudo con oportunidad de mejora";
-  refs.insightFunnelBody.textContent = funnel.body || "Sin datos suficientes para analisis de clientes.";
+  refs.insightFunnelBody.textContent = funnel.body || "Sin datos suficientes para análisis de clientes.";
 
-  refs.insightProductsTitle.textContent = products.title || "Producto lider";
-  refs.insightProductsBody.textContent = products.body || "Sin datos suficientes para analisis de productos.";
+  refs.insightProductsTitle.textContent = products.title || "Producto líder";
+  refs.insightProductsBody.textContent = products.body || "Sin datos suficientes para análisis de productos.";
 
-  refs.insightCategoriesTitle.textContent = categories.title || "Categoria lider";
-  refs.insightCategoriesBody.textContent = categories.body || "Sin datos suficientes para analisis por categoria.";
+  refs.insightCategoriesTitle.textContent = categories.title || "Categoría líder";
+  refs.insightCategoriesBody.textContent = categories.body || "Sin datos suficientes para análisis por categoría.";
 
-  refs.insightWhatsappTitle.textContent = whatsapp.title || "Mayor intencion de compra";
-  refs.insightWhatsappBody.textContent = whatsapp.body || "Sin datos suficientes para analisis de WhatsApp.";
+  refs.insightWhatsappTitle.textContent = whatsapp.title || "Mayor intención de compra";
+  refs.insightWhatsappBody.textContent = whatsapp.body || "Sin datos suficientes para análisis de WhatsApp.";
 }
 
 function applyConfidenceBadge(element, value) {
@@ -196,23 +196,23 @@ function renderPredictions(predictions) {
   const categories = safe.categories || {};
   const whatsapp = safe.whatsapp || {};
 
-  refs.predictionTrafficTitle.textContent = traffic.title || "Prediccion de trafico (7 dias)";
-  refs.predictionTrafficBody.textContent = traffic.body || "Sin datos suficientes para proyectar trafico.";
+  refs.predictionTrafficTitle.textContent = traffic.title || "Predicción de tráfico (7 días)";
+  refs.predictionTrafficBody.textContent = traffic.body || "Sin datos suficientes para proyectar tráfico.";
   applyConfidenceBadge(refs.predictionTrafficConfidence, traffic.confidence || "baja");
 
-  refs.predictionFunnelTitle.textContent = funnel.title || "Prediccion del embudo de clientes";
+  refs.predictionFunnelTitle.textContent = funnel.title || "Predicción del embudo de clientes";
   refs.predictionFunnelBody.textContent = funnel.body || "Sin datos suficientes para proyectar embudo de clientes.";
   applyConfidenceBadge(refs.predictionFunnelConfidence, funnel.confidence || "baja");
 
   refs.predictionProductsTitle.textContent = products.title || "Liderazgo de producto";
-  refs.predictionProductsBody.textContent = products.body || "Sin datos suficientes para proyectar producto lider.";
+  refs.predictionProductsBody.textContent = products.body || "Sin datos suficientes para proyectar producto líder.";
   applyConfidenceBadge(refs.predictionProductsConfidence, products.confidence || "baja");
 
-  refs.predictionCategoriesTitle.textContent = categories.title || "Liderazgo por categoria";
-  refs.predictionCategoriesBody.textContent = categories.body || "Sin datos suficientes para proyectar categoria lider.";
+  refs.predictionCategoriesTitle.textContent = categories.title || "Liderazgo por categoría";
+  refs.predictionCategoriesBody.textContent = categories.body || "Sin datos suficientes para proyectar categoría líder.";
   applyConfidenceBadge(refs.predictionCategoriesConfidence, categories.confidence || "baja");
 
-  refs.predictionWhatsappTitle.textContent = whatsapp.title || "Intencion en WhatsApp";
+  refs.predictionWhatsappTitle.textContent = whatsapp.title || "Intención en WhatsApp";
   refs.predictionWhatsappBody.textContent = whatsapp.body || "Sin datos suficientes para proyectar clics en WhatsApp.";
   applyConfidenceBadge(refs.predictionWhatsappConfidence, whatsapp.confidence || "baja");
 }
@@ -255,7 +255,7 @@ function renderActionPlan(actionPlan) {
         <article class="border border-brand-subtle rounded-4 p-3 bg-white">
           <p class="small text-uppercase letter-space text-muted-brand mb-1">Prioridad ${escapeHtml(String(item.priority || "media"))}</p>
           <h4 class="h6 mb-1">${escapeHtml(item.title || "Recomendacion")}</h4>
-          <p class="mb-0 small text-muted-brand">${escapeHtml(item.action || "Sin accion sugerida")}</p>
+          <p class="mb-0 small text-muted-brand">${escapeHtml(item.action || "Sin acción sugerida")}</p>
         </article>
       `;
     })
@@ -341,7 +341,7 @@ function renderTopTable(rows) {
   if (!rows.length) {
     refs.topTableBody.innerHTML = `
       <tr>
-        <td colspan="4" class="text-center text-muted-brand py-4">No hay datos de vistas todavia.</td>
+        <td colspan="4" class="text-center text-muted-brand py-4">No hay datos de vistas todavía.</td>
       </tr>
     `;
     return;
@@ -366,7 +366,7 @@ function renderTopWhatsappTable(rows) {
   if (!rows.length) {
     refs.topWhatsappTableBody.innerHTML = `
       <tr>
-        <td colspan="4" class="text-center text-muted-brand py-4">No hay clics de WhatsApp todavia.</td>
+        <td colspan="4" class="text-center text-muted-brand py-4">No hay clics de WhatsApp todavía.</td>
       </tr>
     `;
     return;
