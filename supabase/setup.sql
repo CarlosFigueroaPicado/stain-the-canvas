@@ -540,6 +540,10 @@ on public.subcategorias
 for delete
 using (public.is_admin_user());
 
+update public.subcategorias
+set categoria = 'Bisutería'
+where categoria = 'Bisuteria';
+
 -- ============================================================================
 -- INITIAL DATA: Insert categories and subcategories (customer-defined)
 -- ============================================================================
@@ -547,17 +551,23 @@ using (public.is_admin_user());
 -- Bisutería
 insert into public.subcategorias (nombre, categoria, orden, is_active)
 values 
-  ('Collares', 'Bisuteria', 1, true),
-  ('Pulseras', 'Bisuteria', 2, true),
-  ('Artes', 'Bisuteria', 3, true),
-  ('Gargantillas', 'Bisuteria', 4, true),
-  ('Anillos', 'Bisuteria', 5, true)
-on conflict (categoria, nombre) do nothing;
+  ('Collares', 'Bisutería', 1, true),
+  ('Pulseras', 'Bisutería', 2, true),
+  ('Anillos', 'Bisutería', 3, true),
+  ('Aretes', 'Bisutería', 4, true),
+  ('Gargantillas', 'Bisutería', 5, true),
+  ('Sets de bisutería', 'Bisutería', 6, true),
+  ('Rosarios', 'Bisutería', 7, true)
+on conflict (categoria, nombre) do update
+set orden = excluded.orden,
+    is_active = excluded.is_active;
 
 -- Align legacy value with latest catalog naming
 update public.subcategorias
-set nombre = 'Artes'
-where categoria = 'Bisuteria' and nombre = 'Aretes';
+set nombre = 'Aretes',
+    orden = 4,
+    is_active = true
+where categoria in ('Bisuteria', 'Bisutería') and nombre = 'Artes';
 
 -- Accesorios
 insert into public.subcategorias (nombre, categoria, orden, is_active)
@@ -565,16 +575,26 @@ values
   ('Llaveros', 'Accesorios', 1, true),
   ('Porta lentes', 'Accesorios', 2, true),
   ('Porta mascarillas', 'Accesorios', 3, true),
-  ('Colgantes de celular', 'Accesorios', 4, true)
-on conflict (categoria, nombre) do nothing;
+  ('Colgantes de celular', 'Accesorios', 4, true),
+  ('Accesorios para mascotas', 'Accesorios', 5, true)
+on conflict (categoria, nombre) do update
+set orden = excluded.orden,
+    is_active = excluded.is_active;
 
--- Arreglos
+-- Manualidades y Arreglos
 insert into public.subcategorias (nombre, categoria, orden, is_active)
 values 
-  ('Cajas decoradas', 'Arreglos', 1, true),
-  ('Ramos', 'Arreglos', 2, true),
-  ('Detalles', 'Arreglos', 3, true)
-on conflict (categoria, nombre) do nothing;
+  ('Cajas decoradas', 'Manualidades y Arreglos', 1, true),
+  ('Ramos', 'Manualidades y Arreglos', 2, true),
+  ('Flores', 'Manualidades y Arreglos', 3, true),
+  ('Detalles personalizados', 'Manualidades y Arreglos', 4, true),
+  ('Tarjetas personalizadas', 'Manualidades y Arreglos', 5, true),
+  ('Murales', 'Manualidades y Arreglos', 6, true),
+  ('Piñatas', 'Manualidades y Arreglos', 7, true),
+  ('Artículos decorativos religiosos', 'Manualidades y Arreglos', 8, true)
+on conflict (categoria, nombre) do update
+set orden = excluded.orden,
+    is_active = excluded.is_active;
 
 -- Decoraciones
 insert into public.subcategorias (nombre, categoria, orden, is_active)
@@ -594,6 +614,30 @@ values
   ('Letras decoradas', 'Manualidades', 4, true),
   ('Murales', 'Manualidades', 5, true)
 on conflict (categoria, nombre) do nothing;
+
+-- Current grouped catalog taxonomy
+insert into public.subcategorias (nombre, categoria, orden, is_active)
+values
+  ('Decoraciones para cumpleaños infantiles', 'Decoraciones', 1, true),
+  ('Decoraciones para 15 años', 'Decoraciones', 2, true),
+  ('Decoraciones cumpleaños', 'Decoraciones', 3, true)
+on conflict (categoria, nombre) do update
+set orden = excluded.orden,
+    is_active = excluded.is_active;
+
+update public.subcategorias
+set is_active = false
+where categoria in ('Arreglos', 'Manualidades')
+   or (categoria = 'Decoraciones' and nombre in (
+     'Decoracion para cumpleanos',
+     'Decoración para cumpleaños',
+     'Decoracion para bautizo',
+     'Decoración para bautizo',
+     'Decoracion para boda',
+     'Decoración para boda',
+     'Centros de mesa'
+   ))
+   or (categoria in ('Bisuteria', 'Bisutería') and nombre in ('Artes'));
 
 -- ============================================================================
 -- NORMALIZED CATEGORIES AND PRODUCT IMAGES (V2)
@@ -619,14 +663,17 @@ for each row execute function public.set_updated_at();
 
 insert into public.categorias (nombre, orden, is_active)
 values
-  ('Bisuteria', 1, true),
+  ('Bisutería', 1, true),
   ('Accesorios', 2, true),
-  ('Arreglos', 3, true),
-  ('Decoraciones', 4, true),
-  ('Manualidades', 5, true)
+  ('Manualidades y Arreglos', 3, true),
+  ('Decoraciones', 4, true)
 on conflict (nombre) do update
 set orden = excluded.orden,
     is_active = excluded.is_active;
+
+update public.categorias
+set is_active = false
+where nombre in ('Arreglos', 'Manualidades');
 
 alter table public.subcategorias
   add column if not exists categoria_id uuid references public.categorias(id) on delete restrict;
@@ -647,11 +694,20 @@ create index if not exists idx_subcategorias_categoria_id_orden
 alter table public.productos
   add column if not exists categoria_id uuid references public.categorias(id) on delete restrict;
 
+update public.productos
+set categoria = 'Manualidades y Arreglos'
+where lower(trim(categoria)) in ('manualidades', 'arreglos')
+   or lower(trim(categoria)) like '%pinata%'
+   or lower(trim(categoria)) like '%piñata%';
+
+update public.productos
+set categoria = 'Bisutería'
+where lower(trim(categoria)) = 'bisuteria';
+
 update public.productos p
 set categoria_id = c.id
 from public.categorias c
-where p.categoria_id is null
-  and lower(trim(p.categoria)) = lower(trim(c.nombre));
+where lower(trim(p.categoria)) = lower(trim(c.nombre));
 
 create index if not exists idx_productos_categoria_id_featured_created
   on public.productos (categoria_id, featured, created_at desc);
@@ -707,11 +763,20 @@ where coalesce(trim(p.imagen_url), '') <> ''
 alter table public.eventos
   add column if not exists categoria_id uuid references public.categorias(id) on delete set null;
 
+update public.eventos
+set categoria = 'Manualidades y Arreglos'
+where lower(trim(categoria)) in ('manualidades', 'arreglos')
+   or lower(trim(categoria)) like '%pinata%'
+   or lower(trim(categoria)) like '%piñata%';
+
+update public.eventos
+set categoria = 'Bisutería'
+where lower(trim(categoria)) = 'bisuteria';
+
 update public.eventos e
 set categoria_id = c.id
 from public.categorias c
-where e.categoria_id is null
-  and coalesce(trim(e.categoria), '') <> ''
+where coalesce(trim(e.categoria), '') <> ''
   and lower(trim(e.categoria)) = lower(trim(c.nombre));
 
 create index if not exists idx_eventos_categoria_id_fecha

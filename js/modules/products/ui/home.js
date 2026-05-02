@@ -94,7 +94,7 @@ export function initHomeProductsUI() {
   }
 
   function renderCategoryFilters() {
-    const fixedCategories = ["Bisuteria", "Manualidades", "Arreglos", "Decoraciones"];
+    const fixedCategories = ["Bisutería", "Accesorios", "Manualidades y Arreglos", "Decoraciones"];
     const dynamicCategories = pickHomeProductsSource(state.products).map((product) => product.categoria).filter(Boolean);
     const categories = Array.from(new Set(["Todos", ...fixedCategories, ...dynamicCategories]));
 

@@ -1,6 +1,7 @@
 import { getAppConfigSync } from "../core/config.js";
 
-const CATEGORY_MANUALIDADES = "Manualidades";
+const CATEGORY_MANUALIDADES_ARREGLOS = "Manualidades y Arreglos";
+const CATEGORY_BISUTERIA = "Bisutería";
 
 function pickFirst(source, keys, fallback) {
   const input = source && typeof source === "object" ? source : {};
@@ -59,8 +60,18 @@ export function normalizeCategory(value) {
     .toLowerCase();
   const compact = normalized.replace(/[^a-z]/g, "");
 
-  if (compact === "pinatas" || compact.includes("pinata")) {
-    return CATEGORY_MANUALIDADES;
+  if (compact === "bisuteria") {
+    return CATEGORY_BISUTERIA;
+  }
+
+  if (
+    compact === "manualidades" ||
+    compact === "arreglos" ||
+    compact === "manualidadesyarreglos" ||
+    compact === "pinatas" ||
+    compact.includes("pinata")
+  ) {
+    return CATEGORY_MANUALIDADES_ARREGLOS;
   }
 
   return raw;

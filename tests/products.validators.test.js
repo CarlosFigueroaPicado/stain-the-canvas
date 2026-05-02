@@ -5,7 +5,7 @@ describe("products.validators", () => {
   it("nombre inválido (muy corto)", () => {
     const result = validateProductInput({
       nombre: "ab",
-      categoria: "Bisuteria",
+      categoria: "Bisutería",
       descripcion: "Descripción válida del producto",
       precio: 50
     });
@@ -16,7 +16,7 @@ describe("products.validators", () => {
   it("precio negativo", () => {
     const result = validateProductInput({
       nombre: "Producto Test",
-      categoria: "Bisuteria",
+      categoria: "Bisutería",
       descripcion: "Descripción válida del producto",
       precio: -1
     });
@@ -27,7 +27,7 @@ describe("products.validators", () => {
   it("imagenUrl inválida", () => {
     const result = validateProductInput({
       nombre: "Producto Test",
-      categoria: "Bisuteria",
+      categoria: "Bisutería",
       descripcion: "Descripción válida del producto",
       precio: 90,
       imagenUrl: "ftp://archivo-invalido"
@@ -39,7 +39,7 @@ describe("products.validators", () => {
   it("featured inválido", () => {
     const result = validateProductInput({
       nombre: "Producto Test",
-      categoria: "Bisuteria",
+      categoria: "Bisutería",
       descripcion: "Descripción válida del producto",
       precio: 90,
       featured: "tal vez"
@@ -51,7 +51,7 @@ describe("products.validators", () => {
   it("producto válido", () => {
     const result = validateProductInput({
       nombre: "Pulsera artesanal",
-      categoria: "Bisuteria",
+      categoria: "Bisutería",
       descripcion: "Pulsera hecha a mano con materiales de calidad.",
       precio: 120
     });

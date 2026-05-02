@@ -2,7 +2,11 @@ import { getState, subscribe } from "../../../core/store.js";
 import { createProduct, deleteProduct, getProducts, updateProduct, uploadFiles } from "../service.js";
 import { buildPlaceholderImage, escapeHtml, formatCurrency, normalizeCategory } from "../../../shared/product-utils.js";
 import { shouldUseCarousel } from "./shared.js";
-import { getSubcategoriesForCategory } from "../../subcategories/service.js";
+import {
+  getCategoriesWithCache,
+  getSubcategoriesForCategory,
+  getSubcategoriesForCategoryId
+} from "../../subcategories/service.js";
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -34,6 +38,7 @@ const refs = {
 const state = {
   initialized: false,
   editingId: null,
+  categoryOptionsLoaded: false,
   previewObjectUrls: []
 };
 
@@ -156,7 +161,7 @@ function resetForm() {
   refs.subcategory.value = "";
   clearPreviewObjectUrls();
   setImagePreview([]);
-  populateSubcategoriesForCategory(refs.categoria.value);
+  populateCategoryOptions().then(() => populateSubcategoriesForCategory(refs.categoria.value));
 }
 
 function ensureCategoryOption(category) {
@@ -174,6 +179,49 @@ function ensureCategoryOption(category) {
     option.value = normalized;
     option.textContent = normalized;
     refs.categoria.appendChild(option);
+  }
+}
+
+async function populateCategoryOptions(selectedCategory = "") {
+  if (!refs.categoria) {
+    return;
+  }
+
+  const previousValue = normalizeCategory(selectedCategory || refs.categoria.value);
+  const fallbackCategories = ["Bisutería", "Accesorios", "Manualidades y Arreglos", "Decoraciones"];
+
+  try {
+    const result = await getCategoriesWithCache();
+    const source =
+      result.success && Array.isArray(result.data) && result.data.length
+        ? result.data.map((category) => category.nombre)
+        : fallbackCategories;
+    const categories = Array.from(new Set(source.map((item) => normalizeCategory(item)).filter(Boolean)));
+
+    refs.categoria.innerHTML = categories
+      .map((category) => {
+        const categoryInfo =
+          result.success && Array.isArray(result.data)
+            ? result.data.find((item) => normalizeCategory(item.nombre) === category)
+            : null;
+        const categoryId = categoryInfo && categoryInfo.id ? ` data-category-id="${escapeHtml(categoryInfo.id)}"` : "";
+        return `<option value="${escapeHtml(category)}"${categoryId}>${escapeHtml(category)}</option>`;
+      })
+      .join("");
+
+    if (previousValue) {
+      ensureCategoryOption(previousValue);
+      refs.categoria.value = previousValue;
+    }
+
+    state.categoryOptionsLoaded = true;
+  } catch (error) {
+    console.error("No se pudieron cargar categorias para productos:", error);
+    if (!refs.categoria.options.length) {
+      refs.categoria.innerHTML = fallbackCategories
+        .map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+        .join("");
+    }
   }
 }
 
@@ -409,7 +457,11 @@ async function populateSubcategoriesForCategory(categoria, selectedSubcategoryId
   }
 
   try {
-    const result = await getSubcategoriesForCategory(normalizedCategory);
+    const selectedOption = refs.categoria.options[refs.categoria.selectedIndex];
+    const categoryId = selectedOption ? String(selectedOption.dataset.categoryId || "").trim() : "";
+    const result = categoryId
+      ? await getSubcategoriesForCategoryId(categoryId)
+      : await getSubcategoriesForCategory(normalizedCategory);
     if (!result.success || !Array.isArray(result.data)) {
       refs.subcategory.innerHTML = '<option value="">-- Sin subcategoria --</option>';
       return;
@@ -537,5 +589,7 @@ export async function openProductsAdmin() {
     return;
   }
 
+  await populateCategoryOptions();
+  await populateSubcategoriesForCategory(refs.categoria.value);
   await refreshProducts();
 }

@@ -111,7 +111,7 @@ export function initCatalogProductsUI() {
   }
 
   function renderFilters() {
-    const fixedCategories = ["Bisuteria", "Manualidades", "Arreglos", "Decoraciones"];
+    const fixedCategories = ["Bisutería", "Accesorios", "Manualidades y Arreglos", "Decoraciones"];
     const dynamicCategories = state.products.map((product) => product.categoria).filter(Boolean);
     const unique = Array.from(new Set(["Todos", ...fixedCategories, ...dynamicCategories]));
 

@@ -2,20 +2,24 @@ import { requireAdmin } from "./modules/auth/service.js";
 import { initAdminAuthControls } from "./modules/auth/ui/admin.js";
 import { initDashboardAdminUI, openDashboardAdmin } from "./modules/dashboard/ui/admin.js";
 import { initProductsAdminUI, openProductsAdmin } from "./modules/products/ui/admin.js";
+import { initCategoriesAdminUI, openCategoriesAdmin } from "./modules/categories/ui/admin.js";
 
 const DASHBOARD_ENABLED = false;
 
 const refs = {
   dashboardBtn: document.getElementById("goDashboardBtn"),
   productosBtn: document.getElementById("goProductosBtn"),
+  categoriasBtn: document.getElementById("goCategoriasBtn"),
   dashboardSection: document.getElementById("dashboardSection"),
   productosSection: document.getElementById("productosSection"),
+  categoriasSection: document.getElementById("categoriasSection"),
   refreshBtn: document.getElementById("refreshDashboardBtn")
 };
 
 const state = {
   dashboardReady: false,
-  productosReady: false
+  productosReady: false,
+  categoriasReady: false
 };
 
 function revealAdminPage() {
@@ -24,22 +28,31 @@ function revealAdminPage() {
 
 function setNavState(activeSection) {
   const isDashboard = activeSection === "dashboard";
+  const isProductos = activeSection === "productos";
+  const isCategorias = activeSection === "categorias";
   if (refs.dashboardBtn) {
     refs.dashboardBtn.classList.toggle("btn-brand", isDashboard);
     refs.dashboardBtn.classList.toggle("btn-outline-brand", !isDashboard);
     refs.dashboardBtn.setAttribute("aria-selected", String(isDashboard));
   }
 
-  refs.productosBtn.classList.toggle("btn-brand", !isDashboard);
-  refs.productosBtn.classList.toggle("btn-outline-brand", isDashboard);
-  refs.productosBtn.setAttribute("aria-selected", String(!isDashboard));
+  refs.productosBtn.classList.toggle("btn-brand", isProductos);
+  refs.productosBtn.classList.toggle("btn-outline-brand", !isProductos);
+  refs.productosBtn.setAttribute("aria-selected", String(isProductos));
+
+  refs.categoriasBtn.classList.toggle("btn-brand", isCategorias);
+  refs.categoriasBtn.classList.toggle("btn-outline-brand", !isCategorias);
+  refs.categoriasBtn.setAttribute("aria-selected", String(isCategorias));
 }
 
 function showSection(sectionName) {
   const showDashboard = DASHBOARD_ENABLED && sectionName === "dashboard";
+  const showCategorias = sectionName === "categorias";
+  const showProductos = !showDashboard && !showCategorias;
   refs.dashboardSection.classList.toggle("d-none", !showDashboard);
-  refs.productosSection.classList.toggle("d-none", showDashboard);
-  setNavState(showDashboard ? "dashboard" : "productos");
+  refs.productosSection.classList.toggle("d-none", !showProductos);
+  refs.categoriasSection.classList.toggle("d-none", !showCategorias);
+  setNavState(showDashboard ? "dashboard" : showCategorias ? "categorias" : "productos");
 }
 
 async function openDashboard() {
@@ -69,6 +82,17 @@ async function openProductos() {
   }
 }
 
+async function openCategorias() {
+  showSection("categorias");
+  if (!state.categoriasReady) {
+    state.categoriasReady = initCategoriesAdminUI();
+  }
+
+  if (state.categoriasReady) {
+    await openCategoriesAdmin();
+  }
+}
+
 function bindEvents() {
   if (DASHBOARD_ENABLED && refs.dashboardBtn) {
     refs.dashboardBtn.addEventListener("click", () => {
@@ -81,6 +105,12 @@ function bindEvents() {
   refs.productosBtn.addEventListener("click", () => {
     openProductos().catch((error) => {
       console.error("Error al abrir productos:", error);
+    });
+  });
+
+  refs.categoriasBtn.addEventListener("click", () => {
+    openCategorias().catch((error) => {
+      console.error("Error al abrir categorias:", error);
     });
   });
 
@@ -102,7 +132,14 @@ function bindEvents() {
 }
 
 async function init() {
-  if (!refs.dashboardBtn || !refs.productosBtn || !refs.dashboardSection || !refs.productosSection) {
+  if (
+    !refs.dashboardBtn ||
+    !refs.productosBtn ||
+    !refs.categoriasBtn ||
+    !refs.dashboardSection ||
+    !refs.productosSection ||
+    !refs.categoriasSection
+  ) {
     revealAdminPage();
     return;
   }

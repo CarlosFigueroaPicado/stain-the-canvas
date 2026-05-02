@@ -675,7 +675,8 @@ h3 {
 }
 
 .dashboard-section .admin-card,
-.productos-section .admin-card {
+.productos-section .admin-card,
+.categorias-section .admin-card {
   border: 1px solid var(--brand-border);
   background: linear-gradient(180deg, #fffdfb, var(--brand-surface-2));
 }
@@ -731,7 +732,8 @@ h3 {
   border-color: rgba(200, 107, 74, 0.18);
 }
 
-.productos-section .table thead th {
+.productos-section .table thead th,
+.categorias-section .table thead th {
   font-size: 0.82rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;

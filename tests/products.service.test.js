@@ -41,7 +41,7 @@ describe("products.service", () => {
   it("rechaza producto inválido sin llamar al API", async () => {
     const result = await createProduct({
       nombre: "ab",
-      categoria: "Bisuteria",
+      categoria: "Bisutería",
       descripcion: "Descripción válida del producto",
       precio: 100
     });
@@ -58,7 +58,7 @@ describe("products.service", () => {
           {
             id: "prod-1",
             nombre: "Pulsera artesanal",
-            categoria: "Bisuteria",
+            categoria: "Bisutería",
             descripcion: "Pulsera artesanal hecha a mano para eventos.",
             precio: 120,
             imagen_url: "https://example.com/pulsera.jpg",
@@ -85,7 +85,7 @@ describe("products.service", () => {
         {
           id: "prod-1",
           nombre: "Collar floral",
-          categoria: "Bisuteria",
+          categoria: "Bisutería",
           descripcion: "Collar floral artesanal con acabado fino.",
           precio: 200,
           imagen_url: "https://example.com/collar.jpg",
@@ -143,7 +143,7 @@ describe("products.service", () => {
     expect(result).toEqual(expect.objectContaining({ success: true }));
     expect(productsApiMock.insertProduct).toHaveBeenCalledWith({
       nombre: "Producto Mock",
-      categoria: "Manualidades",
+      categoria: "Manualidades y Arreglos",
       subcategory_id: null,
       descripcion: "Producto de prueba con datos completos y válidos.",
       precio: 200,
