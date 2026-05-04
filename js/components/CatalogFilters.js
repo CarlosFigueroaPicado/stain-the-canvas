@@ -3,7 +3,7 @@
  * Maneja filtros por categoría y subcategoría con sincronización de URL
  */
 
-import { getAllCategories } from '../subcategories/service.js';
+import { getCategoriesWithCache } from '../subcategories/service.js';
 import { getSubcategoriesForCategoryId } from '../subcategories/service.js';
 
 class CatalogFilters {
@@ -20,8 +20,8 @@ class CatalogFilters {
 
   async init() {
     try {
-      // Cargar todas las categorías
-      const result = await getAllCategories();
+      // Cargar todas las categorías con sus IDs
+      const result = await getCategoriesWithCache();
       if (!result.success) {
         console.error('Error cargando categorías:', result.error);
         return;
