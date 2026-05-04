@@ -113,6 +113,53 @@ export async function fetchProducts() {
   return lastResult || { data: [], error: { message: "No se pudieron cargar productos." } };
 }
 
+export async function fetchProductById(productId) {
+  const client = await getSupabaseClient();
+  if (!client) {
+    return { data: null, error: { message: "no_client" } };
+  }
+
+  const table = getTable();
+  // Intentar queries con producto_media join
+  const attempts = [
+    {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,created_at,featured,clicks,vistas,product_media(id,type,url,position,is_primary,created_at)"
+    },
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url,created_at,featured,clicks,vistas,product_media(id,type,url,position,is_primary)"
+    },
+    {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,featured,product_media(id,type,url,position,is_primary)"
+    },
+    // Fallback sin product_media
+    {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,featured,clicks,vistas"
+    },
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url,featured,clicks,vistas"
+    }
+  ];
+
+  for (let i = 0; i < attempts.length; i += 1) {
+    try {
+      const query = client.from(table).select(attempts[i].select).eq("id", productId).single();
+      const { data, error } = await query;
+      
+      if (error) {
+        console.debug(`Query attempt ${i + 1} failed:`, error.message);
+        continue;
+      }
+
+      return { data, error: null };
+    } catch (err) {
+      console.debug(`Query attempt ${i + 1} error:`, err.message);
+      continue;
+    }
+  }
+
+  return { data: null, error: { message: "Producto no encontrado." } };
+}
+
 export async function insertProduct(payload) {
   const client = await getSupabaseClient();
   if (!client) {
@@ -120,6 +167,65 @@ export async function insertProduct(payload) {
   }
 
   return client.from(getTable()).insert(payload);
+}
+
+export async function fetchProductsByCategory(categoryName, options = {}) {
+  const client = await getSupabaseClient();
+  if (!client) {
+    return { data: [], error: { message: "no_client" } };
+  }
+
+  const table = getTable();
+  const limit = Number.isInteger(options.limit) && options.limit > 0 ? options.limit : 10;
+  
+  // Intentar queries
+  const attempts = [
+    {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,featured,clicks,vistas,product_media(id,type,url,position,is_primary)",
+      orders: [["featured", { ascending: false }], ["created_at", { ascending: false }]]
+    },
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url,featured,clicks,vistas,product_media(id,type,url,position,is_primary)",
+      orders: [["featured", { ascending: false }], ["created_at", { ascending: false }]]
+    },
+    {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,featured",
+      orders: [["featured", { ascending: false }]]
+    },
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url,featured",
+      orders: [["featured", { ascending: false }]]
+    }
+  ];
+
+  for (let i = 0; i < attempts.length; i += 1) {
+    try {
+      let query = client.from(table).select(attempts[i].select).eq("categoria", categoryName);
+      
+      // Aplicar órdenes
+      if (Array.isArray(attempts[i].orders)) {
+        for (let j = 0; j < attempts[i].orders.length; j += 1) {
+          const [field, orderOptions] = attempts[i].orders[j];
+          query = query.order(field, orderOptions);
+        }
+      }
+      
+      query = query.limit(limit);
+      const { data, error } = await query;
+      
+      if (error) {
+        console.debug(`Query attempt ${i + 1} for category "${categoryName}" failed:`, error.message);
+        continue;
+      }
+
+      return { data: Array.isArray(data) ? data : [], error: null };
+    } catch (err) {
+      console.debug(`Query attempt ${i + 1} for category "${categoryName}" error:`, err.message);
+      continue;
+    }
+  }
+
+  return { data: [], error: { message: "No se pudieron cargar productos." } };
 }
 
 export async function updateProduct(id, payload) {

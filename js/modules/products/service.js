@@ -287,3 +287,45 @@ export async function deleteProduct(productId, currentProduct) {
     return fail("No se pudo eliminar el producto.");
   }
 }
+
+export async function fetchProductById(productId) {
+  try {
+    if (!String(productId || "").trim()) {
+      return fail("ID de producto inválido.");
+    }
+
+    const result = await productsApi.fetchProductById(productId);
+    if (result.error) {
+      return fail(result.error.message || "Producto no encontrado.");
+    }
+
+    if (!result.data) {
+      return fail("Producto no encontrado.");
+    }
+
+    const product = normalizeProduct(result.data);
+    return ok(product);
+  } catch (error) {
+    console.error("Error al obtener producto:", error);
+    return fail("Error al cargar el producto.");
+  }
+}
+
+export async function fetchProductsByCategory(categoryName, options = {}) {
+  try {
+    if (!String(categoryName || "").trim()) {
+      return fail("Categoría inválida.");
+    }
+
+    const result = await productsApi.fetchProductsByCategory(categoryName, options);
+    if (result.error) {
+      return fail(result.error.message || "No se pudieron cargar productos.");
+    }
+
+    const products = normalizeProducts(result.data || []);
+    return ok(products);
+  } catch (error) {
+    console.error("Error al obtener productos por categoría:", error);
+    return fail("No se pudieron cargar productos.");
+  }
+}
