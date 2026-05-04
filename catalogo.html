@@ -19,6 +19,7 @@
 
     <link rel="stylesheet" href="css/styles.css" />
     <link rel="stylesheet" href="css/components/navbar.css" />
+    <link rel="stylesheet" href="css/components/catalog-filters.css" />
   </head>
   <body>
     <header class="sticky-top">
@@ -68,6 +69,23 @@
         </div>
 
         <div class="admin-card catalog-toolbar p-3 p-md-4 mb-4">
+          <!-- Filtros por Categoría y Subcategoría -->
+          <div class="row g-3 mb-3 align-items-end">
+            <div class="col-md-6">
+              <label class="form-label" for="categorySelect">Categoría</label>
+              <select id="categorySelect" class="form-select">
+                <option value="">Todas las categorías</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="subcategorySelect">Subcategoría</label>
+              <select id="subcategorySelect" class="form-select" disabled>
+                <option value="">Todas las subcategorías</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Búsqueda -->
           <div class="row g-3 align-items-center">
             <div class="col-lg-7">
               <label class="form-label mb-2" for="productSearchInput">Buscar en el catálogo</label>

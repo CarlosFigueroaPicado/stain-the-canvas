@@ -4,6 +4,7 @@ import { buildWhatsappLink, escapeHtml, formatCurrency, getProductImageUrls, get
 import { trackEvent, trackVisit } from "../../analytics/service.js";
 import { shouldUseCarousel } from "./shared.js";
 import { getSubcategoriesWithCache } from "../../subcategories/service.js";
+import { CatalogFilters } from "../../../components/CatalogFilters.js";
 
 const state = {
   products: [],
@@ -12,7 +13,9 @@ const state = {
   activeProduct: null,
   modalImages: [],
   modalImageIndex: 0,
-  subcategoryNames: {}
+  subcategoryNames: {},
+  selectedCategoryId: "",
+  selectedSubcategoryId: ""
 };
 
 export function initCatalogProductsUI() {
@@ -54,6 +57,24 @@ export function initCatalogProductsUI() {
 
   const productModal = new globalThis.bootstrap.Modal(modalEl);
   let searchDebounceTimer = null;
+
+  // Inicializar filtros jerárquicos (Fase 3)
+  const categorySelect = document.getElementById('categorySelect');
+  const subcategorySelect = document.getElementById('subcategorySelect');
+  
+  let catalogFilters = null;
+  if (categorySelect && subcategorySelect) {
+    catalogFilters = new CatalogFilters(
+      categorySelect, 
+      subcategorySelect,
+      (filterState) => {
+        state.selectedCategoryId = filterState.categoryId;
+        state.selectedSubcategoryId = filterState.subcategoryId;
+        renderProducts();
+      }
+    );
+    catalogFilters.init().catch(err => console.error('Error inicializando filtros:', err));
+  }
 
   function setStatus(message, kind) {
     statusEl.className = kind === "danger" ? "alert alert-danger" : "alert alert-brand-subtle";
@@ -103,13 +124,29 @@ export function initCatalogProductsUI() {
   }
 
   function getFilteredProducts() {
-    const byCategory =
-      state.activeCategory === "Todos"
-        ? state.products
-        : state.products.filter((product) => product.categoria === state.activeCategory);
+    let products = state.products;
 
+    // Filtro por categoría (botones de categoría - Fase 1)
+    if (state.activeCategory && state.activeCategory !== "Todos") {
+      products = products.filter((product) => product.categoria === state.activeCategory);
+    }
+
+    // Filtro por categoría select (Fase 3)
+    if (state.selectedCategoryId) {
+      const categoryName = catalogFilters ? catalogFilters.getCategoryName(state.selectedCategoryId) : '';
+      if (categoryName) {
+        products = products.filter((product) => product.categoria === categoryName);
+      }
+    }
+
+    // Filtro por subcategoría select (Fase 3)
+    if (state.selectedSubcategoryId) {
+      products = products.filter((product) => product.subcategory_id === state.selectedSubcategoryId);
+    }
+
+    // Filtro por búsqueda de texto
     const normalizedSearch = normalizeSearchText(state.searchTerm);
-    return byCategory.filter((product) => matchesSearch(product, normalizedSearch));
+    return products.filter((product) => matchesSearch(product, normalizedSearch));
   }
 
   function renderFilters() {
