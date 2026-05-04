@@ -114,6 +114,44 @@ export async function uploadFiles(files, prefix) {
   }
 }
 
+// Upload single video file (Estrategia A: Basic video support)
+// TODO: Video upload strategy improvements
+// - [ ] Store video metadata (duration, width, height, codec)
+// - [ ] Generate video thumbnails automatically
+// - [ ] Support adaptive bitrate streaming (HLS/DASH)
+// - [ ] Implement progressive upload with progress tracking
+// - [ ] Add virus scanning for uploaded video files
+// - [ ] Support subtitle file uploads alongside videos
+export async function uploadVideo(file, prefix) {
+  try {
+    if (!file) {
+      return ok(null);
+    }
+
+    const rawExtension = (file.name.split(".").pop() || "mp4").toLowerCase();
+    const extension = /^[a-z0-9]+$/.test(rawExtension) ? rawExtension : "mp4";
+    const base = toSlug(`${prefix || "video"}-${Date.now()}`) || "video";
+    const path = `videos/${Date.now()}-${base}.${extension}`;
+    const upload = await productsApi.uploadImage(path, file);
+
+    if (upload.error) {
+      console.error("Video upload error:", upload.error);
+      return fail(upload.error.message || "No se pudo subir el video. Verifica tu conexión e intenta de nuevo.");
+    }
+
+    const publicUrl = await productsApi.getPublicUrl(path);
+    if (!publicUrl) {
+      console.error("Failed to generate public URL for video:", path);
+      return fail("No se pudo generar URL pública del video. Contacta al administrador.");
+    }
+
+    return ok(publicUrl);
+  } catch (error) {
+    console.error("Error al subir video:", error);
+    return fail(error.message || "No se pudo subir el video. Verifica tu conexión e intenta de nuevo.");
+  }
+}
+
 export async function createProduct(productInput) {
   try {
     const validationError = validateProductInput(productInput);

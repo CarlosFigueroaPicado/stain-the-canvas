@@ -1,5 +1,5 @@
 import { getState, subscribe } from "../../../core/store.js";
-import { createProduct, deleteProduct, getProducts, updateProduct, uploadFiles } from "../service.js";
+import { createProduct, deleteProduct, getProducts, updateProduct, uploadFiles, uploadVideo } from "../service.js";
 import { buildPlaceholderImage, escapeHtml, formatCurrency, normalizeCategory } from "../../../shared/product-utils.js";
 import { shouldUseCarousel } from "./shared.js";
 import {
@@ -17,6 +17,15 @@ const ALLOWED_IMAGE_TYPES = new Set([
   "image/jfif"
 ]);
 
+// Video support (Estrategia A: Minimal implementation)
+const MAX_VIDEO_SIZE_BYTES = 100 * 1024 * 1024;
+const ALLOWED_VIDEO_TYPES = new Set([
+  "video/mp4",
+  "video/webm",
+  "video/ogg",
+  "video/quicktime"
+]);
+
 const refs = {
   section: null,
   form: null,
@@ -31,6 +40,8 @@ const refs = {
   featured: null,
   imagen: null,
   imagePreviewContainer: null,
+  video: null,
+  videoPreviewContainer: null,
   saveBtn: null,
   resetBtn: null
 };
@@ -142,6 +153,33 @@ function setImagePreview(urls, label) {
   refs.imagePreviewContainer.classList.remove("d-none");
 }
 
+function setVideoPreview(url, label) {
+  if (!refs.videoPreviewContainer) {
+    return;
+  }
+
+  const cleanUrl = String(url || "").trim();
+
+  if (!cleanUrl) {
+    refs.videoPreviewContainer.classList.add("d-none");
+    refs.videoPreviewContainer.innerHTML = "";
+    return;
+  }
+
+  const safeLabel = escapeHtml(String(label || "Preview de video"));
+
+  refs.videoPreviewContainer.innerHTML = `
+    <div class="admin-video-preview-wrapper">
+      <p class="form-text small text-muted-brand mb-2">Preview del video:</p>
+      <video class="admin-video-preview" controls style="max-width: 100%; max-height: 300px; border-radius: 0.5rem;">
+        <source src="${escapeHtml(cleanUrl)}" type="video/mp4" />
+        Tu navegador no soporta reproducción de videos HTML5.
+      </video>
+    </div>
+  `;
+  refs.videoPreviewContainer.classList.remove("d-none");
+}
+
 function setLoading(loading) {
   refs.saveBtn.disabled = loading;
   refs.resetBtn.disabled = loading;
@@ -161,6 +199,7 @@ function resetForm() {
   refs.subcategory.value = "";
   clearPreviewObjectUrls();
   setImagePreview([]);
+  setVideoPreview("");
   populateCategoryOptions().then(() => populateSubcategoriesForCategory(refs.categoria.value));
 }
 
@@ -236,8 +275,16 @@ function fillForm(product) {
   refs.descripcion.value = product.descripcion;
   refs.featured.checked = product.featured === true;
   refs.imagen.value = "";
+  refs.video.value = "";
   refs.saveBtn.textContent = "Actualizar producto";
   setImagePreview(product.galleryUrls.length ? product.galleryUrls : [product.imagenUrl], product.nombre);
+  
+  // Show video preview if video_url exists (Estrategia A)
+  if (product.videoUrl) {
+    setVideoPreview(product.videoUrl, product.nombre);
+  } else {
+    setVideoPreview("");
+  }
   
   // Load subcategories for this category and set the current subcategory
   populateSubcategoriesForCategory(normalizedCategory, product.subcategory_id);
@@ -267,6 +314,29 @@ function validateSelectedFile(file) {
   if (type && !ALLOWED_IMAGE_TYPES.has(type) && !type.startsWith("image/")) {
     return "Formato de imagen no permitido. Usa JPG, PNG, WEBP o GIF.";
   }
+
+  return "";
+}
+
+// Validate single video file (Estrategia A)
+function validateSelectedVideoFile(file) {
+  if (!file) {
+    return "";
+  }
+
+  if (file.size > MAX_VIDEO_SIZE_BYTES) {
+    const sizeMB = Math.round(file.size / (1024 * 1024));
+    return `El video supera 100MB (tu archivo: ${sizeMB}MB). Sube un archivo más liviano o comprimido.`;
+  }
+
+  const type = String(file.type || "").toLowerCase();
+  if (type && !ALLOWED_VIDEO_TYPES.has(type) && !type.startsWith("video/")) {
+    return `Formato de video no permitido: "${type}". Usa MP4, WEBM, OGG o MOV.`;
+  }
+
+  // TODO: Validate video codec, bitrate, resolution
+  // - [ ] In future: ensure compatibility with different devices
+  // - [ ] Consider: transcode on upload vs on-demand streaming
 
   return "";
 }
@@ -353,16 +423,25 @@ async function handleSubmit(event) {
   try {
     const input = getFormInput();
     const selectedFiles = refs.imagen.files ? Array.from(refs.imagen.files) : [];
+    const selectedVideo = refs.video.files && refs.video.files.length > 0 ? refs.video.files[0] : null;
+    
     const fileError = validateSelectedFiles(selectedFiles);
-
     if (fileError) {
       setStatus(fileError, "danger");
       return;
     }
 
+    const videoError = validateSelectedVideoFile(selectedVideo);
+    if (videoError) {
+      setStatus(videoError, "danger");
+      return;
+    }
+
     let imageUrl = "";
     let galleryUrls = [];
+    let videoUrl = "";
 
+    // Handle image uploads
     if (selectedFiles.length > 0) {
       const uploadResult = await uploadFiles(selectedFiles, input.nombre);
       if (!uploadResult.success) {
@@ -378,15 +457,29 @@ async function handleSubmit(event) {
       imageUrl = current ? current.imagenUrl : "";
     }
 
+    // Handle video upload (Estrategia A: Single video per product)
+    if (selectedVideo) {
+      const uploadVideoResult = await uploadVideo(selectedVideo, input.nombre);
+      if (!uploadVideoResult.success) {
+        setStatus(uploadVideoResult.error || "No se pudo subir el video.", "danger");
+        return;
+      }
+      videoUrl = uploadVideoResult.data || "";
+    } else if (state.editingId) {
+      const current = getState().products.find((item) => item.id === state.editingId);
+      videoUrl = current ? (current.videoUrl || "") : "";
+    }
+
     const payload = {
       ...input,
       imagenUrl: imageUrl,
-      galleryUrls
+      galleryUrls,
+      videoUrl: videoUrl || null
     };
 
     const saveResult = state.editingId
       ? await updateProduct(state.editingId, payload)
-      : await createProduct(payload);
+      : await createProduct(state.editingId, payload);
 
     if (!saveResult.success) {
       setStatus(saveResult.error || "No se pudo guardar el producto.", "danger");
@@ -560,6 +653,8 @@ function cacheRefs() {
   refs.featured = document.getElementById("featured");
   refs.imagen = document.getElementById("imagen");
   refs.imagePreviewContainer = document.getElementById("imagePreviewContainer");
+  refs.video = document.getElementById("video");
+  refs.videoPreviewContainer = document.getElementById("videoPreviewContainer");
   refs.saveBtn = document.getElementById("saveBtn");
   refs.resetBtn = document.getElementById("resetBtn");
 

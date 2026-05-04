@@ -28,7 +28,8 @@ alter table public.productos
   add column if not exists created_at timestamptz not null default now(),
   add column if not exists updated_at timestamptz not null default now(),
   add column if not exists vistas integer not null default 0,
-  add column if not exists clicks integer not null default 0;
+  add column if not exists clicks integer not null default 0,
+  add column if not exists video_url text default null;
 
 update public.productos
 set gallery_urls =
@@ -86,6 +87,7 @@ create index if not exists idx_visitas_session_id on public.visitas (session_id)
 create index if not exists idx_visitas_session_fecha on public.visitas (session_id, fecha desc);
 create index if not exists idx_productos_featured_created_at on public.productos (featured desc, created_at desc);
 create index if not exists idx_productos_gallery_urls_gin on public.productos using gin (gallery_urls jsonb_path_ops);
+create index if not exists idx_productos_video_url on public.productos (video_url) where video_url is not null;
 create index if not exists idx_eventos_tipo_fecha on public.eventos (tipo, fecha desc);
 create index if not exists idx_eventos_producto_id on public.eventos (producto_id);
 create index if not exists idx_eventos_categoria on public.eventos (categoria);

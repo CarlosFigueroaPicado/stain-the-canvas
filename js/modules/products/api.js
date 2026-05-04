@@ -18,56 +18,72 @@ export async function fetchProducts() {
   }
 
   const table = getTable();
+  // Nuevas queries con soporte a product_media (JOIN left implícito en Supabase)
   const attempts = [
     {
-      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,created_at,featured,clicks,vistas",
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,created_at,featured,clicks,vistas,product_media(id,type,url,position,is_primary,created_at)",
       orders: [
         ["featured", { ascending: false }],
         ["created_at", { ascending: false }]
       ]
     },
     {
-      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at,featured,clicks,vistas",
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url,created_at,featured,clicks,vistas,product_media(id,type,url,position,is_primary,created_at)",
       orders: [
         ["featured", { ascending: false }],
         ["created_at", { ascending: false }]
       ]
     },
     {
-      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,created_at,featured",
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,created_at,featured,product_media(id,type,url,position,is_primary)",
       orders: [
         ["featured", { ascending: false }],
         ["created_at", { ascending: false }]
       ]
     },
     {
-      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at,featured",
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url,created_at,featured,product_media(id,type,url,position,is_primary)",
       orders: [
         ["featured", { ascending: false }],
         ["created_at", { ascending: false }]
       ]
     },
     {
-      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,created_at",
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,created_at,product_media(id,type,url,position,is_primary)",
       orders: [["created_at", { ascending: false }]]
     },
     {
-      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,created_at",
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url,created_at,product_media(id,type,url,position,is_primary)",
       orders: [["created_at", { ascending: false }]]
     },
+    // Fallback a queries viejas (por si product_media tabla no existe aún)
     {
-      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,featured",
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,featured,clicks,vistas",
+      orders: [
+        ["featured", { ascending: false }],
+        ["created_at", { ascending: false }]
+      ]
+    },
+    {
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url,featured,clicks,vistas",
+      orders: [
+        ["featured", { ascending: false }],
+        ["created_at", { ascending: false }]
+      ]
+    },
+    {
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url,featured",
       orders: [["featured", { ascending: false }]]
     },
     {
-      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,featured",
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url,featured",
       orders: [["featured", { ascending: false }]]
     },
     {
-      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls"
+      select: "id,nombre,categoria,subcategory_id,descripcion,precio,imagen_url,gallery_urls,video_url"
     },
     {
-      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls"
+      select: "id,nombre,categoria,descripcion,precio,imagen_url,gallery_urls,video_url"
     }
   ];
 

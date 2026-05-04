@@ -1,6 +1,6 @@
 import { subscribe } from "../../../core/store.js";
 import { getProducts } from "../service.js";
-import { buildWhatsappLink, escapeHtml, formatCurrency, getProductImageUrls } from "../../../shared/product-utils.js";
+import { buildWhatsappLink, escapeHtml, formatCurrency, getProductImageUrls, getProductVideoUrl } from "../../../shared/product-utils.js";
 import { trackEvent, trackVisit } from "../../analytics/service.js";
 import { loadAppConfig } from "../../../core/config.js";
 import { getSubcategoriesWithCache } from "../../subcategories/service.js";
@@ -39,7 +39,9 @@ export function initHomeProductsUI() {
     description: document.getElementById("homeModalProductDescription"),
     whatsapp: document.getElementById("homeModalWhatsappBtn"),
     prev: document.getElementById("homeModalPrevBtn"),
-    next: document.getElementById("homeModalNextBtn")
+    next: document.getElementById("homeModalNextBtn"),
+    video: document.getElementById("homeModalProductVideo"),
+    videoSource: document.getElementById("homeModalProductVideoSource")
   };
 
   if (Object.values(modalRefs).some((ref) => !ref)) {
@@ -176,6 +178,29 @@ export function initHomeProductsUI() {
     modalRefs.whatsapp.href = buildWhatsappLink(product);
     modalRefs.subcategory.textContent = "";
     modalRefs.subcategory.style.display = "none";
+
+    // Show video if available (Estrategia A)
+    // TODO: Video playback enhancements
+    // - [ ] Add video player controls customization (play, pause, volume, fullscreen)
+    // - [ ] Implement video quality selector (adaptive bitrate)
+    // - [ ] Add video analytics (impressions, play time, engagement)
+    // - [ ] Support HLS/DASH streaming for large videos
+    // - [ ] Add subtitles/caption support
+    // - [ ] Implement autoplay detection (respect user preferences)
+    // - [ ] Add related videos recommendation system
+    // - [ ] Cache video frames for faster thumbnail generation
+    const videoUrl = getProductVideoUrl(product);
+    if (videoUrl) {
+      modalRefs.videoSource.src = videoUrl;
+      modalRefs.video.classList.remove("d-none");
+      const videoElement = modalRefs.video.querySelector("video");
+      if (videoElement && videoElement.load) {
+        videoElement.load();
+      }
+    } else {
+      modalRefs.video.classList.add("d-none");
+      modalRefs.videoSource.src = "";
+    }
 
     const resolveSubcategoryName = (item) => {
       if (!item || typeof item !== "object") {

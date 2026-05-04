@@ -140,6 +140,23 @@ export function getProductGalleryUrls(productInput) {
 }
 
 export function getProductImageUrls(productInput, placeholderSize) {
+  // Soporte para nuevo formato product_media (JOIN con Supabase)
+  if (productInput && typeof productInput === "object" && Array.isArray(productInput.product_media)) {
+    const mediaImages = productInput.product_media
+      .filter(m => m && m.type === "image" && m.url)
+      .sort((a, b) => (a.position || 0) - (b.position || 0))
+      .map(m => {
+        const url = String(m.url || "").trim();
+        return isHttpUrl(url) ? url : resolveStorageAssetUrl(url);
+      })
+      .filter(Boolean);
+    
+    if (mediaImages.length > 0) {
+      return mediaImages;
+    }
+  }
+
+  // Fallback a sistema antiguo (imagen_url + gallery_urls)
   const imageUrl = resolveProductImageUrl(productInput);
   const gallery = getProductGalleryUrls(productInput);
   const unique = Array.from(new Set([imageUrl, ...gallery].filter(Boolean)));
@@ -156,6 +173,40 @@ export function getProductImageUrls(productInput, placeholderSize) {
   return [buildPlaceholderImage(label, placeholderSize || "900x700")];
 }
 
+export function getProductVideoUrl(productInput) {
+  // Soporte para nuevo formato product_media (JOIN con Supabase)
+  if (productInput && typeof productInput === "object" && Array.isArray(productInput.product_media)) {
+    const mediaVideos = productInput.product_media.find(m => m && m.type === "video" && m.is_primary);
+    if (mediaVideos && mediaVideos.url) {
+      const url = String(mediaVideos.url || "").trim();
+      return isHttpUrl(url) ? url : resolveStorageAssetUrl(url);
+    }
+  }
+
+  // Fallback a sistema antiguo (video_url)
+  if (!productInput || typeof productInput !== "object") {
+    return null;
+  }
+
+  const rawVideo = String(
+    pickFirst(
+      productInput,
+      ["videoUrl", "video_url", "video", "media_video"],
+      ""
+    )
+  ).trim();
+
+  if (!rawVideo) {
+    return null;
+  }
+
+  if (isHttpUrl(rawVideo)) {
+    return rawVideo;
+  }
+
+  return resolveStorageAssetUrl(rawVideo);
+}
+
 export function validateProductInput(productInput) {
   const input = productInput && typeof productInput === "object" ? productInput : {};
   const nombre = String(input.nombre || "").trim();
@@ -166,6 +217,7 @@ export function validateProductInput(productInput) {
   const galleryUrls = Array.isArray(input.galleryUrls)
     ? input.galleryUrls.map((item) => String(item || "").trim()).filter(Boolean)
     : [];
+  const videoUrl = String(input.videoUrl || input.video_url || "").trim();
 
   if (nombre.length < 3) {
     return "El nombre debe tener al menos 3 caracteres.";
@@ -200,6 +252,13 @@ export function validateProductInput(productInput) {
     return "Las imágenes de galería deben usar URLs http:// o https://";
   }
 
+  // TODO: Video validation (Estrategia A - minimal)
+  // - [ ] In future: add video duration limit, bitrate validation, streaming preparation
+  // - [ ] Consider: watermarking, DRM, regional restrictions
+  if (videoUrl && !isHttpUrl(videoUrl)) {
+    return "La URL del video debe iniciar con http:// o https://";
+  }
+
   return "";
 }
 
@@ -212,6 +271,7 @@ export function buildProductPayload(productInput) {
   const precio = toNumber(input.precio, 0);
   const imagenUrl = String(input.imagenUrl || "").trim();
   const featured = toBoolean(input.featured);
+  const videoUrl = String(input.videoUrl || "").trim() || null;
   const galleryUrls = Array.isArray(input.galleryUrls)
     ? input.galleryUrls.map((item) => String(item || "").trim()).filter(Boolean)
     : imagenUrl
@@ -226,6 +286,7 @@ export function buildProductPayload(productInput) {
     precio,
     imagen_url: imagenUrl,
     gallery_urls: galleryUrls,
+    video_url: videoUrl,
     featured
   };
 }
@@ -253,6 +314,10 @@ export function normalizeProduct(row) {
   const clicks = Number.parseInt(String(pickFirst(safeRow, ["clicks"], 0)), 10);
   const vistas = Number.parseInt(String(pickFirst(safeRow, ["vistas"], 0)), 10);
   const subcategoryId = String(pickFirst(safeRow, ["subcategory_id"], "") || "").trim() || null;
+  const videoUrl = getProductVideoUrl(safeRow);
+  
+  // Soporte para nuevo formato product_media (JOIN con Supabase)
+  const media = Array.isArray(safeRow.product_media) ? safeRow.product_media : [];
 
   return {
     id,
@@ -263,10 +328,12 @@ export function normalizeProduct(row) {
     precio,
     imagenUrl,
     galleryUrls: galleryUrls.length > 0 ? galleryUrls : imagenUrl ? [imagenUrl] : [],
+    videoUrl,
     createdAt,
     featured,
     clicks: Number.isFinite(clicks) ? clicks : 0,
     vistas: Number.isFinite(vistas) ? vistas : 0,
+    product_media: media,  // Nuevo: exponer media array completo con metadata
     raw: safeRow
   };
 }
