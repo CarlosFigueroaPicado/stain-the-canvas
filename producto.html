@@ -127,5 +127,26 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script type="module" src="js/pages/product.js"></script>
+  <script type="module">
+    import { initNavBar } from './js/components/NavBar.js';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      initNavBar().catch(err => console.error('Failed to init navbar:', err));
+    });
+  </script>
+  <script type="module">
+    import { initLazyImages } from './js/components/LazyImage.js';
+    
+    // Inicializar lazy loading en DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', () => {
+      initLazyImages();
+    });
+    
+    // Reiniciar después de cargar productos dinámicamente
+    const observer = new MutationObserver(() => {
+      initLazyImages();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  </script>
 </body>
 </html>

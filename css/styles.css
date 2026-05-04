@@ -757,3 +757,41 @@ h3 {
     min-height: 250px;
   }
 }
+
+/* ===================================
+   FASE 4: LAZY LOADING IMAGES
+   =================================== */
+
+/**
+ * Lazy Image Loading - Intersection Observer based
+ * Images with .lazy-image class and data-src attribute are loaded when
+ * they come within 50px of the viewport. This improves page performance
+ * by deferring image downloads until necessary.
+ */
+
+.lazy-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  background-color: var(--bs-gray-100);
+  transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Placeholder state: image not yet loaded */
+.lazy-image[data-src] {
+  opacity: 0.7;
+  filter: blur(5px);
+}
+
+/* Loaded state: image successfully loaded */
+.lazy-image.lazy-loaded {
+  opacity: 1;
+  filter: blur(0);
+}
+
+/* Error state: image failed to load */
+.lazy-image.lazy-error {
+  opacity: 1;
+  filter: blur(0);
+  background-color: var(--bs-danger-bg-subtle);
+}
