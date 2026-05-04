@@ -194,7 +194,7 @@ function updateBreadcrumbs() {
     const categoryLink = `catalogo.html?categoria=${encodeURIComponent(state.product.categoria)}`;
     const breadcrumbsHTML = `
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a href="index.html">Inicio</a></li>
+        <li class="breadcrumb-item"><a href="catalogo.html">Catálogo</a></li>
         <li class="breadcrumb-item"><a href="catalogo.html">Catálogo</a></li>
         <li class="breadcrumb-item"><a href="${categoryLink}">${escapeHtml(state.product.categoria)}</a></li>
         <li class="breadcrumb-item active" aria-current="page">${escapeHtml(state.product.nombre)}</li>
