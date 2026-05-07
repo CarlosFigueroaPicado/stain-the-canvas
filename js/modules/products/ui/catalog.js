@@ -384,6 +384,7 @@ export function initCatalogProductsUI() {
   }
 
   subscribe((nextState) => {
+    console.log('[CatalogUI] Estado actualizado, productos:', nextState.products?.length || 0);
     state.products = Array.isArray(nextState.products) ? nextState.products : [];
     renderFilters();
     renderProducts();

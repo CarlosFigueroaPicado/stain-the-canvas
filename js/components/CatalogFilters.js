@@ -20,21 +20,28 @@ class CatalogFilters {
 
   async init() {
     try {
+      console.log('[CatalogFilters] Inicializando...');
+      
       // Cargar todas las categorías con sus IDs
       const result = await getCategoriesWithCache();
+      console.log('[CatalogFilters] getCategoriesWithCache resultado:', result);
+      
       if (!result.success) {
-        console.error('Error cargando categorías:', result.error);
+        console.error('[CatalogFilters] Error cargando categorías:', result.error);
         return;
       }
 
       this.categories = result.data.filter(c => c.is_active);
+      console.log('[CatalogFilters] Categorías cargadas:', this.categories);
+      
       this.renderCategories();
       this.bindEvents();
       
       // Restaurar filtros de URL si existen
       await this.restoreFromURL();
+      console.log('[CatalogFilters] Inicialización completada');
     } catch (error) {
-      console.error('Error inicializando CatalogFilters:', error);
+      console.error('[CatalogFilters] Error inicializando CatalogFilters:', error);
     }
   }
 
