@@ -1,0 +1,31 @@
+---
+---
+
+<div class="product-modal" id="productModal" data-product-modal aria-hidden="true">
+  <section class="product-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
+    <button class="product-modal__close" type="button" data-product-modal-close aria-label="Cerrar">×</button>
+    <div class="product-modal__media">
+      <button class="product-modal__nav product-modal__nav--prev" type="button" data-product-modal-prev aria-label="Imagen anterior">‹</button>
+      <img id="productModalImage" src="" alt="" />
+      <button class="product-modal__nav product-modal__nav--next" type="button" data-product-modal-next aria-label="Imagen siguiente">›</button>
+      <div class="product-modal__dots" data-product-modal-dots></div>
+    </div>
+    <div class="product-modal__content">
+      <h2 id="productModalTitle"></h2>
+      <p class="product-modal__label">Categoría</p>
+      <p id="productModalCategory"></p>
+      <p class="product-modal__label">Subcategoría</p>
+      <p id="productModalSubcategory"></p>
+      <p class="product-modal__label">Precio</p>
+      <p class="product-modal__price" id="productModalPrice"></p>
+      <p class="product-modal__label">Descripción</p>
+      <p class="product-modal__description" id="productModalDescription"></p>
+      <a class="stc-button stc-button--primary stc-button--md product-modal__consult" href="#" data-product-modal-consult>
+        <svg class="product-modal__consult-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M21 15a4 4 0 0 1-4 4H8l-5 3 1.4-4.2A4 4 0 0 1 2 15V7a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4v8Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"></path>
+        </svg>
+        Consultar
+      </a>
+    </div>
+  </section>
+</div>

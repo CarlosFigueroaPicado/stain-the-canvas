@@ -1,0 +1,32 @@
+---
+import type { Product } from '../lib/catalog.repository';
+
+interface Props {
+  product: Product;
+  index: number;
+}
+
+const { product, index } = Astro.props;
+const price = new Intl.NumberFormat('es-NI', {
+  style: 'currency',
+  currency: 'NIO',
+  currencyDisplay: 'narrowSymbol'
+}).format(product.price).replace('NIO', 'C$');
+---
+
+<button
+  class="product-card"
+  type="button"
+  data-product-card
+  data-product-index={index}
+  data-name={product.name}
+  data-category={product.category}
+  data-subcategory={product.subcategory}
+>
+  <img class="product-card__image" src={product.imageUrl} alt={product.name} loading="lazy" />
+  <span class="product-card__content">
+    <span class="product-card__title">{product.name}</span>
+    <span class="product-card__path">{product.category} / {product.subcategory}</span>
+    <span class="product-card__price">{price}</span>
+  </span>
+</button>

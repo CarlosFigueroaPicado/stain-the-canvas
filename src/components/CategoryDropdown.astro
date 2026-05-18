@@ -1,0 +1,24 @@
+---
+import type { Category, Subcategory } from '../lib/catalog.repository';
+
+interface Props {
+  category: Category;
+  subcategories: Subcategory[];
+}
+
+const { category, subcategories } = Astro.props;
+---
+
+<article class="category-dropdown" data-category-dropdown>
+  <button class="category-dropdown__trigger" type="button" data-category-trigger>
+    <span>{category.name}</span>
+    <svg class="category-dropdown__chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="m7 10 5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+  </button>
+  <div class="category-dropdown__menu">
+    {subcategories.map((subcategory) => (
+      <button type="button" data-subcategory-filter={subcategory.name}>{subcategory.name}</button>
+    ))}
+  </div>
+</article>

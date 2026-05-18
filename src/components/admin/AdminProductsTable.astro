@@ -1,0 +1,65 @@
+---
+import type { Product } from '../../lib/catalog.repository';
+import AdminTable from './AdminTable.astro';
+
+interface Props {
+  products: Product[];
+}
+
+const { products } = Astro.props;
+
+function price(value: number) {
+  return `C$${Number(value || 0).toFixed(2)}`;
+}
+---
+
+<section class="admin-section" aria-labelledby="products-title">
+  <h2 id="products-title">Productos registrados</h2>
+  <AdminTable headers={['Imagen', 'Nombre', 'Categoría', 'Subcategoría', 'Precio', 'Acciones']}>
+    {products.map((product) => (
+      <tr
+        data-admin-product-row
+        data-search={`${product.name} ${product.category} ${product.subcategory} ${product.description}`}
+      >
+        <td><img class="admin-thumb" src={product.imageUrl} alt={product.name} loading="lazy" /></td>
+        <td>
+          <strong>{product.name}</strong>
+          <span>{product.description.split('.')[0]}</span>
+        </td>
+        <td>{product.category}</td>
+        <td>{product.subcategory}</td>
+        <td>{price(product.price)}</td>
+        <td>
+          <span class="admin-actions">
+            <button
+              class="admin-small-button"
+              type="button"
+              data-admin-modal="productModal"
+              data-admin-product-mode="edit"
+              data-product-id={product.id}
+              data-product-name={product.name}
+              data-product-category={product.category}
+              data-product-subcategory-id={product.subcategoryId || ''}
+              data-product-description={product.description}
+              data-product-price={String(product.price)}
+              data-product-image-url={product.imageUrl}
+              data-product-featured={String(product.featured)}
+              data-product-video-url={product.videoUrl || ''}
+            >
+              Editar
+            </button>
+            <button
+              class="admin-small-button admin-small-button--danger"
+              type="button"
+              data-admin-product-delete
+              data-product-id={product.id}
+              data-product-name={product.name}
+            >
+              Eliminar
+            </button>
+          </span>
+        </td>
+      </tr>
+    ))}
+  </AdminTable>
+</section>

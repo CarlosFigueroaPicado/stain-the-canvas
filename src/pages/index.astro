@@ -1,0 +1,15 @@
+---
+import Catalog from '../components/Catalog.astro';
+import MainLayout from '../layouts/MainLayout.astro';
+import Navbar from '../components/Navbar.astro';
+import { loadCatalogData } from '../lib/catalog.loader';
+
+const { products, categories, subcategories } = await loadCatalogData();
+---
+
+<MainLayout>
+  <div class="catalog-shell">
+    <Navbar />
+    <Catalog products={products} categories={categories} subcategories={subcategories} />
+  </div>
+</MainLayout>

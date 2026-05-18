@@ -1,0 +1,70 @@
+---
+import type { Category, Product, Subcategory } from '../../lib/catalog.repository';
+import AdminCategoriesTable from './AdminCategoriesTable.astro';
+import AdminHeader from './AdminHeader.astro';
+import AdminModals from './AdminModals.astro';
+import AdminProductsTable from './AdminProductsTable.astro';
+import AdminSidebar from './AdminSidebar.astro';
+import AdminSubcategoriesTable from './AdminSubcategoriesTable.astro';
+
+interface Props {
+  active: 'products' | 'categories' | 'subcategories';
+  products: Product[];
+  categories: Category[];
+  subcategories: Subcategory[];
+}
+
+const { active, products, categories, subcategories } = Astro.props;
+
+const config = {
+  products: {
+    sectionLabel: 'PRODUCTOS',
+    actionLabel: 'Añadir productos',
+    actionTarget: 'productModal',
+    countLabel: `${products.length} productos`,
+    showSearch: true
+  },
+  categories: {
+    sectionLabel: 'CATEGORÍAS',
+    actionLabel: 'Añadir categoría',
+    actionTarget: 'categoryModal',
+    countLabel: '',
+    showSearch: false
+  },
+  subcategories: {
+    sectionLabel: 'SUBCATEGORÍAS',
+    actionLabel: 'Añadir subcategoría',
+    actionTarget: 'subcategoryModal',
+    countLabel: '',
+    showSearch: false
+  }
+}[active];
+---
+
+<div class="admin-shell">
+  <AdminSidebar active={active} />
+  <main class="admin-main">
+    <AdminHeader
+      title="Panel Administrativo"
+      sectionLabel={config.sectionLabel}
+      actionLabel={config.actionLabel}
+      actionTarget={config.actionTarget}
+      countLabel={config.countLabel}
+      showSearch={config.showSearch}
+    />
+
+    <div class="admin-content">
+      {active === 'products' && <AdminProductsTable products={products} />}
+      {active === 'categories' && <AdminCategoriesTable categories={categories} />}
+      {active === 'subcategories' && <AdminSubcategoriesTable subcategories={subcategories} />}
+    </div>
+  </main>
+
+  <AdminModals categories={categories} subcategories={subcategories} />
+</div>
+
+<script>
+  import { initAdmin } from '../../scripts/admin';
+
+  await initAdmin();
+</script>

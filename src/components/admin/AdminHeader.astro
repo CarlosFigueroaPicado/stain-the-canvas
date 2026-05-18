@@ -1,0 +1,38 @@
+---
+import Button from '../Button.astro';
+
+interface Props {
+  title: string;
+  sectionLabel: string;
+  actionLabel: string;
+  actionTarget: string;
+  showSearch?: boolean;
+  countLabel?: string;
+}
+
+const { title, sectionLabel, actionLabel, actionTarget, showSearch = false, countLabel = '' } = Astro.props;
+---
+
+<header class="admin-header">
+  <div class="admin-header__title">
+    <h1>{title}</h1>
+    <p>{sectionLabel}</p>
+    {showSearch && (
+      <label class="admin-search">
+        <span>Buscar en el Catálogo</span>
+        <span class="admin-search__control">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle>
+            <path d="m16.5 16.5 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+          </svg>
+          <input id="adminProductSearch" type="search" placeholder="Nombre, categoría o descripción" />
+        </span>
+      </label>
+    )}
+  </div>
+
+  <div class="admin-header__actions">
+    {countLabel && <span class="admin-header__count" id="adminCount">{countLabel}</span>}
+    <Button size="md" class="admin-header__button" data-admin-modal={actionTarget}>{actionLabel}</Button>
+  </div>
+</header>

@@ -1,0 +1,44 @@
+---
+import type { Subcategory } from '../../lib/catalog.repository';
+import AdminTable from './AdminTable.astro';
+
+interface Props {
+  subcategories: Subcategory[];
+}
+
+const { subcategories } = Astro.props;
+---
+
+<section class="admin-section" aria-labelledby="subcategories-title">
+  <h2 id="subcategories-title">Subcategorías registradas</h2>
+  <AdminTable headers={['Nombre', 'Categoría', 'Acciones']}>
+    {subcategories.map((subcategory) => (
+      <tr
+        data-admin-subcategory-row
+        data-search={`${subcategory.name} ${subcategory.category}`}
+      >
+        <td>{subcategory.name}</td>
+        <td>{subcategory.category}</td>
+        <td>
+          <span class="admin-actions admin-actions--end">
+            <button
+              class="admin-small-button"
+              type="button"
+              data-admin-modal="subcategoryModal"
+              data-admin-subcategory-mode="edit"
+              data-subcategory-id={subcategory.id}
+              data-subcategory-name={subcategory.name}
+              data-subcategory-category-id={subcategory.categoryId || ''}
+              data-subcategory-category={subcategory.category}
+              data-subcategory-order={String(subcategory.order)}
+              data-subcategory-is-active="true"
+            >
+              Editar
+            </button>
+            <button class="admin-small-button admin-small-button--danger" type="button" data-admin-subcategory-delete data-subcategory-id={subcategory.id} data-subcategory-name={subcategory.name}>Eliminar</button>
+          </span>
+        </td>
+      </tr>
+    ))}
+  </AdminTable>
+</section>

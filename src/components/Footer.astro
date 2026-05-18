@@ -1,0 +1,15 @@
+---
+interface Props {
+  brand?: string;
+}
+
+const { brand = 'Stain The Canvas' } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="stc-footer">
+  <div class="container stc-footer__inner">
+    <p>{brand}</p>
+    <p>Catálogo artesanal premium · {year}</p>
+  </div>
+</footer>

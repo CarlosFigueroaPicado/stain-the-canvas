@@ -1,0 +1,32 @@
+.stc-navbar {
+  min-height: 58px;
+  background: rgba(255, 249, 244, .92);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.stc-navbar__inner {
+  width: min(var(--layout-page-max), calc(100% - 32px));
+  min-height: 58px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.stc-navbar__brand {
+  font-family: var(--font-heading);
+  color: var(--color-text);
+  font-size: clamp(1.5rem, 2.1vw, 1.875rem);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stc-navbar__action {
+  justify-self: end;
+}
+
+.stc-navbar__spacer {
+  min-width: 1px;
+}

@@ -1,0 +1,125 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--color-background);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 78% 12%, rgba(201, 117, 77, .08), transparent 32%),
+    linear-gradient(112deg, #F6EFE8 0%, #F3E5D8 100%);
+}
+
+.stc-phase {
+  display: grid;
+  min-height: 100vh;
+  align-content: center;
+  gap: 12px;
+  max-width: var(--layout-page-max);
+}
+
+.stc-kicker {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.catalog-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background:
+    radial-gradient(circle at 78% 12%, rgba(201, 117, 77, .08), transparent 32%),
+    linear-gradient(112deg, #F6EFE8 0%, #F3E5D8 100%);
+}
+
+.catalog-foundation {
+  padding: 28px 0 64px;
+}
+
+.catalog-foundation__inner {
+  max-width: var(--layout-page-max);
+  display: grid;
+  gap: 32px;
+}
+
+.foundation-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, .85fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.foundation-panel {
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  min-height: 320px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 249, 244, .72);
+  padding: clamp(24px, 4vw, 40px);
+  box-shadow: var(--shadow-soft);
+}
+
+.foundation-panel h1 {
+  margin: 0;
+}
+
+.foundation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-top: 8px;
+}
+
+.foundation-form {
+  align-content: center;
+}

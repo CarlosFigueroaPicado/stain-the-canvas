@@ -1,0 +1,61 @@
+---
+interface Props {
+  id?: string;
+  name?: string;
+  label?: string;
+  type?: 'text' | 'email' | 'password' | 'search' | 'tel' | 'url' | 'number';
+  placeholder?: string;
+  value?: string;
+  required?: boolean;
+  autocomplete?: string;
+  min?: string;
+  max?: string;
+  step?: string;
+  pattern?: string;
+  inputmode?: 'text' | 'search' | 'email' | 'url' | 'tel' | 'none' | 'numeric' | 'decimal';
+  class?: string;
+  [key: string]: unknown;
+}
+
+const props = Astro.props as Props & Record<string, unknown>;
+
+const {
+  id,
+  name,
+  label,
+  type = 'text',
+  placeholder = '',
+  value = '',
+  required = false,
+  autocomplete,
+  min,
+  max,
+  step,
+  pattern,
+  inputmode,
+  class: className = '',
+  ...attrs
+} = props;
+
+const inputId = id || name;
+---
+
+<label class={`stc-field ${className}`.trim()} for={inputId}>
+  {label && <span class="stc-field__label">{label}</span>}
+  <input
+    id={inputId}
+    class="stc-input"
+    name={name}
+    type={type}
+    placeholder={placeholder}
+    value={value}
+    required={required}
+    autocomplete={autocomplete}
+    min={min}
+    max={max}
+    step={step}
+    pattern={pattern}
+    inputmode={inputmode}
+    {...attrs}
+  />
+</label>

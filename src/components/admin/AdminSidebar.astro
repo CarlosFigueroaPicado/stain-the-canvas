@@ -1,0 +1,42 @@
+---
+interface Props {
+  active: 'products' | 'categories' | 'subcategories';
+}
+
+const { active } = Astro.props;
+
+const items = [
+  { id: 'products', label: 'Productos', href: '/admin', icon: 'box' },
+  { id: 'categories', label: 'Categorías', href: '/admin/categorias', icon: 'folder' },
+  { id: 'subcategories', label: 'Subcategorías', href: '/admin/subcategorias', icon: 'layers' },
+  { id: 'catalog', label: 'Ver catálogo', href: '/', icon: 'eye' },
+  { id: 'settings', label: 'Configuración', href: '#passwordModal', icon: 'gear' }
+];
+---
+
+<aside class="admin-sidebar">
+  <button class="admin-sidebar__collapse" type="button" aria-label="Contraer menú">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 18 9 12l6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="M5 4v16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+    </svg>
+  </button>
+
+  <nav class="admin-sidebar__nav" aria-label="Administración">
+    {items.map((item) => (
+      <a
+        class:list={['admin-sidebar__link', active === item.id && 'is-active']}
+        href={item.href}
+        data-admin-modal={item.id === 'settings' ? 'passwordModal' : undefined}
+      >
+        <span class="admin-sidebar__icon" data-icon={item.icon}></span>
+        <span>{item.label}</span>
+      </a>
+    ))}
+  </nav>
+
+  <button class="admin-sidebar__logout" type="button" data-admin-logout>
+    <span class="admin-sidebar__icon" data-icon="logout"></span>
+    <span>Cerrar sesión</span>
+  </button>
+</aside>

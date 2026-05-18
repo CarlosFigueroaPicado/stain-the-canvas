@@ -1,0 +1,135 @@
+body.has-modal {
+  overflow: hidden;
+}
+
+.product-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: none;
+  place-items: center;
+  padding: 22px;
+  background: rgba(24, 22, 20, .63);
+}
+
+.product-modal[aria-hidden="false"] {
+  display: grid;
+}
+
+.product-modal__dialog {
+  position: relative;
+  width: min(748px, 100%);
+  max-height: calc(100vh - 44px);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 333px;
+  gap: 28px;
+  border-radius: 13px;
+  background: var(--color-surface);
+  box-shadow: 0 18px 48px rgba(44, 31, 24, .22);
+  padding: 28px;
+}
+
+.product-modal__close {
+  position: absolute;
+  top: 15px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.product-modal__media {
+  position: relative;
+  display: grid;
+  align-content: start;
+}
+
+.product-modal__media img {
+  width: 100%;
+  aspect-ratio: 1.04;
+  border-radius: 9px;
+  object-fit: cover;
+}
+
+.product-modal__nav {
+  position: absolute;
+  top: 45%;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 249, 244, .94);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .16);
+  color: var(--color-text);
+  font-size: 1.875rem;
+  line-height: 1;
+}
+
+.product-modal__nav--prev {
+  left: 14px;
+}
+
+.product-modal__nav--next {
+  right: 14px;
+}
+
+.product-modal__dots {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 26px;
+}
+
+.product-modal__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e4b5a2;
+}
+
+.product-modal__dot.is-active {
+  background: var(--color-primary);
+}
+
+.product-modal__content {
+  min-width: 0;
+  padding-right: 2px;
+}
+
+.product-modal__content h2 {
+  margin: 0 0 18px;
+  font-size: 1.6875rem;
+  line-height: 1.18;
+}
+
+.product-modal__label {
+  margin: 18px 0 6px;
+  color: var(--color-primary);
+  font-size: .75rem;
+}
+
+.product-modal__price {
+  margin: 6px 0 22px;
+  color: #34302d;
+  font-size: 2.0625rem;
+}
+
+.product-modal__description {
+  color: #514943;
+  line-height: 1.55;
+}
+
+.product-modal__consult {
+  width: 100%;
+  margin-top: 22px;
+}
+
+.product-modal__consult-icon {
+  flex: 0 0 auto;
+}

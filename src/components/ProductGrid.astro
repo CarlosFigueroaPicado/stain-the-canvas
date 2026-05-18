@@ -1,0 +1,14 @@
+---
+import type { Product } from '../lib/catalog.repository';
+import ProductCard from './ProductCard.astro';
+
+interface Props {
+  products: Product[];
+}
+
+const { products } = Astro.props;
+---
+
+<section class="product-grid" id="productGrid" aria-label="Productos">
+  {products.map((product, index) => <ProductCard product={product} index={index} />)}
+</section>

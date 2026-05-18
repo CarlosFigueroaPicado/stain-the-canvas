@@ -1,0 +1,21 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+
+export function getStaticPaths() {
+  return [
+    { params: { path: 'catalog' } }
+  ];
+}
+
+const { path } = Astro.params;
+---
+
+<MainLayout title="Catálogo">
+  <div style="text-align: center; padding: 48px;">
+    <h1>Página en construcción</h1>
+    <p>La ruta /{path} está en desarrollo.</p>
+    <a href="/" class="btn btn-primary" style="display: inline-block; margin-top: 20px;">
+      Volver al catálogo
+    </a>
+  </div>
+</MainLayout>

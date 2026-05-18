@@ -1,0 +1,214 @@
+@media (max-width: 991.98px) {
+  :root {
+    --layout-page-max: 720px;
+  }
+
+  .foundation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-filters,
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-modal__dialog {
+    grid-template-columns: 1fr;
+    width: min(560px, 100%);
+  }
+
+  .login-screen {
+    grid-template-columns: 1fr;
+  }
+
+  .login-hero,
+  .login-panel {
+    min-height: 50vh;
+  }
+
+  .login-panel {
+    justify-items: center;
+  }
+
+  .admin-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: static;
+    min-height: auto;
+  }
+
+  .admin-sidebar__collapse,
+  .admin-sidebar__logout {
+    display: none;
+  }
+
+  .admin-sidebar__nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 16px 19px;
+  }
+
+  .admin-header {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .admin-header__actions {
+    justify-content: space-between;
+  }
+
+  .admin-table-wrap {
+    overflow-x: auto;
+  }
+
+  .admin-table {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  :root {
+    --layout-gutter: 12px;
+  }
+
+  h1 {
+    font-size: 2.25rem;
+  }
+
+  .stc-navbar__inner {
+    width: calc(100% - 24px);
+    grid-template-columns: 1fr auto;
+  }
+
+  .stc-navbar__brand {
+    justify-self: start;
+    font-size: 1.35rem;
+    white-space: normal;
+    text-align: left;
+  }
+
+  .stc-navbar__spacer {
+    display: none;
+  }
+
+  .catalog-foundation {
+    padding-top: 18px;
+  }
+
+  .catalog-page {
+    padding-top: 18px;
+  }
+
+  .catalog-page__inner {
+    width: calc(100% - 24px);
+  }
+
+  .catalog-filters,
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-filters {
+    gap: 18px;
+  }
+
+  .product-card__image {
+    height: 210px;
+  }
+
+  .product-modal {
+    padding: 12px;
+  }
+
+  .product-modal__dialog {
+    max-height: calc(100vh - 24px);
+    padding: 20px;
+  }
+
+  .product-modal__content h2 {
+    padding-right: 42px;
+  }
+
+  .foundation-panel {
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .foundation-actions,
+  .stc-footer__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stc-footer__inner {
+    justify-content: center;
+  }
+
+  .login-hero {
+    min-height: 46vh;
+    padding: 32px 24px;
+  }
+
+  .login-hero__quote {
+    font-size: 1.9rem;
+    line-height: 1.5;
+  }
+
+  .login-panel {
+    min-height: 54vh;
+    padding: 36px 24px;
+  }
+
+  .login-form {
+    width: 100%;
+  }
+
+  .login-form__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar__nav {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .admin-header,
+  .admin-content {
+    padding-inline: 18px;
+  }
+
+  .admin-header__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-header__button {
+    width: 100%;
+  }
+
+  .admin-modal {
+    padding: 12px;
+  }
+
+  .admin-modal__dialog {
+    max-height: calc(100vh - 24px);
+    padding: 24px;
+  }
+
+  .admin-form-grid,
+  .admin-modal__actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms;
+    animation-iteration-count: 1;
+    scroll-behavior: auto;
+    transition-duration: .01ms;
+  }
+}

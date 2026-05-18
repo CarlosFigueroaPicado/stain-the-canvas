@@ -1,0 +1,16 @@
+---
+import AdminShell from '../../components/admin/AdminShell.astro';
+import MainLayout from '../../layouts/MainLayout.astro';
+import { loadCatalogData } from '../../lib/catalog.loader';
+
+const { products, categories, subcategories } = await loadCatalogData();
+---
+
+<MainLayout title="Subcategorías | Stain The Canvas" bodyClass="admin-body">
+  <AdminShell
+    active="subcategories"
+    products={products}
+    categories={categories}
+    subcategories={subcategories}
+  />
+</MainLayout>

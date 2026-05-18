@@ -1,0 +1,42 @@
+---
+import type { Category, Product, Subcategory } from '../lib/catalog.repository';
+import CategoryDropdown from './CategoryDropdown.astro';
+import ProductGrid from './ProductGrid.astro';
+import ProductModal from './ProductModal.astro';
+import SearchBar from './SearchBar.astro';
+
+interface Props {
+  products: Product[];
+  categories: Category[];
+  subcategories: Subcategory[];
+}
+
+const { products, categories, subcategories } = Astro.props;
+
+function subcategoriesFor(category: Category) {
+  return subcategories.filter((subcategory) => subcategory.category === category.name || subcategory.categoryId === category.id);
+}
+---
+
+<main class="catalog-page">
+  <section class="container catalog-page__inner">
+    <SearchBar id="catalogSearch" />
+
+    <section class="catalog-filters" aria-label="Categorías">
+      {categories.map((category) => (
+        <CategoryDropdown category={category} subcategories={subcategoriesFor(category)} />
+      ))}
+    </section>
+
+    <ProductGrid products={products} />
+  </section>
+
+  <ProductModal />
+  <script is:inline type="application/json" id="catalogData" set:html={JSON.stringify({ products })} />
+</main>
+
+<script>
+  import { initCatalog } from '../scripts/catalog';
+
+  initCatalog();
+</script>

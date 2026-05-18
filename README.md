@@ -1,112 +1,147 @@
-# Stain the Canvas
+# SATIN THE CANVAS
 
-Catálogo web artesanal con panel admin, productos dinámicos y dashboard de analítica sobre Supabase.
+Catalogo digital artesanal construido con Astro y Supabase. El proyecto incluye un catalogo publico, panel administrativo, autenticacion, carga de medios y taxonomias funcionales.
 
-## Stack
+## Resumen
 
-- HTML + CSS + JavaScript modular nativo
-- Bootstrap 5
-- Supabase Auth, Database y Storage
-- Vitest para pruebas unitarias ligeras
-- Vercel para deploy estático + `api/config`
+Este repositorio contiene la version actual del sitio para el catalogo de productos de Satin The Canvas. La aplicacion esta pensada para mostrar productos al publico y administrar contenido desde un panel privado con control de acceso por Supabase Auth y RLS.
 
-## Arquitectura
+### Funcionalidades principales
 
-La app usa una sola fuente de verdad en `js/`:
+- Catalogo publico con listado de productos.
+- Busqueda y filtrado por categorias y subcategorias.
+- Vista de producto con medios asociados.
+- Login de administracion con Supabase Auth.
+- CRUD de productos, categorias y subcategorias.
+- Subida de imagenes y videos a Supabase Storage.
+- Registro de visitas y eventos para analitica.
+
+## Stack tecnico
+
+- Astro 4
+- TypeScript
+- Supabase JS
+- PostgreSQL con RLS
+- Supabase Storage
+
+## Estructura del proyecto
 
 ```text
-js/
-  core/
-    config.js
-    result.js
-    store.js
-    supabase-client.js
-  shared/
-    chart-colors.js
-    dashboard-helpers.js
-    product-utils.js
-  modules/
-    auth/
-      api.js
-      service.js
-      ui/
-    analytics/
-      api.js
-      service.js
-    dashboard/
-      api.js
-      service.js
-      ui/
-    products/
-      api.js
-      service.js
-      ui/
+src/
+  components/        Componentes publicos y del panel admin
+  layouts/           Layout base de la app
+  lib/               Cliente Supabase, carga y repositorio de datos
+  pages/             Rutas publicas y administrativas
+  scripts/           Interaccion del lado del cliente
+  styles/            Variables visuales y estilos globales
+
+supabase/
+  setup.sql                             Esquema principal de la base de datos
+  update_taxonomy_2026_05_02.sql        Normalizacion de categorias y subcategorias
+  delete_taxonomy_data.sql              Limpieza segura de taxonomias
+  20260503_*.sql                        Migraciones de medios y video
 ```
-
-Separación aplicada:
-
-- `api`: acceso a Supabase
-- `service`: validación y lógica de negocio
-- `ui`: renderizado y eventos del DOM
-- `core`: configuración, cliente y store global
-- `shared`: helpers puros reutilizables
-
-## Seguridad
-
-- La autenticación admin usa `supabase.auth.getSession()` y validación de rol real.
-- El frontend no usa `localStorage` para conceder acceso admin.
-- La seguridad real depende de RLS y policies en `supabase/setup.sql`.
-- El cliente rechaza claves tipo `service_role` o `sb_secret`.
-- Las inserciones de productos validan nombre, precio, descripción, imagen y `featured`.
 
 ## Variables de entorno
 
-Crea tus variables a partir de `.env.example`:
-
-```env
-STC_SUPABASE_URL=https://your-project-ref.supabase.co
-STC_SUPABASE_PUBLISHABLE_KEY=your-public-anon-or-publishable-key
-STC_SUPABASE_BUCKET=productos
-STC_PRODUCTS_TABLE=productos
-STC_WHATSAPP_NUMBER=50589187562
-```
-
-`api/config.js` expone solo configuración pública. También acepta `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` como fallback para compatibilidad local.
-
-## Supabase
-
-Aplica `supabase/setup.sql` en el SQL Editor. Ese script crea:
-
-- `productos` con soporte para `gallery_urls` y `featured`
-- `visitas` y `eventos` para analítica
-- `admin_users` para control de acceso
-- RLS, policies y triggers de rate limit básicos
-- RPC `get_dashboard_metrics`
-
-Para crear un admin:
-
-1. Crea el usuario en Supabase Auth.
-2. Marca `app_metadata.role = "admin"` o registra su `user_id` en `admin_users`.
-3. Inicia sesión desde `login.html`.
-
-## Desarrollo
-
-Para correr pruebas:
+Crea un archivo `.env` en la raiz con los valores de Supabase:
 
 ```bash
-pnpm test:ci
+PUBLIC_SUPABASE_URL=
+PUBLIC_SUPABASE_ANON_KEY=
+PUBLIC_SUPABASE_BUCKET=productos
+PUBLIC_PRODUCTS_TABLE=productos
+PUBLIC_WHATSAPP_NUMBER=
 ```
 
-Para desarrollo local con variables de Vercel, usa `vercel dev` o cualquier servidor estático que también sirva `api/config`.
+`PUBLIC_SUPABASE_BUCKET` y `PUBLIC_PRODUCTS_TABLE` tienen valores por defecto, pero conviene declararlos para dejar la instalacion cerrada.
 
-## Deploy en Vercel
+## Instalacion local
 
-- `vercel.json` agrega headers de seguridad y CSP.
-- `api/config.js` entrega la configuración pública de Supabase.
-- Las páginas consumen `/api/config`, así que no dependen de valores hardcodeados.
+1. Instala dependencias.
 
-## Notas
+```bash
+pnpm install
+```
 
-- Los productos destacados del home salen de base de datos usando el campo `featured`.
-- Si no hay productos destacados, el home usa los productos más recientes cargados.
-- El store global centraliza `user` y `products` para evitar llamadas duplicadas.
+2. Crea y configura el archivo `.env`.
+
+3. Ejecuta el entorno de desarrollo.
+
+```bash
+pnpm dev
+```
+
+4. Verifica el build de produccion.
+
+```bash
+pnpm build
+```
+
+## Scripts disponibles
+
+- `pnpm dev`: inicia Astro en modo desarrollo.
+- `pnpm build`: genera el build de produccion.
+- `pnpm preview`: previsualiza el build.
+- `pnpm test`: ejecuta chequeo y build.
+- `pnpm test:ci`: mismo flujo para CI.
+
+## Base de datos en Supabase
+
+La base esta organizada en tres bloques:
+
+### 1. Catalogo
+
+- `productos`: tabla central del catalogo.
+- `categorias`: categorias principales activas.
+- `subcategorias`: taxonomia secundaria con FK opcional a categorias.
+- `producto_imagenes`: historial/galeria normalizada de medios por producto.
+
+### 2. Analitica
+
+- `visitas`: captura visitas del sitio.
+- `eventos`: registra vistas de producto y clicks de WhatsApp.
+- Triggers anti-spam y trigger de sincronizacion de metricas.
+
+### 3. Administracion
+
+- `admin_users`: lista de usuarios autorizados.
+- Funcion `public.is_admin_user()` para validar permisos.
+- RLS para lectura publica y escritura limitada a administradores.
+
+## Medios y archivos
+
+Los productos usan Supabase Storage en el bucket `productos`. El frontend soporta:
+
+- una imagen principal,
+- una galeria compatible por compatibilidad,
+- un video por producto.
+
+Ademas existe una migracion futura para un modelo mas normalizado de multimedia en `product_media`.
+
+## Rutas principales
+
+- `/`: catalogo publico.
+- `/login`: acceso al panel.
+- `/admin`: panel administrativo principal.
+- `/admin/categorias`: gestion de categorias.
+- `/admin/subcategorias`: gestion de subcategorias.
+
+## Flujo de trabajo
+
+1. El catalogo publico carga datos desde Supabase con fallback local.
+2. El login autentica con Supabase Auth.
+3. El panel valida sesion y permisos desde el navegador.
+4. Los formularios del admin crean, editan y eliminan registros en la base.
+5. Los archivos se suben a Storage y se guardan como URL publica.
+
+## Notas de despliegue
+
+- Asegura que las variables de entorno esten definidas en el entorno de hosting.
+- Verifica que el bucket `productos` exista en Supabase.
+- Aplica primero `supabase/setup.sql` y luego las migraciones incrementales.
+- Ejecuta `pnpm build` antes de publicar cambios.
+
+## Estado actual
+
+La aplicacion ya esta orientada a produccion: catalogo funcional, panel admin funcional, taxonomias activas y soporte de imagenes/video. El siguiente paso habitual es publicar el proyecto en GitHub y conectar el repositorio al flujo de despliegue.

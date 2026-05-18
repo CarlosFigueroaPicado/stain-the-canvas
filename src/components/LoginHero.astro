@@ -1,0 +1,25 @@
+---
+interface Props {
+  quote?: string[];
+}
+
+const {
+  quote = [
+    '"La mente creativa te puede llevar',
+    'mucho más largo de lo que',
+    'imaginas, porque tu imaginación',
+    'es el límite"'
+  ]
+} = Astro.props;
+---
+
+<section class="login-hero" aria-label="Inspiración artesanal">
+  <p class="login-hero__quote">
+    {quote.map((line) => (
+      <>
+        {line}
+        <br />
+      </>
+    ))}
+  </p>
+</section>

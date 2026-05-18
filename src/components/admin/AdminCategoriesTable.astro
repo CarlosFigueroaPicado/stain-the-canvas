@@ -1,0 +1,38 @@
+---
+import type { Category } from '../../lib/catalog.repository';
+import AdminTable from './AdminTable.astro';
+
+interface Props {
+  categories: Category[];
+}
+
+const { categories } = Astro.props;
+---
+
+<section class="admin-section" aria-labelledby="categories-title">
+  <h2 id="categories-title">Categorías registradas</h2>
+  <AdminTable headers={['Nombre', 'Acciones']}>
+    {categories.map((category) => (
+      <tr data-admin-category-row data-search={category.name}>
+        <td>{category.name}</td>
+        <td>
+          <span class="admin-actions admin-actions--end">
+            <button
+              class="admin-small-button"
+              type="button"
+              data-admin-modal="categoryModal"
+              data-admin-category-mode="edit"
+              data-category-id={category.id}
+              data-category-name={category.name}
+              data-category-order={String(category.order)}
+              data-category-is-active="true"
+            >
+              Editar
+            </button>
+            <button class="admin-small-button admin-small-button--danger" type="button" data-admin-category-delete data-category-id={category.id} data-category-name={category.name}>Eliminar</button>
+          </span>
+        </td>
+      </tr>
+    ))}
+  </AdminTable>
+</section>

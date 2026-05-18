@@ -1,0 +1,40 @@
+---
+import '../styles/bootstrap.css';
+import '../styles/variables.css';
+import '../styles/typography.css';
+import '../styles/global.css';
+import '../styles/components/buttons.css';
+import '../styles/components/forms.css';
+import '../styles/components/navbar.css';
+import '../styles/components/footer.css';
+import '../styles/components/catalog.css';
+import '../styles/components/product-modal.css';
+import '../styles/components/login.css';
+import '../styles/components/admin.css';
+import '../styles/responsive.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  bodyClass?: string;
+}
+
+const {
+  title = 'Catálogo Digital Stain The Canvas',
+  description = 'Catálogo digital artesanal premium de Stain The Canvas.',
+  bodyClass = ''
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+  <body class={bodyClass}>
+    <slot />
+  </body>
+</html>

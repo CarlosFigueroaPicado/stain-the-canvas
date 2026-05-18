@@ -1,0 +1,62 @@
+.stc-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0 22px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    background-color .18s ease,
+    border-color .18s ease;
+}
+
+.stc-button:hover {
+  transform: translateY(-1px);
+}
+
+.stc-button--sm {
+  min-height: 34px;
+  padding-inline: 16px;
+  font-size: .875rem;
+}
+
+.stc-button--md {
+  min-height: 42px;
+  padding-inline: 22px;
+}
+
+.stc-button--primary {
+  color: #fff;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.stc-button--primary:hover {
+  background: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+  box-shadow: var(--shadow-soft);
+}
+
+.stc-button--secondary,
+.stc-button--ghost {
+  color: var(--color-text);
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+.stc-button--ghost {
+  background: var(--color-surface);
+}
+
+.stc-button--danger {
+  color: #fff;
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+}

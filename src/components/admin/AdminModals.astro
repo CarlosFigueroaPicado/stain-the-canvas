@@ -1,0 +1,148 @@
+---
+import Button from '../Button.astro';
+import Input from '../Input.astro';
+import type { Category, Subcategory } from '../../lib/catalog.repository';
+
+interface Props {
+  categories: Category[];
+  subcategories: Subcategory[];
+}
+
+const { categories, subcategories } = Astro.props;
+
+function subcategoriesFor(category: Category) {
+  return subcategories.filter((subcategory) => subcategory.category === category.name || subcategory.categoryId === category.id);
+}
+---
+
+<div class="admin-modal" id="productModal" aria-hidden="true" data-admin-overlay>
+  <form class="admin-modal__dialog admin-modal__dialog--wide" role="dialog" aria-modal="true" aria-labelledby="productFormTitle" data-product-form>
+    <button class="admin-modal__close" type="button" data-admin-modal-close aria-label="Cerrar">×</button>
+    <h2 id="productFormTitle" data-product-form-title>Formulario de producto</h2>
+    <p class="admin-modal__status" data-product-status aria-live="polite"></p>
+
+    <input type="hidden" name="id" data-product-id-input />
+    <input type="hidden" name="mode" value="create" data-product-mode />
+    <input type="hidden" name="existingImageUrl" data-product-existing-image-url />
+    <input type="hidden" name="existingVideoUrl" data-product-existing-video-url />
+    <input type="hidden" name="featured" value="false" data-product-featured-value />
+
+    <div class="admin-form-grid">
+      <Input label="Nombre" name="name" required data-product-name />
+      <Input label="Precio (NIO)" name="price" type="number" required min="0" step="0.01" data-product-price />
+    </div>
+
+    <div class="admin-form-grid">
+      <label class="stc-field">
+        <span class="stc-field__label">Categoría</span>
+        <select class="stc-input" name="category" required data-product-category>
+          <option value="" selected disabled>Seleccionar...</option>
+          {categories.map((category) => (
+            <option value={category.name}>{category.name}</option>
+          ))}
+        </select>
+      </label>
+
+      <label class="stc-field">
+        <span class="stc-field__label">Subcategoría (opcional)</span>
+        <select class="stc-input" name="subcategoryId" data-product-subcategory>
+          <option value="" selected>-- Sin subcategoría --</option>
+          {categories.map((category) => (
+            <optgroup label={category.name}>
+              {subcategoriesFor(category).map((subcategory) => (
+                <option value={subcategory.id}>{subcategory.name}</option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+      </label>
+    </div>
+
+    <label class="stc-field admin-upload-field">
+      <span class="stc-field__label">Subir imagen o video</span>
+      <span class="admin-upload-zone admin-upload-zone--compact">
+        <span class="admin-upload-zone__icon">↑</span>
+        <span class="admin-upload-zone__title">Haz clic para subir o arrastra archivos aquí</span>
+        <span class="admin-upload-zone__meta">Imágenes: JPG, PNG, GIF | Videos: MP4, MOV, AVI</span>
+        <input class="admin-upload-zone__input" name="mediaFiles" type="file" accept="image/*,video/*" multiple data-product-media-files />
+      </span>
+      <span class="admin-help" data-product-media-help>Sube una imagen, un video o ambos en un solo paso.</span>
+    </label>
+
+    <label class="stc-field">
+      <span class="stc-field__label">Descripción</span>
+      <textarea class="stc-input admin-textarea" name="description" required data-product-description></textarea>
+    </label>
+
+    <div class="admin-modal__actions">
+      <Button variant="ghost" data-admin-modal-close>Cancelar</Button>
+      <Button type="submit" data-product-submit>Guardar producto</Button>
+    </div>
+  </form>
+</div>
+
+<div class="admin-modal" id="categoryModal" aria-hidden="true" data-admin-overlay>
+  <form class="admin-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="categoryFormTitle" data-category-form>
+    <button class="admin-modal__close" type="button" data-admin-modal-close aria-label="Cerrar">×</button>
+    <h2 id="categoryFormTitle" data-category-form-title>Añadir Categoría</h2>
+    <p class="admin-modal__status" data-category-status aria-live="polite"></p>
+    <input type="hidden" name="id" data-category-id-input />
+    <input type="hidden" name="mode" value="create" data-category-mode />
+    <Input label="Nombre de la Categoría" name="categoryName" required data-category-name />
+    <Input label="Orden" name="order" type="number" min="0" step="1" value="0" data-category-order />
+    <label class="stc-field admin-checkbox-field">
+      <span class="stc-field__label">Estado</span>
+      <label class="admin-checkbox">
+        <input type="checkbox" name="isActive" checked data-category-is-active />
+        <span>Activa</span>
+      </label>
+    </label>
+    <div class="admin-modal__actions">
+      <Button type="submit" data-category-submit>Guardar Categoría</Button>
+      <Button variant="ghost" data-admin-modal-close>Cancelar</Button>
+    </div>
+  </form>
+</div>
+
+<div class="admin-modal" id="subcategoryModal" aria-hidden="true" data-admin-overlay>
+  <form class="admin-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="subcategoryFormTitle" data-subcategory-form>
+    <button class="admin-modal__close" type="button" data-admin-modal-close aria-label="Cerrar">×</button>
+    <h2 id="subcategoryFormTitle" data-subcategory-form-title>Añadir Subcategoría</h2>
+    <p class="admin-modal__status" data-subcategory-status aria-live="polite"></p>
+    <input type="hidden" name="id" data-subcategory-id-input />
+    <input type="hidden" name="mode" value="create" data-subcategory-mode />
+    <Input label="Nombre de la Subcategoría" name="subcategoryName" required data-subcategory-name />
+    <label class="stc-field">
+      <span class="stc-field__label">Categoría</span>
+      <select class="stc-input" name="categoryId" required data-subcategory-category-id>
+        <option value="" selected disabled>Seleccionar...</option>
+        {categories.map((category) => <option value={category.id}>{category.name}</option>)}
+      </select>
+    </label>
+    <Input label="Orden" name="order" type="number" min="0" step="1" value="0" data-subcategory-order />
+    <label class="stc-field admin-checkbox-field">
+      <span class="stc-field__label">Estado</span>
+      <label class="admin-checkbox">
+        <input type="checkbox" name="isActive" checked data-subcategory-is-active />
+        <span>Activa</span>
+      </label>
+    </label>
+    <div class="admin-modal__actions">
+      <Button type="submit" data-subcategory-submit>Guardar Subcategoría</Button>
+      <Button variant="ghost" data-admin-modal-close>Cancelar</Button>
+    </div>
+  </form>
+</div>
+
+<div class="admin-modal" id="passwordModal" aria-hidden="true" data-admin-overlay>
+  <form class="admin-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="passwordFormTitle">
+    <button class="admin-modal__close" type="button" data-admin-modal-close aria-label="Cerrar">×</button>
+    <h2 id="passwordFormTitle">Cambiar Contraseña</h2>
+    <Input label="Ingrese la nueva contraseña" name="newPassword" type="password" />
+    <Input label="Confirme la nueva contraseña" name="confirmPassword" type="password" />
+    <div class="admin-modal__actions">
+      <Button type="submit">Actualizar</Button>
+      <Button variant="ghost" data-admin-modal-close>Cancelar</Button>
+    </div>
+  </form>
+</div>

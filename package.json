@@ -1,15 +1,20 @@
 {
   "name": "stain-the-canvas",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "vitest",
-    "test:watch": "vitest",
-    "test:ci": "vitest run --coverage"
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "astro check && astro build",
+    "test:ci": "astro check && astro build"
   },
-  "devDependencies": {
-    "vitest": "^3.2.4",
-    "@vitest/coverage-v8": "^3.2.4"
+  "dependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@supabase/supabase-js": "^2.49.1",
+    "astro": "^4.16.18",
+    "bootstrap": "^5.3.0",
+    "typescript": "^5.8.0"
   }
 }
