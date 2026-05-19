@@ -110,6 +110,41 @@ function setProductFormMode(mode: FormMode) {
   if (submit) submit.textContent = mode === 'create' ? 'Guardar producto' : 'Actualizar producto';
 }
 
+function syncProductSubcategoryOptions() {
+  const form = getProductForm();
+  if (!form) return;
+
+  const categorySelect = form.querySelector<HTMLSelectElement>('[data-product-category]');
+  const subcategorySelect = form.querySelector<HTMLSelectElement>('[data-product-subcategory]');
+
+  if (!subcategorySelect) return;
+
+  const selectedCategory = categorySelect?.value || '';
+  const currentSubcategory = subcategorySelect.value;
+
+  Array.from(subcategorySelect.options).forEach((option) => {
+    if (option.value === '') {
+      option.hidden = false;
+      option.disabled = false;
+      return;
+    }
+
+    const matchesCategory = Boolean(selectedCategory) && option.dataset.categoryName === selectedCategory;
+    option.hidden = !matchesCategory;
+    option.disabled = !matchesCategory;
+  });
+
+  if (!selectedCategory) {
+    subcategorySelect.value = '';
+    return;
+  }
+
+  const selectedOption = Array.from(subcategorySelect.options).find((option) => option.value === currentSubcategory);
+  if (!selectedOption || selectedOption.hidden) {
+    subcategorySelect.value = '';
+  }
+}
+
 function setCategoryFormMode(mode: FormMode) {
   const form = getCategoryForm();
   if (!form) return;
@@ -157,6 +192,7 @@ function clearProductForm() {
   if (featuredValue) featuredValue.value = 'false';
   if (mediaInput) mediaInput.value = '';
   if (help) help.textContent = 'Sube una imagen, un video o ambos en un solo paso.';
+  syncProductSubcategoryOptions();
 
   setProductFormMode('create');
   setProductStatus('', '');
@@ -183,7 +219,6 @@ function populateProductForm(trigger: HTMLElement) {
   if (nameInput) nameInput.value = trigger.dataset.productName || '';
   if (priceInput) priceInput.value = trigger.dataset.productPrice || '';
   if (categorySelect) categorySelect.value = trigger.dataset.productCategory || '';
-  if (subcategorySelect) subcategorySelect.value = trigger.dataset.productSubcategoryId || '';
   if (descriptionInput) descriptionInput.value = trigger.dataset.productDescription || '';
   if (featuredInput) featuredInput.checked = trigger.dataset.productFeatured === 'true';
   if (existingImageUrl) existingImageUrl.value = trigger.dataset.productImageUrl || '';
@@ -195,6 +230,9 @@ function populateProductForm(trigger: HTMLElement) {
       ? 'El archivo actual se mantiene si no subes uno nuevo.'
       : 'Sube una imagen, un video o ambos en un solo paso.';
   }
+
+  syncProductSubcategoryOptions();
+  if (subcategorySelect) subcategorySelect.value = trigger.dataset.productSubcategoryId || '';
 
   setProductFormMode('edit');
   setProductStatus('', '');
@@ -499,8 +537,7 @@ function bindForms() {
   const subcategoryForm = getSubcategoryForm();
 
   productForm?.querySelector<HTMLSelectElement>('[data-product-category]')?.addEventListener('change', () => {
-    const subcategorySelect = productForm.querySelector<HTMLSelectElement>('[data-product-subcategory]');
-    if (subcategorySelect) subcategorySelect.value = '';
+    syncProductSubcategoryOptions();
   });
 
   productForm?.addEventListener('submit', async (event) => {
