@@ -1,10 +1,10 @@
-# SATIN THE CANVAS
+# STAIN THE CANVAS
 
 Catalogo digital artesanal construido con Astro y Supabase. El proyecto incluye un catalogo publico, panel administrativo, autenticacion, carga de medios y taxonomias funcionales.
 
 ## Resumen
 
-Este repositorio contiene la version actual del sitio para el catalogo de productos de Satin The Canvas. La aplicacion esta pensada para mostrar productos al publico y administrar contenido desde un panel privado con control de acceso por Supabase Auth y RLS.
+Este repositorio contiene la version actual del sitio para el catalogo de productos de Stain The Canvas. La aplicacion esta pensada para mostrar productos al publico y administrar contenido desde un panel privado con control de acceso por Supabase Auth y RLS.
 
 ### Funcionalidades principales
 
