@@ -6,22 +6,36 @@ type SupabaseConfig = {
   whatsappNumber: string;
 };
 
-function readRequiredEnv(name: keyof ImportMetaEnv): string {
-  const value = import.meta.env[name];
+function readEnvValue(names: Array<keyof ImportMetaEnv>): string {
+  for (const name of names) {
+    const value = import.meta.env[name];
 
-  if (!value || !String(value).trim()) {
-    throw new Error(`Falta la variable de entorno ${name}. Revisa el archivo .env.`);
+    if (value && String(value).trim()) {
+      return String(value).trim();
+    }
   }
 
-  return String(value).trim();
+  throw new Error(`Falta la variable de entorno ${names.join(' o ')}. Revisa el archivo .env.`);
+}
+
+function readOptionalEnvValue(names: Array<keyof ImportMetaEnv>, fallback: string): string {
+  for (const name of names) {
+    const value = import.meta.env[name];
+
+    if (value && String(value).trim()) {
+      return String(value).trim();
+    }
+  }
+
+  return fallback;
 }
 
 export function getSupabaseConfig(): SupabaseConfig {
   return {
-    url: readRequiredEnv('PUBLIC_SUPABASE_URL'),
-    anonKey: readRequiredEnv('PUBLIC_SUPABASE_ANON_KEY'),
-    bucket: import.meta.env.PUBLIC_SUPABASE_BUCKET?.trim() || 'productos',
-    productsTable: import.meta.env.PUBLIC_PRODUCTS_TABLE?.trim() || 'productos',
-    whatsappNumber: import.meta.env.PUBLIC_WHATSAPP_NUMBER?.trim() || ''
+    url: readEnvValue(['PUBLIC_SUPABASE_URL', 'VITE_SUPABASE_URL']),
+    anonKey: readEnvValue(['PUBLIC_SUPABASE_ANON_KEY', 'VITE_SUPABASE_ANON_KEY']),
+    bucket: readOptionalEnvValue(['PUBLIC_SUPABASE_BUCKET', 'VITE_SUPABASE_BUCKET'], 'productos'),
+    productsTable: readOptionalEnvValue(['PUBLIC_PRODUCTS_TABLE', 'VITE_PRODUCTS_TABLE'], 'productos'),
+    whatsappNumber: readOptionalEnvValue(['PUBLIC_WHATSAPP_NUMBER', 'VITE_WHATSAPP_NUMBER'], '')
   };
 }

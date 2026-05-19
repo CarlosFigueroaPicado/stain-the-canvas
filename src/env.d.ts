@@ -7,6 +7,11 @@ interface ImportMetaEnv {
 	readonly PUBLIC_SUPABASE_BUCKET?: string;
 	readonly PUBLIC_PRODUCTS_TABLE?: string;
 	readonly PUBLIC_WHATSAPP_NUMBER?: string;
+	readonly VITE_SUPABASE_URL?: string;
+	readonly VITE_SUPABASE_ANON_KEY?: string;
+	readonly VITE_SUPABASE_BUCKET?: string;
+	readonly VITE_PRODUCTS_TABLE?: string;
+	readonly VITE_WHATSAPP_NUMBER?: string;
 }
 
 interface ImportMeta {
