@@ -52,8 +52,8 @@ a {
 .app-shell {
   min-height: 100vh;
   background:
-    radial-gradient(circle at 78% 12%, rgba(201, 117, 77, .08), transparent 32%),
-    linear-gradient(112deg, #F6EFE8 0%, #F3E5D8 100%);
+    radial-gradient(circle at 78% 12%, rgba(200, 107, 74, .10), transparent 32%),
+    linear-gradient(112deg, var(--color-secondary) 0%, #FFFDF9 100%);
 }
 
 .stc-phase {
@@ -76,8 +76,8 @@ a {
   display: grid;
   grid-template-rows: auto 1fr auto;
   background:
-    radial-gradient(circle at 78% 12%, rgba(201, 117, 77, .08), transparent 32%),
-    linear-gradient(112deg, #F6EFE8 0%, #F3E5D8 100%);
+    radial-gradient(circle at 78% 12%, rgba(200, 107, 74, .10), transparent 32%),
+    linear-gradient(112deg, var(--color-secondary) 0%, #FFFDF9 100%);
 }
 
 .catalog-foundation {
