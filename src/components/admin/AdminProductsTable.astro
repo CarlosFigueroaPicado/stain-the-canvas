@@ -43,6 +43,7 @@ function price(value: number) {
               data-product-description={product.description}
               data-product-price={String(product.price)}
               data-product-image-url={product.imageUrl}
+              data-product-gallery-urls={JSON.stringify(product.galleryUrls)}
               data-product-featured={String(product.featured)}
               data-product-video-url={product.videoUrl || ''}
             >

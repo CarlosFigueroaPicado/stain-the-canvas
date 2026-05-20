@@ -73,6 +73,16 @@ function subcategoriesFor(category: Category) {
       <span class="admin-help" data-product-media-help>Sube una imagen, un video o ambos en un solo paso.</span>
     </label>
 
+    <input type="hidden" name="galleryUrls" data-product-gallery-urls />
+
+    <div class="admin-media-preview">
+      <div class="admin-media-preview__header">
+        <span class="stc-field__label">Vista previa de imágenes</span>
+        <span class="admin-media-preview__hint" data-product-media-preview-hint>Las imágenes existentes aparecen aquí cuando editas un producto.</span>
+      </div>
+      <div class="admin-media-preview__grid" data-product-media-preview-list></div>
+    </div>
+
     <label class="stc-field">
       <span class="stc-field__label">Descripción</span>
       <textarea class="stc-input admin-textarea" name="description" required data-product-description></textarea>

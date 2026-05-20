@@ -42,6 +42,66 @@ function getSubcategoryForm() {
   return document.querySelector<HTMLFormElement>('[data-subcategory-form]');
 }
 
+function getProductGalleryInput() {
+  return document.querySelector<HTMLInputElement>('[data-product-gallery-urls]');
+}
+
+function parseGalleryUrls(value: string) {
+  if (!value.trim()) return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed)
+      ? parsed.map((item) => String(item).trim()).filter(Boolean)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function normalizeGalleryUrls(value: string[]) {
+  return Array.from(new Set(value.map((item) => String(item).trim()).filter(Boolean)));
+}
+
+function renderProductMediaPreviews(urls: string[]) {
+  const form = getProductForm();
+  if (!form) return;
+
+  const previewList = form.querySelector<HTMLElement>('[data-product-media-preview-list]');
+  const primaryImageInput = form.querySelector<HTMLInputElement>('[data-product-existing-image-url]');
+  const galleryInput = getProductGalleryInput();
+  const uniqueUrls = normalizeGalleryUrls(urls);
+
+  if (galleryInput) {
+    galleryInput.value = JSON.stringify(uniqueUrls);
+  }
+
+  if (primaryImageInput) {
+    primaryImageInput.value = uniqueUrls[0] || '';
+  }
+
+  const help = form.querySelector<HTMLElement>('[data-product-media-help]');
+  if (help) {
+    help.textContent = uniqueUrls.length > 0
+      ? 'Puedes eliminar imágenes desde la vista previa antes de guardar.'
+      : 'Sube una imagen, un video o ambos en un solo paso.';
+  }
+
+  if (!previewList) return;
+
+  previewList.innerHTML = uniqueUrls.length > 0
+    ? uniqueUrls
+        .map(
+          (url) => `
+            <div class="admin-media-preview__item" data-product-media-item data-media-url="${escapeHtml(url)}">
+              <button class="admin-media-preview__remove" type="button" data-product-media-remove aria-label="Eliminar imagen">×</button>
+              <img class="admin-media-preview__image" src="${escapeHtml(url)}" alt="Vista previa de imagen" loading="lazy">
+            </div>`
+        )
+        .join('')
+    : '<p class="admin-media-preview__empty">No hay imágenes cargadas.</p>';
+}
+
 function fileExtension(file: File) {
   const parts = file.name.split('.');
   return parts.length > 1 ? `.${parts.pop()?.toLowerCase() || ''}` : '';
@@ -181,17 +241,18 @@ function clearProductForm() {
   const subcategorySelect = form.querySelector<HTMLSelectElement>('[data-product-subcategory]');
   const existingImageUrl = form.querySelector<HTMLInputElement>('[data-product-existing-image-url]');
   const existingVideoUrl = form.querySelector<HTMLInputElement>('[data-product-existing-video-url]');
+  const galleryUrls = getProductGalleryInput();
   const featuredValue = form.querySelector<HTMLInputElement>('[data-product-featured-value]');
   const mediaInput = form.querySelector<HTMLInputElement>('[data-product-media-files]');
-  const help = form.querySelector<HTMLElement>('[data-product-media-help]');
 
   if (idInput) idInput.value = '';
   if (subcategorySelect) subcategorySelect.value = '';
   if (existingImageUrl) existingImageUrl.value = '';
   if (existingVideoUrl) existingVideoUrl.value = '';
+  if (galleryUrls) galleryUrls.value = '[]';
   if (featuredValue) featuredValue.value = 'false';
   if (mediaInput) mediaInput.value = '';
-  if (help) help.textContent = 'Sube una imagen, un video o ambos en un solo paso.';
+  renderProductMediaPreviews([]);
   syncProductSubcategoryOptions();
 
   setProductFormMode('create');
@@ -211,9 +272,15 @@ function populateProductForm(trigger: HTMLElement) {
   const featuredInput = form.querySelector<HTMLInputElement>('[data-product-featured]');
   const existingImageUrl = form.querySelector<HTMLInputElement>('[data-product-existing-image-url]');
   const existingVideoUrl = form.querySelector<HTMLInputElement>('[data-product-existing-video-url]');
+  const galleryUrlsInput = getProductGalleryInput();
   const featuredValue = form.querySelector<HTMLInputElement>('[data-product-featured-value]');
   const mediaInput = form.querySelector<HTMLInputElement>('[data-product-media-files]');
-  const help = form.querySelector<HTMLElement>('[data-product-media-help]');
+  const existingGalleryUrls = parseGalleryUrls(trigger.dataset.productGalleryUrls || '');
+  const galleryUrls = existingGalleryUrls.length > 0
+    ? existingGalleryUrls
+    : trigger.dataset.productImageUrl
+      ? [trigger.dataset.productImageUrl]
+      : [];
 
   if (idInput) idInput.value = trigger.dataset.productId || '';
   if (nameInput) nameInput.value = trigger.dataset.productName || '';
@@ -221,15 +288,12 @@ function populateProductForm(trigger: HTMLElement) {
   if (categorySelect) categorySelect.value = trigger.dataset.productCategory || '';
   if (descriptionInput) descriptionInput.value = trigger.dataset.productDescription || '';
   if (featuredInput) featuredInput.checked = trigger.dataset.productFeatured === 'true';
-  if (existingImageUrl) existingImageUrl.value = trigger.dataset.productImageUrl || '';
+  if (existingImageUrl) existingImageUrl.value = galleryUrls[0] || trigger.dataset.productImageUrl || '';
   if (existingVideoUrl) existingVideoUrl.value = trigger.dataset.productVideoUrl || '';
+  if (galleryUrlsInput) galleryUrlsInput.value = JSON.stringify(galleryUrls);
   if (featuredValue) featuredValue.value = trigger.dataset.productFeatured || 'false';
   if (mediaInput) mediaInput.value = '';
-  if (help) {
-    help.textContent = trigger.dataset.productImageUrl || trigger.dataset.productVideoUrl
-      ? 'El archivo actual se mantiene si no subes uno nuevo.'
-      : 'Sube una imagen, un video o ambos en un solo paso.';
-  }
+  renderProductMediaPreviews(galleryUrls);
 
   syncProductSubcategoryOptions();
   if (subcategorySelect) subcategorySelect.value = trigger.dataset.productSubcategoryId || '';
@@ -476,6 +540,7 @@ function readProductForm(): {
   mediaFiles: File[];
   existingImageUrl: string;
   existingVideoUrl: string;
+  galleryUrls: string[];
 } {
   const form = getProductForm();
   if (!form) {
@@ -492,6 +557,7 @@ function readProductForm(): {
   const mediaInput = form.querySelector<HTMLInputElement>('[data-product-media-files]');
   const existingImageUrlInput = form.querySelector<HTMLInputElement>('[data-product-existing-image-url]');
   const existingVideoUrlInput = form.querySelector<HTMLInputElement>('[data-product-existing-video-url]');
+  const galleryUrlsInput = getProductGalleryInput();
 
   const name = nameInput?.value.trim() || '';
   const price = Number(priceInput?.value || 0);
@@ -502,13 +568,14 @@ function readProductForm(): {
   const mediaFiles = Array.from(mediaInput?.files || []);
   const existingImageUrl = existingImageUrlInput?.value.trim() || '';
   const existingVideoUrl = existingVideoUrlInput?.value.trim() || '';
+  const galleryUrls = parseGalleryUrls(galleryUrlsInput?.value || '');
 
   if (!name || !category || !description || Number.isNaN(price)) {
     throw new Error('Completa nombre, categoría, precio y descripción antes de guardar.');
   }
 
   const hasImage = mediaFiles.some((file) => file.type.startsWith('image/'));
-  if (!hasImage && !existingImageUrl) {
+  if (!hasImage && galleryUrls.length === 0 && !existingImageUrl) {
     throw new Error('Selecciona una imagen para el producto.');
   }
 
@@ -521,13 +588,14 @@ function readProductForm(): {
       description,
       price,
       imageUrl: existingImageUrl,
-      galleryUrls: existingImageUrl ? [existingImageUrl] : [],
+      galleryUrls,
       featured,
       videoUrl: existingVideoUrl || null
     },
     mediaFiles,
     existingImageUrl,
-    existingVideoUrl
+    existingVideoUrl,
+    galleryUrls
   };
 }
 
@@ -540,20 +608,37 @@ function bindForms() {
     syncProductSubcategoryOptions();
   });
 
+  productForm?.querySelector<HTMLElement>('[data-product-media-preview-list]')?.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement | null;
+    const removeButton = target?.closest('[data-product-media-remove]') as HTMLButtonElement | null;
+    if (!removeButton) return;
+
+    const item = removeButton.closest<HTMLElement>('[data-product-media-item]');
+    const mediaUrl = item?.dataset.mediaUrl || '';
+    if (!mediaUrl) return;
+
+    const galleryInput = getProductGalleryInput();
+    const currentUrls = parseGalleryUrls(galleryInput?.value || '');
+    renderProductMediaPreviews(currentUrls.filter((url) => url !== mediaUrl));
+  });
+
   productForm?.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     try {
-      const { id, input, mediaFiles, existingImageUrl, existingVideoUrl } = readProductForm();
+      const { id, input, mediaFiles, existingImageUrl, existingVideoUrl, galleryUrls } = readProductForm();
       const mode = productForm.querySelector<HTMLInputElement>('[data-product-mode]')?.value || 'create';
       const imageFiles = mediaFiles.filter((file) => file.type.startsWith('image/'));
       const videoFile = mediaFiles.find((file) => file.type.startsWith('video/')) || null;
-      const imageUrls = imageFiles.length > 0
+      const uploadedImageUrls = imageFiles.length > 0
         ? await Promise.all(imageFiles.map((file) => uploadProductFile(file, 'image')))
-        : existingImageUrl
-          ? [existingImageUrl]
-          : [];
-      const imageUrl = imageUrls[0] || '';
+        : [];
+      const imageUrls = normalizeGalleryUrls([
+        ...galleryUrls,
+        ...uploadedImageUrls,
+        ...(!galleryUrls.length && existingImageUrl ? [existingImageUrl] : [])
+      ]);
+      const imageUrl = imageUrls[0] || existingImageUrl || '';
       const videoUrl = videoFile ? await uploadProductFile(videoFile, 'video') : existingVideoUrl || null;
 
       const payload: ProductInput = {
@@ -715,6 +800,7 @@ function renderProductRows(products: Awaited<ReturnType<typeof getProducts>>) {
               data-product-description="${escapeHtml(product.description)}"
               data-product-price="${String(product.price)}"
               data-product-image-url="${escapeHtml(product.imageUrl)}"
+              data-product-gallery-urls='${escapeHtml(JSON.stringify(product.galleryUrls))}'
               data-product-featured="${String(product.featured)}"
               data-product-video-url="${escapeHtml(product.videoUrl || '')}"
             >
