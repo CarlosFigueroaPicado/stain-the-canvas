@@ -546,16 +546,21 @@ function bindForms() {
     try {
       const { id, input, mediaFiles, existingImageUrl, existingVideoUrl } = readProductForm();
       const mode = productForm.querySelector<HTMLInputElement>('[data-product-mode]')?.value || 'create';
-      const imageFile = mediaFiles.find((file) => file.type.startsWith('image/')) || null;
+      const imageFiles = mediaFiles.filter((file) => file.type.startsWith('image/'));
       const videoFile = mediaFiles.find((file) => file.type.startsWith('video/')) || null;
-      const imageUrl = imageFile ? await uploadProductFile(imageFile, 'image') : existingImageUrl;
+      const imageUrls = imageFiles.length > 0
+        ? await Promise.all(imageFiles.map((file) => uploadProductFile(file, 'image')))
+        : existingImageUrl
+          ? [existingImageUrl]
+          : [];
+      const imageUrl = imageUrls[0] || '';
       const videoUrl = videoFile ? await uploadProductFile(videoFile, 'video') : existingVideoUrl || null;
 
       const payload: ProductInput = {
         ...input,
         imageUrl,
         videoUrl,
-        galleryUrls: imageUrl ? [imageUrl] : []
+        galleryUrls: imageUrls
       };
 
       setProductFormBusy(true);
