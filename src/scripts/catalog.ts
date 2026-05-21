@@ -30,24 +30,26 @@ function setModalProduct(product: Product, imageIndex: number) {
   const gallery = product.galleryUrls.length > 0 ? product.galleryUrls : [product.imageUrl];
   const safeIndex = Math.max(0, Math.min(imageIndex, gallery.length - 1));
   const image = document.getElementById('productModalImage') as HTMLImageElement | null;
-  const consult = document.querySelector('[data-product-modal-consult]') as HTMLAnchorElement | null;
   const videoWrap = document.querySelector<HTMLElement>('[data-product-modal-video-wrap]');
-  const video = document.getElementById('productModalVideo') as HTMLVideoElement | null;
+  const video = document.querySelector<HTMLVideoElement>('[data-product-modal-video]');
+  const consult = document.querySelector('[data-product-modal-consult]') as HTMLAnchorElement | null;
+  const posterUrl = gallery[safeIndex] || product.imageUrl;
 
   if (image) {
-    image.src = gallery[safeIndex] || product.imageUrl;
+    image.src = posterUrl;
     image.alt = product.name;
     image.dataset.index = String(safeIndex);
   }
 
-  if (video && videoWrap) {
+  if (videoWrap && video) {
     if (product.videoUrl) {
       video.src = product.videoUrl;
-      video.poster = gallery[0] || product.imageUrl;
+      video.poster = posterUrl;
       videoWrap.hidden = false;
     } else {
       video.pause();
       video.removeAttribute('src');
+      video.removeAttribute('poster');
       video.load();
       videoWrap.hidden = true;
     }
@@ -83,6 +85,11 @@ function openModal(product: Product) {
 function closeModal() {
   const modal = document.querySelector('[data-product-modal]');
   if (!modal) return;
+
+  const video = document.querySelector<HTMLVideoElement>('[data-product-modal-video]');
+  if (video) {
+    video.pause();
+  }
 
   modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('has-modal');

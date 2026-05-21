@@ -15,6 +15,8 @@ import { supabase, supabaseConfig } from '../lib/supabase';
 
 type FormMode = 'create' | 'edit';
 
+let currentVideoPreviewObjectUrl: string | null = null;
+
 function openModal(id: string) {
   const modal = document.getElementById(id);
   if (!modal) return;
@@ -69,6 +71,7 @@ function renderProductMediaPreviews(urls: string[]) {
 
   const previewList = form.querySelector<HTMLElement>('[data-product-media-preview-list]');
   const primaryImageInput = form.querySelector<HTMLInputElement>('[data-product-existing-image-url]');
+  const existingVideoUrl = form.querySelector<HTMLInputElement>('[data-product-existing-video-url]')?.value.trim() || '';
   const galleryInput = getProductGalleryInput();
   const uniqueUrls = normalizeGalleryUrls(urls);
 
@@ -78,6 +81,10 @@ function renderProductMediaPreviews(urls: string[]) {
 
   if (primaryImageInput) {
     primaryImageInput.value = uniqueUrls[0] || '';
+  }
+
+  if (existingVideoUrl || currentVideoPreviewObjectUrl) {
+    renderProductVideoPreview(currentVideoPreviewObjectUrl || existingVideoUrl, uniqueUrls[0] || '', Boolean(currentVideoPreviewObjectUrl));
   }
 
   const help = form.querySelector<HTMLElement>('[data-product-media-help]');
@@ -100,6 +107,55 @@ function renderProductMediaPreviews(urls: string[]) {
         )
         .join('')
     : '<p class="admin-media-preview__empty">No hay imágenes cargadas.</p>';
+}
+
+function renderProductVideoPreview(url: string, posterUrl = '', isObjectUrl = false) {
+  const form = getProductForm();
+  if (!form) return;
+
+  const wrap = form.querySelector<HTMLElement>('[data-product-video-preview-wrap]');
+  const player = form.querySelector<HTMLVideoElement>('[data-product-video-preview]');
+
+  if (!wrap || !player) return;
+
+  if (currentVideoPreviewObjectUrl && !isObjectUrl) {
+    URL.revokeObjectURL(currentVideoPreviewObjectUrl);
+    currentVideoPreviewObjectUrl = null;
+  }
+
+  if (!url) {
+    player.pause();
+    player.removeAttribute('src');
+    player.removeAttribute('poster');
+    player.load();
+    wrap.hidden = true;
+    return;
+  }
+
+  player.src = url;
+  if (posterUrl) {
+    player.poster = posterUrl;
+  } else {
+    player.removeAttribute('poster');
+  }
+
+  wrap.hidden = false;
+}
+
+function setProductVideoPreviewFromFile(file: File | null, posterUrl = '') {
+  if (!file) {
+    const form = getProductForm();
+    const existingVideoUrl = form?.querySelector<HTMLInputElement>('[data-product-existing-video-url]')?.value.trim() || '';
+    renderProductVideoPreview(existingVideoUrl, posterUrl);
+    return;
+  }
+
+  if (currentVideoPreviewObjectUrl) {
+    URL.revokeObjectURL(currentVideoPreviewObjectUrl);
+  }
+
+  currentVideoPreviewObjectUrl = URL.createObjectURL(file);
+  renderProductVideoPreview(currentVideoPreviewObjectUrl, posterUrl, true);
 }
 
 function fileExtension(file: File) {
@@ -253,6 +309,7 @@ function clearProductForm() {
   if (featuredValue) featuredValue.value = 'false';
   if (mediaInput) mediaInput.value = '';
   renderProductMediaPreviews([]);
+  renderProductVideoPreview('');
   syncProductSubcategoryOptions();
 
   setProductFormMode('create');
@@ -294,6 +351,7 @@ function populateProductForm(trigger: HTMLElement) {
   if (featuredValue) featuredValue.value = trigger.dataset.productFeatured || 'false';
   if (mediaInput) mediaInput.value = '';
   renderProductMediaPreviews(galleryUrls);
+  renderProductVideoPreview(trigger.dataset.productVideoUrl || '', galleryUrls[0] || trigger.dataset.productImageUrl || '');
 
   syncProductSubcategoryOptions();
   if (subcategorySelect) subcategorySelect.value = trigger.dataset.productSubcategoryId || '';
@@ -606,6 +664,16 @@ function bindForms() {
 
   productForm?.querySelector<HTMLSelectElement>('[data-product-category]')?.addEventListener('change', () => {
     syncProductSubcategoryOptions();
+  });
+
+  productForm?.querySelector<HTMLInputElement>('[data-product-media-files]')?.addEventListener('change', () => {
+    const mediaInput = getProductForm()?.querySelector<HTMLInputElement>('[data-product-media-files]');
+    const files = Array.from(mediaInput?.files || []);
+    const videoFile = files.find((file) => file.type.startsWith('video/')) || null;
+    const existingImageUrl = getProductForm()?.querySelector<HTMLInputElement>('[data-product-existing-image-url]')?.value.trim() || '';
+    const galleryInput = getProductGalleryInput();
+    const galleryUrls = parseGalleryUrls(galleryInput?.value || '');
+    setProductVideoPreviewFromFile(videoFile, galleryUrls[0] || existingImageUrl);
   });
 
   productForm?.querySelector<HTMLElement>('[data-product-media-preview-list]')?.addEventListener('click', (event) => {

@@ -83,6 +83,20 @@ function subcategoriesFor(category: Category) {
       <div class="admin-media-preview__grid" data-product-media-preview-list></div>
     </div>
 
+    <div class="admin-video-preview" data-product-video-preview-wrap hidden>
+      <div class="admin-media-preview__header">
+        <span class="stc-field__label">Vista previa de video</span>
+        <span class="admin-media-preview__hint">Puedes reproducir el video aquí antes de guardar.</span>
+      </div>
+      <video
+        class="admin-video-preview__player"
+        data-product-video-preview
+        controls
+        playsinline
+        preload="metadata"
+      ></video>
+    </div>
+
     <label class="stc-field">
       <span class="stc-field__label">Descripción</span>
       <textarea class="stc-input admin-textarea" name="description" required data-product-description></textarea>
