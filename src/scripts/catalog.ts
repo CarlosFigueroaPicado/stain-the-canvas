@@ -10,8 +10,54 @@ type Product = {
   videoUrl?: string | null;
 };
 
+type ProductMediaItem =
+  | { type: 'image'; url: string }
+  | { type: 'video'; url: string };
+
+let currentModalProduct: Product | null = null;
+let currentModalMediaIndex = 0;
+let touchStartX: number | null = null;
+
 function formatPrice(value: number) {
   return `C$${Number(value || 0).toFixed(2)}`;
+}
+
+function getProductMedia(product: Product): ProductMediaItem[] {
+  const images = product.galleryUrls.length > 0 ? product.galleryUrls : [product.imageUrl].filter(Boolean);
+  const media: ProductMediaItem[] = images.map((url) => ({ type: 'image', url }));
+
+  if (product.videoUrl) {
+    media.push({ type: 'video', url: product.videoUrl });
+  }
+
+  return media;
+}
+
+function getCurrentMediaState(product: Product, mediaIndex: number) {
+  const media = getProductMedia(product);
+  const safeIndex = Math.max(0, Math.min(mediaIndex, media.length - 1));
+  return { media, safeIndex, current: media[safeIndex] || media[0] || null };
+}
+
+function renderModalStage(product: Product, current: ProductMediaItem | null) {
+  const stage = document.querySelector<HTMLElement>('[data-product-modal-stage]');
+  if (!stage) return;
+
+  if (!current) {
+    stage.innerHTML = '';
+    return;
+  }
+
+  if (current.type === 'video') {
+    stage.innerHTML = `
+      <video class="product-modal__stage-media" controls playsinline preload="metadata" poster="${product.galleryUrls[0] || product.imageUrl}">
+        <source src="${current.url}">
+      </video>`;
+    return;
+  }
+
+  stage.innerHTML = `
+    <img class="product-modal__stage-media" src="${current.url}" alt="${product.name}">`;
 }
 
 function getCatalogProducts(): Product[] {
@@ -27,33 +73,10 @@ function getCatalogProducts(): Product[] {
 }
 
 function setModalProduct(product: Product, imageIndex: number) {
-  const gallery = product.galleryUrls.length > 0 ? product.galleryUrls : [product.imageUrl];
-  const safeIndex = Math.max(0, Math.min(imageIndex, gallery.length - 1));
-  const image = document.getElementById('productModalImage') as HTMLImageElement | null;
-  const videoWrap = document.querySelector<HTMLElement>('[data-product-modal-video-wrap]');
-  const video = document.querySelector<HTMLVideoElement>('[data-product-modal-video]');
+  const { media, safeIndex, current } = getCurrentMediaState(product, imageIndex);
   const consult = document.querySelector('[data-product-modal-consult]') as HTMLAnchorElement | null;
-  const posterUrl = gallery[safeIndex] || product.imageUrl;
 
-  if (image) {
-    image.src = posterUrl;
-    image.alt = product.name;
-    image.dataset.index = String(safeIndex);
-  }
-
-  if (videoWrap && video) {
-    if (product.videoUrl) {
-      video.src = product.videoUrl;
-      video.poster = posterUrl;
-      videoWrap.hidden = false;
-    } else {
-      video.pause();
-      video.removeAttribute('src');
-      video.removeAttribute('poster');
-      video.load();
-      videoWrap.hidden = true;
-    }
-  }
+  renderModalStage(product, current);
 
   document.getElementById('productModalTitle')!.textContent = product.name;
   document.getElementById('productModalCategory')!.textContent = product.category;
@@ -67,10 +90,23 @@ function setModalProduct(product: Product, imageIndex: number) {
 
   const dots = document.querySelector('[data-product-modal-dots]');
   if (dots) {
-    dots.innerHTML = gallery
+    dots.innerHTML = media
       .map((_, index) => `<span class="product-modal__dot${index === safeIndex ? ' is-active' : ''}"></span>`)
       .join('');
   }
+
+  currentModalProduct = product;
+  currentModalMediaIndex = safeIndex;
+}
+
+function stepModalProduct(delta: number) {
+  if (!currentModalProduct) return;
+
+  const media = getProductMedia(currentModalProduct);
+  if (media.length === 0) return;
+
+  const nextIndex = (currentModalMediaIndex + delta + media.length) % media.length;
+  setModalProduct(currentModalProduct, nextIndex);
 }
 
 function openModal(product: Product) {
@@ -86,10 +122,11 @@ function closeModal() {
   const modal = document.querySelector('[data-product-modal]');
   if (!modal) return;
 
-  const video = document.querySelector<HTMLVideoElement>('[data-product-modal-video]');
-  if (video) {
-    video.pause();
-  }
+  const stage = document.querySelector<HTMLElement>('[data-product-modal-stage]');
+  if (stage) stage.innerHTML = '';
+
+  currentModalProduct = null;
+  currentModalMediaIndex = 0;
 
   modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('has-modal');
@@ -144,28 +181,39 @@ function bindModal(products: Product[]) {
   });
 
   document.querySelector('[data-product-modal-prev]')?.addEventListener('click', () => {
-    const products = getCatalogProducts();
-    const title = document.getElementById('productModalTitle')?.textContent || '';
-    const product = products.find((item) => item.name === title);
-    const image = document.getElementById('productModalImage') as HTMLImageElement | null;
-    if (!product || !image) return;
-
-    const gallery = product.galleryUrls.length > 0 ? product.galleryUrls : [product.imageUrl];
-    const current = Number(image.dataset.index || 0);
-    setModalProduct(product, (current - 1 + gallery.length) % gallery.length);
+    stepModalProduct(-1);
   });
 
   document.querySelector('[data-product-modal-next]')?.addEventListener('click', () => {
-    const products = getCatalogProducts();
-    const title = document.getElementById('productModalTitle')?.textContent || '';
-    const product = products.find((item) => item.name === title);
-    const image = document.getElementById('productModalImage') as HTMLImageElement | null;
-    if (!product || !image) return;
-
-    const gallery = product.galleryUrls.length > 0 ? product.galleryUrls : [product.imageUrl];
-    const current = Number(image.dataset.index || 0);
-    setModalProduct(product, (current + 1) % gallery.length);
+    stepModalProduct(1);
   });
+
+  const stage = document.querySelector<HTMLElement>('[data-product-modal-stage]');
+  if (stage && !stage.dataset.swipeBound) {
+    stage.dataset.swipeBound = 'true';
+
+    stage.addEventListener('touchstart', (event) => {
+      touchStartX = event.touches[0]?.clientX ?? null;
+    }, { passive: true });
+
+    stage.addEventListener('touchend', (event) => {
+      if (touchStartX === null) return;
+
+      const touchEndX = event.changedTouches[0]?.clientX ?? null;
+      if (touchEndX === null) return;
+
+      const deltaX = touchEndX - touchStartX;
+      touchStartX = null;
+
+      if (Math.abs(deltaX) < 45) return;
+
+      if (deltaX < 0) {
+        stepModalProduct(1);
+      } else {
+        stepModalProduct(-1);
+      }
+    });
+  }
 }
 
 export function initCatalog() {

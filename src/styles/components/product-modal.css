@@ -51,12 +51,20 @@ body.has-modal {
   gap: 16px;
 }
 
-.product-modal__media img {
+.product-modal__stage {
+  position: relative;
+}
+
+.product-modal__stage-media {
   width: 100%;
   aspect-ratio: 1.04;
   border-radius: 9px;
   object-fit: contain;
   background: var(--color-secondary);
+}
+
+.product-modal__stage video {
+  display: block;
 }
 
 .product-modal__nav {
@@ -86,23 +94,6 @@ body.has-modal {
   gap: 14px;
   justify-content: center;
   margin-top: 26px;
-}
-
-.product-modal__video-wrap {
-  display: grid;
-  gap: 10px;
-}
-
-.product-modal__label--video {
-  margin-top: 0;
-}
-
-.product-modal__video {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 9px;
-  border: 1px solid var(--color-border);
-  background: var(--color-secondary);
 }
 
 .product-modal__dot {

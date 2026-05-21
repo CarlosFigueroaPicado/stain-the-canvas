@@ -11,9 +11,9 @@
     "test:ci": "astro check && astro build"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
+    "@astrojs/check": "0.9.9",
     "@supabase/supabase-js": "^2.49.1",
-    "astro": "^4.16.18",
+    "astro": "^6.3.6",
     "bootstrap": "^5.3.0",
     "typescript": "^5.8.0"
   }

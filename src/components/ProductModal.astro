@@ -5,14 +5,10 @@
   <section class="product-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
     <button class="product-modal__close" type="button" data-product-modal-close aria-label="Cerrar">×</button>
     <div class="product-modal__media">
+      <div class="product-modal__stage" data-product-modal-stage></div>
       <button class="product-modal__nav product-modal__nav--prev" type="button" data-product-modal-prev aria-label="Imagen anterior">‹</button>
-      <img id="productModalImage" src="" alt="" />
       <button class="product-modal__nav product-modal__nav--next" type="button" data-product-modal-next aria-label="Imagen siguiente">›</button>
       <div class="product-modal__dots" data-product-modal-dots></div>
-      <div class="product-modal__video-wrap" data-product-modal-video-wrap hidden>
-        <p class="product-modal__label product-modal__label--video">Video del producto</p>
-        <video class="product-modal__video" data-product-modal-video controls playsinline preload="metadata"></video>
-      </div>
     </div>
     <div class="product-modal__content">
       <h2 id="productModalTitle"></h2>

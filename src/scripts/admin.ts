@@ -65,6 +65,22 @@ function normalizeGalleryUrls(value: string[]) {
   return Array.from(new Set(value.map((item) => String(item).trim()).filter(Boolean)));
 }
 
+function renderProductVideoPreview(url: string, posterUrl = '') {
+  if (currentVideoPreviewObjectUrl) {
+    URL.revokeObjectURL(currentVideoPreviewObjectUrl);
+    currentVideoPreviewObjectUrl = null;
+  }
+
+  if (!url) return '';
+
+  const posterAttribute = posterUrl ? ` poster="${escapeHtml(posterUrl)}"` : '';
+  return `
+    <div class="admin-media-preview__item admin-media-preview__item--video" data-product-video-item>
+      <span class="admin-media-preview__video-badge">Video</span>
+      <video class="admin-media-preview__video" src="${escapeHtml(url)}"${posterAttribute} autoplay muted loop playsinline preload="metadata"></video>
+    </div>`;
+}
+
 function renderProductMediaPreviews(urls: string[]) {
   const form = getProductForm();
   if (!form) return;
@@ -83,18 +99,17 @@ function renderProductMediaPreviews(urls: string[]) {
     primaryImageInput.value = uniqueUrls[0] || '';
   }
 
-  if (existingVideoUrl || currentVideoPreviewObjectUrl) {
-    renderProductVideoPreview(currentVideoPreviewObjectUrl || existingVideoUrl, uniqueUrls[0] || '', Boolean(currentVideoPreviewObjectUrl));
-  }
-
   const help = form.querySelector<HTMLElement>('[data-product-media-help]');
   if (help) {
     help.textContent = uniqueUrls.length > 0
-      ? 'Puedes eliminar imágenes desde la vista previa antes de guardar.'
+      ? 'Puedes eliminar imágenes desde la vista previa antes de guardar. El video cargado también se muestra aquí.'
       : 'Sube una imagen, un video o ambos en un solo paso.';
   }
 
   if (!previewList) return;
+
+  const posterUrl = uniqueUrls[0] || primaryImageInput?.value.trim() || '';
+  const videoUrl = currentVideoPreviewObjectUrl || existingVideoUrl;
 
   previewList.innerHTML = uniqueUrls.length > 0
     ? uniqueUrls
@@ -105,57 +120,8 @@ function renderProductMediaPreviews(urls: string[]) {
               <img class="admin-media-preview__image" src="${escapeHtml(url)}" alt="Vista previa de imagen" loading="lazy">
             </div>`
         )
-        .join('')
-    : '<p class="admin-media-preview__empty">No hay imágenes cargadas.</p>';
-}
-
-function renderProductVideoPreview(url: string, posterUrl = '', isObjectUrl = false) {
-  const form = getProductForm();
-  if (!form) return;
-
-  const wrap = form.querySelector<HTMLElement>('[data-product-video-preview-wrap]');
-  const player = form.querySelector<HTMLVideoElement>('[data-product-video-preview]');
-
-  if (!wrap || !player) return;
-
-  if (currentVideoPreviewObjectUrl && !isObjectUrl) {
-    URL.revokeObjectURL(currentVideoPreviewObjectUrl);
-    currentVideoPreviewObjectUrl = null;
-  }
-
-  if (!url) {
-    player.pause();
-    player.removeAttribute('src');
-    player.removeAttribute('poster');
-    player.load();
-    wrap.hidden = true;
-    return;
-  }
-
-  player.src = url;
-  if (posterUrl) {
-    player.poster = posterUrl;
-  } else {
-    player.removeAttribute('poster');
-  }
-
-  wrap.hidden = false;
-}
-
-function setProductVideoPreviewFromFile(file: File | null, posterUrl = '') {
-  if (!file) {
-    const form = getProductForm();
-    const existingVideoUrl = form?.querySelector<HTMLInputElement>('[data-product-existing-video-url]')?.value.trim() || '';
-    renderProductVideoPreview(existingVideoUrl, posterUrl);
-    return;
-  }
-
-  if (currentVideoPreviewObjectUrl) {
-    URL.revokeObjectURL(currentVideoPreviewObjectUrl);
-  }
-
-  currentVideoPreviewObjectUrl = URL.createObjectURL(file);
-  renderProductVideoPreview(currentVideoPreviewObjectUrl, posterUrl, true);
+        .join('') + (videoUrl ? renderProductVideoPreview(videoUrl, posterUrl) : '')
+    : (videoUrl ? renderProductVideoPreview(videoUrl, posterUrl) : '<p class="admin-media-preview__empty">No hay imágenes cargadas.</p>');
 }
 
 function fileExtension(file: File) {
@@ -308,8 +274,11 @@ function clearProductForm() {
   if (galleryUrls) galleryUrls.value = '[]';
   if (featuredValue) featuredValue.value = 'false';
   if (mediaInput) mediaInput.value = '';
+  if (currentVideoPreviewObjectUrl) {
+    URL.revokeObjectURL(currentVideoPreviewObjectUrl);
+    currentVideoPreviewObjectUrl = null;
+  }
   renderProductMediaPreviews([]);
-  renderProductVideoPreview('');
   syncProductSubcategoryOptions();
 
   setProductFormMode('create');
@@ -319,6 +288,11 @@ function clearProductForm() {
 function populateProductForm(trigger: HTMLElement) {
   const form = getProductForm();
   if (!form) return;
+
+  if (currentVideoPreviewObjectUrl) {
+    URL.revokeObjectURL(currentVideoPreviewObjectUrl);
+    currentVideoPreviewObjectUrl = null;
+  }
 
   const idInput = form.querySelector<HTMLInputElement>('[data-product-id-input]');
   const nameInput = form.querySelector<HTMLInputElement>('[data-product-name]');
@@ -351,7 +325,6 @@ function populateProductForm(trigger: HTMLElement) {
   if (featuredValue) featuredValue.value = trigger.dataset.productFeatured || 'false';
   if (mediaInput) mediaInput.value = '';
   renderProductMediaPreviews(galleryUrls);
-  renderProductVideoPreview(trigger.dataset.productVideoUrl || '', galleryUrls[0] || trigger.dataset.productImageUrl || '');
 
   syncProductSubcategoryOptions();
   if (subcategorySelect) subcategorySelect.value = trigger.dataset.productSubcategoryId || '';
@@ -673,7 +646,17 @@ function bindForms() {
     const existingImageUrl = getProductForm()?.querySelector<HTMLInputElement>('[data-product-existing-image-url]')?.value.trim() || '';
     const galleryInput = getProductGalleryInput();
     const galleryUrls = parseGalleryUrls(galleryInput?.value || '');
-    setProductVideoPreviewFromFile(videoFile, galleryUrls[0] || existingImageUrl);
+
+    if (currentVideoPreviewObjectUrl) {
+      URL.revokeObjectURL(currentVideoPreviewObjectUrl);
+      currentVideoPreviewObjectUrl = null;
+    }
+
+    if (videoFile) {
+      currentVideoPreviewObjectUrl = URL.createObjectURL(videoFile);
+    }
+
+    renderProductMediaPreviews(galleryUrls.length > 0 ? galleryUrls : existingImageUrl ? [existingImageUrl] : []);
   });
 
   productForm?.querySelector<HTMLElement>('[data-product-media-preview-list]')?.addEventListener('click', (event) => {
