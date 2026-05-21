@@ -54,7 +54,22 @@ body.has-modal {
   width: 100%;
   aspect-ratio: 1.04;
   border-radius: 9px;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--color-secondary);
+}
+
+.product-modal__video-wrap {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.product-modal__video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 9px;
+  background: var(--color-secondary);
 }
 
 .product-modal__nav {

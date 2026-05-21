@@ -228,7 +228,8 @@
   width: 54px;
   height: 54px;
   border-radius: 10px;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--color-secondary);
 }
 
 .admin-product-preview {
@@ -248,7 +249,8 @@
   width: 22px;
   height: 22px;
   border-radius: 7px;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--color-secondary);
   border: 1px solid rgba(201, 107, 74, .18);
   box-shadow: 0 4px 10px rgba(44, 31, 24, .08);
 }

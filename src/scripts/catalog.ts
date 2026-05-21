@@ -7,6 +7,7 @@ type Product = {
   price: number;
   imageUrl: string;
   galleryUrls: string[];
+  videoUrl?: string | null;
 };
 
 function formatPrice(value: number) {
@@ -30,11 +31,26 @@ function setModalProduct(product: Product, imageIndex: number) {
   const safeIndex = Math.max(0, Math.min(imageIndex, gallery.length - 1));
   const image = document.getElementById('productModalImage') as HTMLImageElement | null;
   const consult = document.querySelector('[data-product-modal-consult]') as HTMLAnchorElement | null;
+  const videoWrap = document.querySelector<HTMLElement>('[data-product-modal-video-wrap]');
+  const video = document.getElementById('productModalVideo') as HTMLVideoElement | null;
 
   if (image) {
     image.src = gallery[safeIndex] || product.imageUrl;
     image.alt = product.name;
     image.dataset.index = String(safeIndex);
+  }
+
+  if (video && videoWrap) {
+    if (product.videoUrl) {
+      video.src = product.videoUrl;
+      video.poster = gallery[0] || product.imageUrl;
+      videoWrap.hidden = false;
+    } else {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      videoWrap.hidden = true;
+    }
   }
 
   document.getElementById('productModalTitle')!.textContent = product.name;
