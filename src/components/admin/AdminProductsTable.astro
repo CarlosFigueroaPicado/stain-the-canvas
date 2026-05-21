@@ -11,6 +11,11 @@ const { products } = Astro.props;
 function price(value: number) {
   return `C$${Number(value || 0).toFixed(2)}`;
 }
+
+function galleryPreview(product: Product) {
+  const gallery = product.galleryUrls.length > 0 ? product.galleryUrls : product.imageUrl ? [product.imageUrl] : [];
+  return gallery.slice(0, 4);
+}
 ---
 
 <section class="admin-section" aria-labelledby="products-title">
@@ -21,7 +26,24 @@ function price(value: number) {
         data-admin-product-row
         data-search={`${product.name} ${product.category} ${product.subcategory} ${product.description}`}
       >
-        <td><img class="admin-thumb" src={product.imageUrl} alt={product.name} loading="lazy" /></td>
+        <td>
+          <div class="admin-product-preview">
+            <img class="admin-thumb" src={product.imageUrl} alt={product.name} loading="lazy" />
+            <div class="admin-product-preview__gallery" aria-label={`Vista previa de imágenes de ${product.name}`}>
+              {galleryPreview(product).map((imageUrl, previewIndex) => (
+                <img
+                  class="admin-product-preview__thumb"
+                  src={imageUrl}
+                  alt={`${product.name} - imagen ${previewIndex + 1}`}
+                  loading="lazy"
+                />
+              ))}
+              {product.galleryUrls.length > 4 && (
+                <span class="admin-product-preview__count">+{product.galleryUrls.length - 4}</span>
+              )}
+            </div>
+          </div>
+        </td>
         <td>
           <strong>{product.name}</strong>
           <span>{product.description.split('.')[0]}</span>

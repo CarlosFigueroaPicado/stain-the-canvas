@@ -231,6 +231,38 @@
   object-fit: cover;
 }
 
+.admin-product-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-product-preview__gallery {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-product-preview__thumb,
+.admin-product-preview__count {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  object-fit: cover;
+  border: 1px solid rgba(201, 107, 74, .18);
+  box-shadow: 0 4px 10px rgba(44, 31, 24, .08);
+}
+
+.admin-product-preview__count {
+  display: grid;
+  place-items: center;
+  background: var(--color-secondary);
+  color: var(--color-primary);
+  font-size: .68rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .admin-actions {
   display: flex;
   gap: 10px;
